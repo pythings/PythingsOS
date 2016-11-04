@@ -21,4 +21,4 @@ file:734:updates_settings.py
 file:890:utils.py
 file:1007:webserver.py
 file:846:worker.py
-file:2:version
+file:5:version
