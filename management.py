@@ -54,16 +54,17 @@ def system_management_task(chronos):
         machine.reset()
 
     # Data = remote command sent, here we use a sample
-    app_data    = content['data']['app_data'] if 'app_data' in content['data'] else None
-    app_data_id = content['data']['app_data_id'] if 'app_data_id' in content['data'] else None
+    app_data     = content['data']['app_data'] if 'app_data' in content['data'] else None
+    app_data_id  = content['data']['app_data_id'] if 'app_data_id' in content['data'] else None
+    app_data_rep = None
 
     # Call App's management
     if globals.app_management_task:
         try:
             print('67----------------------------',gc.mem_free())
-            globals.app_management_task.call(chronos, app_data)
+            app_data_rep=globals.app_management_task.call(chronos, app_data)
             if app_data_id:
-                run_controlled(2,report,what='management', status='OK', message={'app_data_id':app_data_id})
+                run_controlled(2,report,what='management', status='OK', message={'app_data_id':app_data_id,'app_data_rep':app_data_rep})
             else:
                 run_controlled(2,report,what='management', status='OK')
                 
