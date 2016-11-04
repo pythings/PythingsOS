@@ -12,7 +12,7 @@ file:3013:http.py
 file:1788:install.py
 file:662:logger.py
 file:1261:main.py
-file:3208:management.py
+file:3275:management.py
 file:6286:startup.py
 file:846:uninstall.py
 file:309:updates_app.py
@@ -21,4 +21,4 @@ file:734:updates_settings.py
 file:890:utils.py
 file:1007:webserver.py
 file:846:worker.py
-file:5:version
+file:2:version
