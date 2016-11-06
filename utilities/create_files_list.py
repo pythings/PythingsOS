@@ -2,7 +2,7 @@ from os import listdir, stat
 from os.path import isfile, join
 
 for file in listdir('./'):
-    if file!='version' and file != '.gitignore': # Skip gitignore and do version as last (see next block)
+    if file!='version' and file[0] != '.': # Skip hidden files and do version as last (see next block)
         if not isfile(file):
             continue
         else:

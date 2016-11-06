@@ -1,5 +1,3 @@
-file:370:.project
-file:423:.pydevproject
 file:4178:ap_config.py
 file:880:api.py
 file:672:app.py
@@ -7,7 +5,7 @@ file:7:arch
 file:2972:common.py
 file:286:config.py
 file:375:factory_reset.py
-file:541:files.txt
+file:500:files.txt
 file:0:globals.py
 file:620:handle_main_error.py
 file:3076:http.py
