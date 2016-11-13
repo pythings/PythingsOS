@@ -61,8 +61,10 @@ def run_controlled(retr, function, **kwargs):
 def get_running_app_version():
     try:
         from app import version as app_version
-    except ImportError as e:
-        print('Error in importing version from app ({}:{}), trying obtaining it by parsing the file'.format(type(e), str(e)))
+    except Exception as e:
+        import sys
+        sys.print_exception(e)
+        logger.error('Error in importing version from app ({}:{}), trying obtaining it by parsing the file'.format(type(e), str(e)))
         try:
             with open('/app.py','r') as file:
                 last_line=None
@@ -70,8 +72,9 @@ def get_running_app_version():
                     last_line=line
             app_version=last_line.split('=')[1].replace('\'','')
         except Exception as e:
+            sys.print_exception(e)
+            logger.error('Error in reading version form app code ({}:{}), falling back on version 0: '.format(type(e), str(e)))
             app_version='0'
-            print('Error in reading version form app code ({}:{}), falling back on version 0: '.format(type(e), str(e)))
     return app_version
 
 def get_running_pythings_version():
@@ -79,7 +82,7 @@ def get_running_pythings_version():
         f = open('version')
         version=f.read()
     except Exception as e:
-        print('Error in obtaining Pythings version: ',type(e), str(e), ', skipping...')    
+        logger.error('Error in obtaining Pythings version: ',type(e), str(e), ', skipping...')    
         version='Unknown'
     finally:
         try: f.close()

@@ -84,8 +84,8 @@ def start():
 
     # Register and perform the first management task call on "safe" backend
     if not pythings_host_overrided:
-       pythings_host_set = globals.pythings_host
-       globals.pythings_host ='http://backend.pythings.io'
+        pythings_host_set = globals.pythings_host
+        globals.pythings_host ='http://backend.pythings.io'
     
     # Register yourself, and start a new session
     from api import apost
@@ -133,6 +133,8 @@ def start():
         from app import worker_task
         globals.app_worker_task = worker_task(chronos)
     except Exception as e:
+        import sys
+        from api import report
         sys.print_exception(e)
         logger.error('Error in importing/loading app\'s worker tasks: {} {}'.format(e.__class__.__name__, e))
         common.run_controlled(2,report,what='worker', status='KO', message='{} {}'.format(e.__class__.__name__, e))
@@ -141,6 +143,8 @@ def start():
         from app import management_task
         globals.app_management_task = management_task(chronos)
     except Exception as e:
+        import sys
+        from api import report
         sys.print_exception(e)
         logger.error('Error in importing/loading  app\'s management tasks: {} {}'.format(e.__class__.__name__, e))
         common.run_controlled(2,report,what='worker', status='KO', message='{} {}'.format(e.__class__.__name__, e))
