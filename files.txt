@@ -2,7 +2,7 @@ file:4178:ap_config.py
 file:880:api.py
 file:672:app.py
 file:7:arch
-file:2972:common.py
+file:3076:common.py
 file:286:config.py
 file:375:factory_reset.py
 file:500:files.txt
@@ -13,7 +13,7 @@ file:1787:install.py
 file:662:logger.py
 file:1261:main.py
 file:3275:management.py
-file:6286:startup.py
+file:6388:startup.py
 file:846:uninstall.py
 file:309:updates_app.py
 file:1161:updates_pythings.py
