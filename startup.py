@@ -68,8 +68,6 @@ def start():
     if not globals.pool:
         if 'pool' in globals.settings and globals.settings['pool']:
             globals.pool = globals.settings['pool']
-        else:
-            globals.pool = 'production'
 
     # Tasks placeholders
     globals.app_worker_task = None
