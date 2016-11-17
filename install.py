@@ -1,7 +1,7 @@
 import socket
 import os
 
-BASE ='http://backend.pythings.io/static/dist/ESP8266/v0.06'
+BASE ='http://backend.pythings.io/static/dist/ESP8266/v0.08'
 
 def download(file,path,debug=False):
     print('\nDownloading', file, 'in', path)
