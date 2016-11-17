@@ -1,30 +1,5 @@
-import machine
-import network
-import ure
-import socket
 import time
-import json
-import globals
-from http import post,get
 import logger
-
-def unquote(s):
-    """Kindly rewritten by Damien from Micropython"""
-    """No longer uses caching because of memory limitations"""
-    res = s.split('%')
-    for i in range(1, len(res)): # no xrange as not available for this micro.
-        item = res[i]
-        try:
-            res[i] = chr(int(item[:2], 16)) + item[2:]
-        except ValueError:
-            res[i] = '%' + item
-    return "".join(res)
-
-def connect_wifi(wlan, essid, password):
-    print("Connecting with: ", essid)
-    print("Using password: ", password) 
-    wlan.connect(essid, password) # connect to an AP
-    wlan.config('mac')      # get the interface's MAC adddress
 
 class Chronos(object):
     def __init__(self, epoch_s_now=0):
@@ -82,7 +57,7 @@ def get_running_pythings_version():
         f = open('version')
         version=f.read()
     except Exception as e:
-        logger.error('Error in obtaining Pythings version: ',type(e), str(e), ', skipping...')    
+        logger.error('Error in obtaining Pythings version: ({}: {}), skipping...'.format(type(e), str(e)))
         version='Unknown'
     finally:
         try: f.close()

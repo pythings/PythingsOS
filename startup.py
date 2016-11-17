@@ -30,19 +30,22 @@ def start():
     print('|------------------------|')
     print('Version: {} (ESP8266)'.format(globals.running_pythings_version))
 
-    apconfig_timeout = load_param('apconfig_timeout', 120)
+    websetup_timeout = load_param('websetup_timeout', 60)
     # Start AP config mode if required
     if machine.reset_cause() == HARD_RESET:
-        if apconfig_timeout:
+        if websetup_timeout:
             gc.collect()
-            logger.info('Starting AP conf mode with timeout={}'.format(apconfig_timeout))
             LED.low()
-            from ap_config import ap_config
-            ap_config(timeout_s=apconfig_timeout, lock_session=True)
+            from websetup import websetup
+            websetup(timeout_s=websetup_timeout, lock_session=True)
             LED.high()
             # Reset (will start without AP config mode since this is a soft reset)
             logger.info('Resetting...')
             machine.reset()
+
+    # Enable STA mode and Disable AP mode
+    network.WLAN(network.STA_IF).active(True)
+    network.WLAN(network.AP_IF).active(False)
 
     # Start loading settings and parameters
     from utils import load_settings, get_tuuid
@@ -68,6 +71,8 @@ def start():
     if not globals.pool:
         if 'pool' in globals.settings and globals.settings['pool']:
             globals.pool = globals.settings['pool']
+        else:
+            globals.pool = 'production'
 
     # Tasks placeholders
     globals.app_worker_task = None
