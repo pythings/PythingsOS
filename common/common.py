@@ -54,13 +54,12 @@ def get_running_app_version():
 
 def get_running_pythings_version():
     try:
-        f = open('version')
-        version=f.read()
+        from version import version
     except Exception as e:
         logger.error('Error in obtaining Pythings version: ({}: {}), skipping...'.format(type(e), str(e)))
         version='Unknown'
-    finally:
-        try: f.close()
-        except:pass
     return version
 
+def get_running_pythings_version(path):
+    try:
+        f = open(path+'/version')
