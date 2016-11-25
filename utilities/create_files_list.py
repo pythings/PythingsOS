@@ -1,13 +1,16 @@
 from os import listdir, stat
 from os.path import isfile, join
 
+ignored=['websetup.html', 'jquery.js']
+
 for file in listdir('./'):
-    if file!='version' and file[0] != '.': # Skip hidden files and do version as last (see next block)
+    if file!='version' and file[0] != '.' and file not in ignored: 
         if not isfile(file):
             continue
         else:
             print 'file:{}:{}'.format(stat(file).st_size,file)
 
+# Do version as last
 for file in listdir('./'):
     if file=='version':
         if not isfile(file):
