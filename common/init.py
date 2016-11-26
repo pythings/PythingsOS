@@ -33,13 +33,13 @@ def start(path=None):
         if hal.reset_cause() == hal.HARD_RESET:
             if websetup_timeout:
                 gc.collect()
-                hal.LED.on()
+                if hal.HW_SUPPORTS_LED: hal.LED.on()
                 from websetup import websetup
                 websetup(timeout_s=websetup_timeout, lock_session=True)
-                hal.LED.off()
+                if hal.HW_SUPPORTS_LED: hal.LED.off()
                 # Reset (will start without AP config mode since this is a soft reset)
                 logger.info('Resetting...')
-                hal.reset()
+                hal.reboot()
 
     
     # Enable STA mode and Disable AP mode
@@ -162,7 +162,8 @@ def start(path=None):
         
         if loop_count % management_interval == 0:
             logger.info('Calling management (loop={})'.format(loop_count))
-            hal.LED.on(); time.sleep(0.05); hal.LED.off()
+            if hal.HW_SUPPORTS_LED:
+                hal.LED.on(); time.sleep(0.05); hal.LED.off()
             from management import system_management_task
             system_management_task(chronos)
             del system_management_task

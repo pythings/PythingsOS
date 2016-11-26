@@ -38,9 +38,9 @@ del load_settings
         
 # Execute Pythings framework
 try:
-    import mainloop
+    import init
     gc.collect()
-    mainloop.start(path=path)
+    init.start(path=path)
 
 except Exception as e:
     import handle_main_error

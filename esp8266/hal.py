@@ -3,12 +3,12 @@ import machine
 import network
 
 # Constants (settings)
-HW_SUPPORTS_DEEPSLEEP  = False
-HW_SUPPORTS_RESETCAUSE = False
-HW_SUPPORTS_LED        = False
-HW_SUPPORTS_WLAN       = False
+HW_SUPPORTS_DEEPSLEEP  = True
+HW_SUPPORTS_RESETCAUSE = True
+HW_SUPPORTS_LED        = True
+HW_SUPPORTS_WLAN       = True
 
-# Other constants
+# Required if resetcause is supported
 HARD_RESET = 6
 
 def init():
@@ -34,7 +34,6 @@ class WLAN(object):
 
 def reset_cause():
     return machine.reset_cause()
-    #raise NotImplementedError('reset_cause not implemented for this HW') 
 
-def reset():
+def reboot():
     machine.reset()

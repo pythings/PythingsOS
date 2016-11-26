@@ -46,12 +46,12 @@ def system_management_task(chronos):
 
     gc.collect()
 
-    # If updates, reset everything
+    # If updates, reboot.
     if updates:
-        logger.info('Resetting due to update')
+        logger.info('Rebooting due to update')
         run_controlled(2,report,what='pythings', status='OK', message='Resetting due to {} update'.format(updates))
-        import machine
-        machine.reset()
+        import hal
+        hal.reboot()
 
     # Data = remote command sent, here we use a sample
     app_data     = content['data']['app_data'] if 'app_data' in content['data'] else None

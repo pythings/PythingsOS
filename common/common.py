@@ -59,7 +59,3 @@ def get_running_pythings_version():
         logger.error('Error in obtaining Pythings version: ({}: {}), skipping...'.format(type(e), str(e)))
         version='Unknown'
     return version
-
-def get_running_pythings_version(path):
-    try:
-        f = open(path+'/version')
