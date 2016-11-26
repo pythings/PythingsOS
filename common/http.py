@@ -14,7 +14,8 @@ def post(url, data):
         host=host.split(':')[0]
     addr = socket.getaddrinfo(host, port)[0][-1]
     s = socket.socket()
-    s.settimeout(60)
+    try: s.settimeout(60)
+    except: pass
     s.connect(addr) #Tryexcept this
     s.write('%s /%s HTTP/1.0\r\nHost: %s\r\n' % ('POST', path, host))
 
@@ -58,8 +59,8 @@ def get(url):
         host=host.split(':')[0]
     addr = socket.getaddrinfo(host, port)[0][-1]
     s = socket.socket()
-    s.settimeout(60)
-    s.connect(addr)
+    try: s.settimeout(60)
+    except: pass    s.connect(addr)
     s.send(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
 
     # Status, msg etc.
@@ -90,8 +91,8 @@ def download(source,dest):
         host=host.split(':')[0]
     addr = socket.getaddrinfo(host, port)[0][-1]
     s = socket.socket()
-    s.settimeout(60)
-    s.connect(addr)
+    try: s.settimeout(60)
+    except: pass    s.connect(addr)
     s.send(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
  
     # Status, msg etc.
