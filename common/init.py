@@ -3,7 +3,6 @@
 import machine
 import time
 import gc
-import network
 import globals
 import common
 import hal
