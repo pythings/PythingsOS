@@ -6,21 +6,18 @@ import gc
 import network
 import globals
 import common
+import hal
 from utils import load_param
 
 # Logger
 import logger
 logger.level = logger.DEBUG
 
-#  Constants
-LED = machine.Pin(2, machine.Pin.OUT)
-HARD_RESET = 6
-
 #---------------------
 #  Main
 #---------------------
 
-def start():
+def start(path=None):
 
     # Get Pythings version
     globals.running_pythings_version = common.get_running_pythings_version()
@@ -30,23 +27,26 @@ def start():
     print('|------------------------|')
     print('Version: {} (ESP8266)'.format(globals.running_pythings_version))
 
-    websetup_timeout = load_param('websetup_timeout', 60)
-    # Start AP config mode if required
-    if machine.reset_cause() == HARD_RESET:
-        if websetup_timeout:
-            gc.collect()
-            LED.low()
-            from websetup import websetup
-            websetup(timeout_s=websetup_timeout, lock_session=True)
-            LED.high()
-            # Reset (will start without AP config mode since this is a soft reset)
-            logger.info('Resetting...')
-            machine.reset()
+    if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN:
+        websetup_timeout = load_param('websetup_timeout', 60)
+        # Start AP config mode if required
+        if hal.reset_cause() == hal.HARD_RESET:
+            if websetup_timeout:
+                gc.collect()
+                hal.LED.on()
+                from websetup import websetup
+                websetup(timeout_s=websetup_timeout, lock_session=True)
+                hal.LED.off()
+                # Reset (will start without AP config mode since this is a soft reset)
+                logger.info('Resetting...')
+                hal.reset()
 
+    
     # Enable STA mode and Disable AP mode
-    network.WLAN(network.STA_IF).active(True)
-    network.WLAN(network.AP_IF).active(False)
-
+    if hal.HW_SUPPORTS_WLAN:
+        hal.WLAN.ap_active(False)
+        hal.WLAN.sta_active(True)
+    
     # Start loading settings and parameters
     from utils import load_settings, get_tuuid
     globals.settings = load_settings()
@@ -162,7 +162,7 @@ def start():
         
         if loop_count % management_interval == 0:
             logger.info('Calling management (loop={})'.format(loop_count))
-            LED.low(); time.sleep(0.05); LED.high()
+            hal.LED.on(); time.sleep(0.05); hal.LED.off()
             from management import system_management_task
             system_management_task(chronos)
             del system_management_task

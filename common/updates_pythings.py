@@ -2,7 +2,7 @@
 import globals
 import logger
 import os
-from version import arch
+from arch import arch
 
 BASE ='http://backend.pythings.io/static/dist/{}/'.format(arch)
 
