@@ -1,2 +1,1 @@
-version = 'v0.08'
-arch    = 'esp8266'
+../common/version.py

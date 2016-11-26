@@ -1,0 +1,1 @@
+../common/updates_settings.py
