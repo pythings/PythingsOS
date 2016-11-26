@@ -60,7 +60,8 @@ def get(url):
     addr = socket.getaddrinfo(host, port)[0][-1]
     s = socket.socket()
     try: s.settimeout(60)
-    except: pass    s.connect(addr)
+    except: pass
+    s.connect(addr)
     s.send(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
 
     # Status, msg etc.
@@ -92,7 +93,8 @@ def download(source,dest):
     addr = socket.getaddrinfo(host, port)[0][-1]
     s = socket.socket()
     try: s.settimeout(60)
-    except: pass    s.connect(addr)
+    except: pass
+    s.connect(addr)
     s.send(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
  
     # Status, msg etc.
