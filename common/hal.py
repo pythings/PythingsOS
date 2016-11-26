@@ -28,6 +28,9 @@ class WLAN(object):
     def ap_active(mode):
         raise NotImplementedError() 
 
+def get_tuuid():
+    return '000000000001'
+
 def reset_cause():
     raise NotImplementedError() 
 

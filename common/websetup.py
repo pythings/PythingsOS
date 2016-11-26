@@ -9,6 +9,7 @@ import ure
 import gc
 
 from utils import *
+from hal import get_tuuid
 
 def websetup(timeout_s=60, lock_session=False):
     logger.info('Starting WebSetup')

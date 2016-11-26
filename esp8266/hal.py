@@ -32,6 +32,12 @@ class WLAN(object):
     def ap_active(mode):
         network.WLAN(network.AP_IF).active(mode)
 
+def get_tuuid():
+    wlan = network.WLAN(network.STA_IF)
+    mac_b = wlan.config('mac')
+    mac_s = ':'.join( [ "%02X" % x for x in mac_b ] )
+    return mac_s.replace(':','')
+
 def reset_cause():
     return machine.reset_cause()
 

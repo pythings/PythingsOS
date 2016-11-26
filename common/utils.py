@@ -1,5 +1,4 @@
 import os
-import network
 import ure
 
 def connect_wifi(wlan, essid, password):
@@ -46,11 +45,7 @@ def mv(source,dest):
     except:
         pass
 
-def get_tuuid():
-    wlan = network.WLAN(network.STA_IF)
-    mac_b = wlan.config('mac')
-    mac_s = ':'.join( [ "%02X" % x for x in mac_b ] )
-    return mac_s.replace(':','')
+
 
 def get_wifi_data():
     try:

@@ -48,12 +48,12 @@ def start(path=None):
         hal.WLAN.sta_active(True)
     
     # Start loading settings and parameters
-    from utils import load_settings, get_tuuid
+    from utils import load_settings
     globals.settings = load_settings()
 
     # Load aid and tid: only local param or default
     globals.aid = load_param('aid', None)
-    globals.tid = load_param('tid', get_tuuid())
+    globals.tid = load_param('tid', hal.get_tuuid())
     
     # Load pythings_host: the local param wins 
     globals.pythings_host = load_param('pythings_host', None)
