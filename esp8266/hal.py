@@ -5,7 +5,7 @@ import network
 # Constants (settings)
 HW_SUPPORTS_DEEPSLEEP  = True
 HW_SUPPORTS_RESETCAUSE = True
-HW_SUPPORTS_LED        = True
+HW_SUPPORTS_LED        = False
 HW_SUPPORTS_WLAN       = True
 
 # Required if resetcause is supported
@@ -19,10 +19,10 @@ def init():
 class LED(object):
     @staticmethod
     def on():
-        machine.Pin(2, machine.Pin.OUT).low()     
+        pass
     @staticmethod
     def off():
-        machine.Pin(2, machine.Pin.OUT).high() 
+        pass
 
 class WLAN(object):  
     @staticmethod
