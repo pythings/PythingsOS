@@ -16,7 +16,7 @@ try:
         else:
             print('Updated version found, checking its consistency...')
             try:
-                os.stat(path+'/version')
+                os.stat(path+'/version.py')
             except OSError:
                 print('Error, proceeding with factory default version...')
                 path='/'

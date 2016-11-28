@@ -8,12 +8,12 @@ file:620:handle_main_error.py
 file:3142:http.py
 file:6579:init.py
 file:662:logger.py
-file:1367:main.py
-file:3259:management.py
+file:1370:main.py
+file:3232:management.py
 file:309:updates_app.py
-file:1212:updates_pythings.py
-file:734:updates_settings.py
+file:1211:updates_pythings.py
+file:832:updates_settings.py
 file:1702:utils.py
-file:18:version.py
 file:7796:websetup.py
 file:846:worker.py
+file:18:version.py

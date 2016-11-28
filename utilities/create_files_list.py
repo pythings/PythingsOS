@@ -4,7 +4,7 @@ from os.path import isfile, join
 ignored=['websetup.html', 'jquery.js']
 
 for file in listdir('./'):
-    if file!='version' and file[0] != '.' and file not in ignored: 
+    if file!='version.py' and file[0] != '.' and file not in ignored: 
         if not isfile(file):
             continue
         else:
@@ -12,7 +12,7 @@ for file in listdir('./'):
 
 # Do version as last
 for file in listdir('./'):
-    if file=='version':
+    if file=='version.py':
         if not isfile(file):
             continue
         else:

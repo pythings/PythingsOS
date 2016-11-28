@@ -18,25 +18,22 @@ def system_management_task(chronos):
     del response
     gc.collect()
 
-    # Update settings, pythings, app
+    # Update settings, pythings, app. TODO: move to try/except?
     try:
-        if 'settings' in content['data'] and content['data']['settings'] != globals.settings:
-            updates='settings' 
+        if 'settings' in content['data'] and content['data']['settings'] != globals.settings:   
             from updates_settings import update_settings
-            update_settings(content)
+            if update_settings(content): updates='settings' 
         
         elif globals.settings['pythings_version'].upper() != 'FACTORY' and globals.settings['pythings_version'] != globals.running_pythings_version:
             logger.debug('Downloading the new pythings (running version = "{}"; required version = "{}")'.format(globals.running_pythings_version, globals.settings['pythings_version']))
-            updates='pythings'
             from updates_pythings import update_pythings
-            update_pythings(globals.settings['pythings_version'])
+            if update_pythings(globals.settings['pythings_version']): updates='pythings' 
  
         else:
             if globals.settings['app_version'] != globals.running_app_version:
-                updates='app' # Optim.
                 logger.debug('Downloading the new app (running version = "{}"; required version = "{}")'.format(globals.running_app_version, globals.settings['app_version']))
                 from updates_app import update_app
-                if not update_app(globals.settings['app_version']): updates=None  
+                if update_app(globals.settings['app_version']): updates='app'  
 
     except Exception as e:
         import sys

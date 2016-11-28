@@ -5,7 +5,7 @@ import os
 from arch import arch
 
 def update_pythings(version):
-    source='http://backend.pythings.io/static/dist/PythingsOS/{}/{}/'.format(version,arch)
+    source='http://backend.pythings.io/static/dist/PythingsOS/{}/{}'.format(version,arch)
     path='/'+version
     try:
         os.mkdir(path)
