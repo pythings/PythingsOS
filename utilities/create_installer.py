@@ -54,13 +54,12 @@ def install(path='/'):
         f.write(\'\'\'{2}\'\'\')
 '''.format(source_file,sanitize(content1),sanitize(content2)))
 
-        # Add initialized file and main
+        # Add initialized file and initializer
         installer.write('''
     with open(path+'/initialized','w') as f:
         f.write('')
 
-if __name__ == "__main__":
-    install()
+install()
             
     ''')
 

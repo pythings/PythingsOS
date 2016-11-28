@@ -119,16 +119,17 @@ def get_running_pythings_version():
         f.write('''file:880:api.py
 file:24:arch.py
 file:2257:common.py
-file:394:files.txt
+file:419:files.txt
 file:0:globals.py
 file:964:hal.py
 file:620:handle_main_error.py
 file:3142:http.py
 file:6579:init.py
+file:35166:installer.pyc
 file:662:logger.py
 file:1370:main.py
 file:3232:management.py
-file:309:updates_app.py
+file:389:updates_app.py
 file:1211:updates_pythings.py
 file:682:updates_settings.py
 file:1702:utils.py
@@ -711,13 +712,6 @@ def system_management_task(chronos):
             run_controlled(2,report,what='management', status='KO', message='{} {}'.format(e.__class__.__name__, e))
 ''')
 
-    print('Writing',path+'/test.py')
-    with open(path+'/test.py','w') as f:
-        f.write('''import installer
-installer.install('/tmp/pythest')
-''')
-        f.write('''''')
-
     print('Writing',path+'/updates_app.py')
     with open(path+'/updates_app.py','w') as f:
         f.write('''import globals
@@ -1122,7 +1116,6 @@ def system_worker_task(chronos):
     with open(path+'/initialized','w') as f:
         f.write('')
 
-if __name__ == "__main__":
-    install()
+install()
             
     

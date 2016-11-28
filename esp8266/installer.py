@@ -128,7 +128,7 @@ file:6579:init.py
 file:662:logger.py
 file:1370:main.py
 file:3232:management.py
-file:309:updates_app.py
+file:389:updates_app.py
 file:1211:updates_pythings.py
 file:682:updates_settings.py
 file:1702:utils.py
@@ -1115,7 +1115,6 @@ def system_worker_task(chronos):
     with open(path+'/initialized','w') as f:
         f.write('')
 
-if __name__ == "__main__":
-    install()
+install()
             
     
