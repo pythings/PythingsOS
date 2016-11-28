@@ -40,11 +40,13 @@ def report(what, status, message=None):
     response = apost('/things/report/', {'what':what,'status': status,'message': message})
     logger.debug('Response:',response)
 ''')
+        f.write('''''')
 
     print('Writing',path+'/arch.py')
     with open(path+'/arch.py','w') as f:
         f.write('''arch = 'esp8266_esp-12'
 ''')
+        f.write('''''')
 
     print('Writing',path+'/common.py')
     with open(path+'/common.py','w') as f:
@@ -110,6 +112,7 @@ def get_running_pythings_version():
         version='Unknown'
     return version
 ''')
+        f.write('''''')
 
     print('Writing',path+'/files.txt')
     with open(path+'/files.txt','w') as f:
@@ -133,9 +136,11 @@ file:7796:websetup.py
 file:846:worker.py
 file:15:version.py
 ''')
+        f.write('''''')
 
     print('Writing',path+'/globals.py')
     with open(path+'/globals.py','w') as f:
+        f.write('''''')
         f.write('''''')
 
     print('Writing',path+'/hal.py')
@@ -186,6 +191,7 @@ def reset_cause():
 def reboot():
     machine.reset()
 ''')
+        f.write('''''')
 
     print('Writing',path+'/handle_main_error.py')
     with open(path+'/handle_main_error.py','w') as f:
@@ -204,6 +210,7 @@ def handle(e):
     import machine
     time.sleep(5)
     machine.reset() ''')
+        f.write('''''')
 
     print('Writing',path+'/http.py')
     with open(path+'/http.py','w') as f:
@@ -320,7 +327,8 @@ def download(source,dest):
         pass 
 
     while True:
-        data = s.readline() #data = s.recv(100)?
+        data = s.readline() #data = s.rec''')
+        f.write('''v(100)?
         if data:
             f.write((str(data, 'utf8')))
         else:
@@ -423,7 +431,8 @@ def start(path=None):
         pythings_host_set = globals.pythings_host
         globals.pythings_host ='http://backend.pythings.io'
     
-    # Register yourself, and start a new session
+    # Register yourself, and start a ne''')
+        f.write('''w session
     from api import apost
     logger.info('Registering myself with tid={} and aid={}'.format(globals.tid,globals.aid))
     response = common.run_controlled(None,
@@ -567,6 +576,7 @@ def critical(msg,det=''):
 
 
 ''')
+        f.write('''''')
 
     print('Writing',path+'/main.py')
     with open(path+'/main.py','w') as f:
@@ -622,6 +632,7 @@ finally:
     
 
 ''')
+        f.write('''''')
 
     print('Writing',path+'/management.py')
     with open(path+'/management.py','w') as f:
@@ -694,7 +705,8 @@ def system_management_task(chronos):
                 
         except Exception as e:
             import sys
-            sys.print_exception(e)
+            sys.print_excepti''')
+        f.write('''on(e)
             logger.error('Error in executing app\'s management task: {} {}'.format(e.__class__.__name__, e))
             run_controlled(2,report,what='management', status='KO', message='{} {}'.format(e.__class__.__name__, e))
 ''')
@@ -714,6 +726,7 @@ def update_app(version):
         return True
     except:
         return False''')
+        f.write('''''')
 
     print('Writing',path+'/updates_pythings.py')
     with open(path+'/updates_pythings.py','w') as f:
@@ -753,6 +766,7 @@ def update_pythings(version):
     files_list.close()
     return True
 ''')
+        f.write('''''')
 
     print('Writing',path+'/updates_settings.py')
     with open(path+'/updates_settings.py','w') as f:
@@ -779,6 +793,7 @@ def update_settings(content):
         return False
 
 ''')
+        f.write('''''')
 
     print('Writing',path+'/utils.py')
     with open(path+'/utils.py','w') as f:
@@ -852,11 +867,13 @@ def parseURL(url):
             pass
     return path, parameters
 ''')
+        f.write('''''')
 
     print('Writing',path+'/version.py')
     with open(path+'/version.py','w') as f:
         f.write('''version='v0.1'
 ''')
+        f.write('''''')
 
     print('Writing',path+'/websetup.py')
     with open(path+'/websetup.py','w') as f:
@@ -945,7 +962,8 @@ def websetup(timeout_s=60, lock_session=False):
                 set_api()
                 cmd = parameters['cmd']
                 essid = None
-                if 'essid' in parameters: essid = parameters['essid']   
+                if 'essid' in parameters: e''')
+        f.write('''ssid = parameters['essid']   
                 password = None
                 if 'password' in parameters: password = parameters['password']                    
                 try:
@@ -1092,6 +1110,7 @@ def system_worker_task(chronos):
             logger.error('Error in executing app\'s worker taks or sending its data: {} {}'.format(e.__class__.__name__, e))
             run_controlled(2,report,what='worker', status='KO', message='{} {}'.format(e.__class__.__name__, e))
             ''')
+        f.write('''''')
 
         with open(path+'/initialized','w') as f:
             f.write('')
