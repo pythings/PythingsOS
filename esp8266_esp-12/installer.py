@@ -1119,8 +1119,10 @@ def system_worker_task(chronos):
             ''')
         f.write('''''')
 
-        with open(path+'/initialized','w') as f:
-            f.write('')
-        
+    with open(path+'/initialized','w') as f:
+        f.write('')
+
+if __name__ == "__main__":
+    install()
             
     
