@@ -97,7 +97,7 @@ def get_running_app_version():
                 last_line=None
                 for line in file:
                     last_line=line
-            app_version=last_line.split('=')[1].replace('\'','')
+            app_version=last_line.split('=')[1].replace('\\'','')
         except Exception as e:
             sys.print_exception(e)
             logger.error('Error in reading version form app code ({}:{}), falling back on version 0: '.format(type(e), str(e)))
@@ -233,24 +233,24 @@ def post(url, data):
     try: s.settimeout(60)
     except: pass
     s.connect(addr) #Tryexcept this
-    s.write('%s /%s HTTP/1.0\r\\nHost: %s\r\\n' % ('POST', path, host))
+    s.write('%s /%s HTTP/1.0\\r\\nHost: %s\\r\\n' % ('POST', path, host))
 
     content = json.dumps(data)
     content_type = 'application/json'
 
     if content is not None:
-        s.write('content-length: %s\r\\n' % len(content))
-        s.write('content-type: %s\r\\n' % content_type)
-        s.write('\r\\n')
+        s.write('content-length: %s\\r\\n' % len(content))
+        s.write('content-type: %s\\r\\n' % content_type)
+        s.write('\\r\\n')
         s.write(content)
     else:
-        s.write('\r\\n')
+        s.write('\\r\\n')
 
     # Status, msg etc.
     version, status, msg = s.readline().split(None, 2)
 
     # Skip headers
-    while s.readline() != b'\r\\n':
+    while s.readline() != b'\\r\\n':
         pass
 
     # Read data
@@ -278,13 +278,13 @@ def get(url):
     try: s.settimeout(60)
     except: pass
     s.connect(addr)
-    s.send(bytes('GET /%s HTTP/1.0\r\\nHost: %s\r\\n\r\\n' % (path, host), 'utf8'))
+    s.send(bytes('GET /%s HTTP/1.0\\r\\nHost: %s\\r\\n\\r\\n' % (path, host), 'utf8'))
 
     # Status, msg etc.
     version, status, msg = s.readline().split(None, 2)
 
     # Skip headers
-    while s.readline() != b'\r\\n':
+    while s.readline() != b'\\r\\n':
         pass
 
     # Read data
@@ -311,7 +311,7 @@ def download(source,dest):
     try: s.settimeout(60)
     except: pass
     s.connect(addr)
-    s.send(bytes('GET /%s HTTP/1.0\r\\nHost: %s\r\\n\r\\n' % (path, host), 'utf8'))
+    s.send(bytes('GET /%s HTTP/1.0\\r\\nHost: %s\\r\\n\\r\\n' % (path, host), 'utf8'))
  
     # Status, msg etc.
     version, status, msg = s.readline().split(None, 2)
@@ -323,7 +323,7 @@ def download(source,dest):
         return False
 
     # Skip headers
-    while s.readline() != b'\r\\n': 
+    while s.readline() != b'\\r\\n': 
         pass 
 
     while True:
@@ -481,7 +481,7 @@ def start(path=None):
         import sys
         from api import report
         sys.print_exception(e)
-        logger.error('Error in importing/loading app\'s worker tasks: {} {}'.format(e.__class__.__name__, e))
+        logger.error('Error in importing/loading app\\'s worker tasks: {} {}'.format(e.__class__.__name__, e))
         common.run_controlled(2,report,what='worker', status='KO', message='{} {}'.format(e.__class__.__name__, e))
 
     try:
@@ -491,7 +491,7 @@ def start(path=None):
         import sys
         from api import report
         sys.print_exception(e)
-        logger.error('Error in importing/loading  app\'s management tasks: {} {}'.format(e.__class__.__name__, e))
+        logger.error('Error in importing/loading  app\\'s management tasks: {} {}'.format(e.__class__.__name__, e))
         common.run_controlled(2,report,what='worker', status='KO', message='{} {}'.format(e.__class__.__name__, e))
 
     # Setup intervals
@@ -707,7 +707,7 @@ def system_management_task(chronos):
             import sys
             sys.print_excepti''')
         f.write('''on(e)
-            logger.error('Error in executing app\'s management task: {} {}'.format(e.__class__.__name__, e))
+            logger.error('Error in executing app\\'s management task: {} {}'.format(e.__class__.__name__, e))
             run_controlled(2,report,what='management', status='KO', message='{} {}'.format(e.__class__.__name__, e))
 ''')
 
@@ -865,7 +865,7 @@ def get_wifi_data():
 
 def parseURL(url):
     parameters = {}
-    path = ure.search("(.*?)(\?|$)", url).group(1)
+    path = ure.search("(.*?)(\\?|$)", url).group(1)
     if '?' in url:
         try:
             for keyvalue in url.split('?')[1].split('&'):
@@ -930,7 +930,7 @@ def websetup(timeout_s=60, lock_session=False):
             request = str(cl.recv(1024))
 
             # Parse GET request
-            get_request_data = ure.search("GET (.*?) HTTP\/1\.1", request)
+            get_request_data = ure.search("GET (.*?) HTTP\\/1\\.1", request)
             if get_request_data:
                 path, parameters = parseURL(get_request_data.group(1))
                 logger.debug('Got request for path = "{}" with params = "{}"'.format(path, parameters))
@@ -938,24 +938,24 @@ def websetup(timeout_s=60, lock_session=False):
                 path = []
                 parameters = []
 
-            cl.write('HTTP/1.0 200 OK\r\\n')
-            cl.write('Access-Control-Allow-Methods: POST, GET, OPTIONS\r\\n');
-            cl.write("Access-Control-Allow-Origin: *\r\\n");
+            cl.write('HTTP/1.0 200 OK\\r\\n')
+            cl.write('Access-Control-Allow-Methods: POST, GET, OPTIONS\\r\\n');
+            cl.write("Access-Control-Allow-Origin: *\\r\\n");
             #cl.write('Access-Control-Allow-Origin: http://localhost:8080\\n');
-            cl.write("Access-Control-Allow-Credentials: true\r\\n");
-            cl.write("Access-Control-Allow-Headers: X-CSRFToken, ACCEPT, CONTENT-TYPE, X-CSRF-TOKEN, Content-Type, Authorization, X-Requested-With\r\\n");
+            cl.write("Access-Control-Allow-Credentials: true\\r\\n");
+            cl.write("Access-Control-Allow-Headers: X-CSRFToken, ACCEPT, CONTENT-TYPE, X-CSRF-TOKEN, Content-Type, Authorization, X-Requested-With\\r\\n");
 
             if not get_request_data: # an OPTIONS, basically
                 logger.debug('no GET data in request')
-                cl.write('Content-Length: 0\r\\n\r\\n')
+                cl.write('Content-Length: 0\\r\\n\\r\\n')
                 cl.close()
                 continue
             def set_api():
-                cl.write('Content-Type: application/json\r\\n')
-                cl.write('\r\\n')
+                cl.write('Content-Type: application/json\\r\\n')
+                cl.write('\\r\\n')
             def set_page():
-                cl.write('Content-Type: text/html\r\\n')
-                cl.write('\r\\n')
+                cl.write('Content-Type: text/html\\r\\n')
+                cl.write('\\r\\n')
 
             # Close connection if requesting favicon
             if 'favicon' in path:
@@ -1061,7 +1061,7 @@ def websetup(timeout_s=60, lock_session=False):
             else:
                 logger.debug('Serving main page')
                 set_page()
-                cl.write('Please go to your vendor\'s Website to configure this device.\r\\n')
+                cl.write('Please go to your vendor\\'s Website to configure this device.\\r\\n')
                 #with open('websetup.html') as f:
                 #    for line in f:
                 #        cl.write(line)
@@ -1114,7 +1114,7 @@ def system_worker_task(chronos):
         except Exception as e:
             import sys
             sys.print_exception(e)
-            logger.error('Error in executing app\'s worker taks or sending its data: {} {}'.format(e.__class__.__name__, e))
+            logger.error('Error in executing app\\'s worker taks or sending its data: {} {}'.format(e.__class__.__name__, e))
             run_controlled(2,report,what='worker', status='KO', message='{} {}'.format(e.__class__.__name__, e))
             ''')
         f.write('''''')
