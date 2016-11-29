@@ -119,13 +119,12 @@ def get_running_pythings_version():
         f.write('''file:880:api.py
 file:24:arch.py
 file:2257:common.py
-file:419:files.txt
+file:394:files.txt
 file:0:globals.py
 file:964:hal.py
-file:620:handle_main_error.py
+file:615:handle_main_error.py
 file:3142:http.py
 file:6579:init.py
-file:35166:installer.pyc
 file:662:logger.py
 file:1370:main.py
 file:3232:management.py
@@ -133,7 +132,7 @@ file:389:updates_app.py
 file:1211:updates_pythings.py
 file:682:updates_settings.py
 file:1702:utils.py
-file:7796:websetup.py
+file:7703:websetup.py
 file:846:worker.py
 file:15:version.py
 ''')
@@ -206,11 +205,12 @@ def handle(e):
     except Exception as e2:
         print('Error in reporting error to Pythings framework: ',type(e2), str(e2))
         sys.print_exception(e2) # TODO: try except also the prints as they can fail due to uncode   
-    print('\\n{}: I will reset in 5 seconds. CTRL-C now to stop the reset.'.format(e.__class__.__name__)) 
+    print('\\n{}: I will reboot in 5 seconds. CTRL-C now to stop the reboot.'.format(e.__class__.__name__)) 
     import time
-    import machine
     time.sleep(5)
-    machine.reset() ''')
+    import hal
+    hal.reboot()
+''')
         f.write('''''')
 
     print('Writing',path+'/http.py')
@@ -889,7 +889,7 @@ import ure
 import gc
 
 from utils import *
-from hal import get_tuuid
+import hal
 
 def websetup(timeout_s=60, lock_session=False):
     logger.info('Starting WebSetup')
@@ -906,7 +906,7 @@ def websetup(timeout_s=60, lock_session=False):
     sta.active(False)
     ap = network.WLAN(network.AP_IF)
     ap.active(True)
-    ap.config(essid="Device_{}".format(get_tuuid()), authmode=network.AUTH_WPA_WPA2_PSK, password="NewDevice")
+    ap.config(essid="Device_{}".format(hal.get_tuuid()), authmode=network.AUTH_WPA_WPA2_PSK, password="NewDevice")
     
     while True:
         try:
@@ -963,17 +963,16 @@ def websetup(timeout_s=60, lock_session=False):
                 set_api()
                 cmd = parameters['cmd']
                 essid = None
-                if 'essid' in parameters: e''')
-        f.write('''ssid = parameters['essid']   
+                if 'essid' in parameters: essid = para''')
+        f.write('''meters['essid']   
                 password = None
                 if 'password' in parameters: password = parameters['password']                    
-                try:
-                    LED = machine.Pin(2, machine.Pin.OUT)  
-                    LED.high()
+
+                if hal.HW_SUPPORTS_LED:
+                    hal.LED.off()
                     time.sleep(0.3)
-                    LED.low()
-                except:
-                    pass
+                    hal.LED.on()
+
                 gc.collect()
 
                 # Set app command

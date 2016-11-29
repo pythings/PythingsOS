@@ -9,7 +9,7 @@ import ure
 import gc
 
 from utils import *
-from hal import get_tuuid
+import hal
 
 def websetup(timeout_s=60, lock_session=False):
     logger.info('Starting WebSetup')
@@ -26,7 +26,7 @@ def websetup(timeout_s=60, lock_session=False):
     sta.active(False)
     ap = network.WLAN(network.AP_IF)
     ap.active(True)
-    ap.config(essid="Device_{}".format(get_tuuid()), authmode=network.AUTH_WPA_WPA2_PSK, password="NewDevice")
+    ap.config(essid="Device_{}".format(hal.get_tuuid()), authmode=network.AUTH_WPA_WPA2_PSK, password="NewDevice")
     
     while True:
         try:
@@ -86,13 +86,12 @@ def websetup(timeout_s=60, lock_session=False):
                 if 'essid' in parameters: essid = parameters['essid']   
                 password = None
                 if 'password' in parameters: password = parameters['password']                    
-                try:
-                    LED = machine.Pin(2, machine.Pin.OUT)  
-                    LED.high()
+
+                if hal.HW_SUPPORTS_LED:
+                    hal.LED.off()
                     time.sleep(0.3)
-                    LED.low()
-                except:
-                    pass
+                    hal.LED.on()
+
                 gc.collect()
 
                 # Set app command

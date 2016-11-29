@@ -1,13 +1,12 @@
 file:880:api.py
 file:24:arch.py
 file:2257:common.py
-file:419:files.txt
+file:394:files.txt
 file:0:globals.py
 file:964:hal.py
-file:620:handle_main_error.py
+file:615:handle_main_error.py
 file:3142:http.py
 file:6579:init.py
-file:35166:installer.pyc
 file:662:logger.py
 file:1370:main.py
 file:3232:management.py
@@ -15,6 +14,6 @@ file:389:updates_app.py
 file:1211:updates_pythings.py
 file:682:updates_settings.py
 file:1702:utils.py
-file:7796:websetup.py
+file:7703:websetup.py
 file:846:worker.py
 file:15:version.py

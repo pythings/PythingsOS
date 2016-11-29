@@ -1,20 +1,22 @@
 import socket
 import os
 
-BASE ='http://backend.pythings.io/static/dist/ESP8266/v0.08'
+VERS = 'v0.1'
+ARCH = 'Unix'
 
 def download(file,path,debug=False):
+    base = 'http://backend.pythings.io/static/dist/PythingsOS/{}/{}'.format(VERS,ARCH)
     print('\nDownloading', file, 'in', path)
     fullpath = path+file
-    basepath = '/'.join(fullpath.split('/')[0:-1])
+    basepath = '/'
     try:
         os.stat(basepath)
     except OSError:
-        print('Directory"', basepath,  '" does not exists, creating')
+        print('Directory "', basepath,  '" does not exists, creating')
         os.mkdir(basepath)    
     if debug: print('Writing in {}'.format(fullpath))
     f = open(fullpath, 'w')
-    remotepath=BASE+'/'+file
+    remotepath=base+'/'+file
     print('Source:', remotepath)
     _, _, host, path = (remotepath).split('/', 3)
     addr = socket.getaddrinfo(host, 80)[0][-1]
@@ -40,8 +42,8 @@ def doinstall(path='/'):
             filename=item.split(':')[2]
             filesize=item.split(':')[1]
             download(filename, path)
-            if os.stat(filename)[6] != int(filesize):
-                print('Aborting: file expected size={}, actual size={}.'.format(filesize,os.stat(filename)[6]))
+            if os.stat(path+'/'+filename)[6] != int(filesize):
+                print('Aborting: file expected size={}, actual size={}.'.format(filesize,os.stat(path+'/'+filename)[6]))
                 os.remove(filename)
                 files_list.close()
                 return
