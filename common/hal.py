@@ -29,7 +29,7 @@ class WLAN(object):
         raise NotImplementedError() 
 
 def get_tuuid():
-    return '000000000001'
+    raise NotImplementedError()
 
 def reset_cause():
     raise NotImplementedError() 
