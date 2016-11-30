@@ -52,7 +52,9 @@ def start(path=None):
 
     # Load aid and tid: only local param or default
     globals.aid = load_param('aid', None)
-    globals.tid = load_param('tid', hal.get_tuuid())
+    if globals.aid is None: raise Exception('AID not provided')
+    globals.tid = load_param('tid', None)
+    if globals.tid is None: globals.tid = hal.get_tuuid()
     
     # Load pythings_host: the local param wins 
     globals.pythings_host = load_param('pythings_host', None)
