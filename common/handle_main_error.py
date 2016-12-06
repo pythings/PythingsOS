@@ -1,7 +1,8 @@
-import hal
 def handle(e):
-    print('Error in executing Pythings framework: ',type(e), str(e))
+    # Do not move the following import on top or code will fail (why?!)
+    import hal
     print(hal.get_traceback(e))
+    print('Error in executing Pythings framework: ',type(e), str(e))
     try:
         from api import report
         report(what='pythings', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))

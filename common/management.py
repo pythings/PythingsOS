@@ -26,9 +26,9 @@ def system_management_task(chronos):
             from updates_settings import update_settings
             update_settings(content)
 
-        elif globals.settings['pythings_version'].upper() != 'FACTORY' and globals.settings['pythings_version'] != globals.running_pythings_version:
+        elif globals.settings['pythings_version'].upper() != 'FACTORY' and globals.settings['pythings_version'] != globals.running_os_version:
             updates='PythingsOS' 
-            logger.debug('Downloading the new pythings (running version = "{}"; required version = "{}")'.format(globals.running_pythings_version, globals.settings['pythings_version']))
+            logger.debug('Downloading the new pythings (running version = "{}"; required version = "{}")'.format(globals.running_os_version, globals.settings['pythings_version']))
             from updates_pythings import update_pythings
             update_pythings(globals.settings['pythings_version'])
 
