@@ -52,6 +52,7 @@ def report(what, status, message=None):
     with open(path+'/common.py','w') as f:
         f.write('''import time
 import logger
+import hal
 
 class Chronos(object):
     def __init__(self, epoch_s_now=0):
@@ -71,8 +72,7 @@ def run_controlled(retr, function, **kwargs):
         try:
             return function(**kwargs)   
         except Exception as e:
-            import sys
-            sys.print_exception(e)
+            print(hal.get_traceback(e))
             logger.error('Error in executing controlled step ({}): {} {}'.format(function,e.__class__.__name__,e))
             if retr == None or count < retr:
                 count += 1
@@ -89,8 +89,7 @@ def get_running_app_version():
     try:
         from app import version as app_version
     except Exception as e:
-        import sys
-        sys.print_exception(e)
+        print(hal.get_traceback(e))
         logger.error('Error in importing version from app ({}:{}), trying obtaining it by parsing the file'.format(type(e), str(e)))
         try:
             with open('/app.py','r') as file:
@@ -99,12 +98,12 @@ def get_running_app_version():
                     last_line=line
             app_version=last_line.split('=')[1].replace('\\'','')
         except Exception as e:
-            sys.print_exception(e)
+            print(hal.get_traceback(e))
             logger.error('Error in reading version form app code ({}:{}), falling back on version 0: '.format(type(e), str(e)))
             app_version='0'
     return app_version
 
-def get_running_pythings_version():
+def get_running_os_version():
     try:
         from version import version
     except Exception as e:
@@ -118,23 +117,23 @@ def get_running_pythings_version():
     with open(path+'/files.txt','w') as f:
         f.write('''file:880:api.py
 file:24:arch.py
-file:2257:common.py
-file:394:files.txt
+file:2235:common.py
+file:395:files.txt
 file:0:globals.py
-file:964:hal.py
-file:615:handle_main_error.py
+file:1280:hal.py
+file:688:handle_main_error.py
 file:3142:http.py
-file:6579:init.py
+file:6840:init.py
 file:662:logger.py
-file:1370:main.py
-file:3232:management.py
-file:389:updates_app.py
+file:1429:main.py
+file:3377:management.py
+file:987:updates_app.py
 file:1211:updates_pythings.py
-file:682:updates_settings.py
+file:573:updates_settings.py
 file:1702:utils.py
 file:7703:websetup.py
-file:846:worker.py
-file:15:version.py
+file:855:worker.py
+file:17:version.py
 ''')
         f.write('''''')
 
@@ -185,6 +184,25 @@ def get_tuuid():
     mac_s = ':'.join( [ "%02X" % x for x in mac_b ] )
     return mac_s.replace(':','')
 
+def is_os_frozen():
+    import os
+    try:
+        os.stat('/initialized')
+        return False
+    except:
+        return True
+
+def mem_free():
+    import gc
+    return gc.mem_free()
+
+def get_traceback(e):
+    import uio
+    import sys
+    s = uio.StringIO()
+    sys.print_exception(e, s)
+    return s.getvalue() 
+
 def reset_cause():
     return machine.reset_cause()
 
@@ -195,16 +213,17 @@ def reboot():
 
     print('Writing',path+'/handle_main_error.py')
     with open(path+'/handle_main_error.py','w') as f:
-        f.write('''import sys
+        f.write('''import hal
 def handle(e):
     print('Error in executing Pythings framework: ',type(e), str(e))
-    sys.print_exception(e)
+    print(hal.get_traceback(e))
     try:
         from api import report
-        report('pythings', 'KO', e.__class__.__name__+' '+str(e))
+        report(what='pythings', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
     except Exception as e2:
         print('Error in reporting error to Pythings framework: ',type(e2), str(e2))
-        sys.print_exception(e2) # TODO: try except also the prints as they can fail due to uncode   
+        print(hal.get_traceback(e2))
+        # TODO: try except also the prints as they can fail due to uncode   
     print('\\n{}: I will reboot in 5 seconds. CTRL-C now to stop the reboot.'.format(e.__class__.__name__)) 
     import time
     time.sleep(5)
@@ -362,12 +381,12 @@ logger.level = logger.DEBUG
 def start(path=None):
 
     # Get Pythings version
-    globals.running_pythings_version = common.get_running_pythings_version()
+    globals.running_os_version = common.get_running_os_version()
 
     print('|------------------------|')
     print('|  Starting Pythings :)  |')
     print('|------------------------|')
-    print('Version: {} (ESP8266)'.format(globals.running_pythings_version))
+    print('Version: {} (ESP8266)'.format(globals.running_os_version))
 
     if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN:
         websetup_timeout = load_param('websetup_timeout', 60)
@@ -395,7 +414,9 @@ def start(path=None):
 
     # Load aid and tid: only local param or default
     globals.aid = load_param('aid', None)
-    globals.tid = load_param('tid', hal.get_tuuid())
+    if globals.aid is None: raise Exception('AID not provided')
+    globals.tid = load_param('tid', None)
+    if globals.tid is None: globals.tid = hal.get_tuuid()
     
     # Load pythings_host: the local param wins 
     globals.pythings_host = load_param('pythings_host', None)
@@ -415,6 +436,8 @@ def start(path=None):
             globals.pool = globals.settings['pool']
         else:
             globals.pool = 'production'
+            
+    globals.frozen_os = hal.is_os_frozen()
 
     # Tasks placeholders
     globals.app_worker_task = None
@@ -429,11 +452,11 @@ def start(path=None):
 
     # Register and perform the first management task call on "safe" backend
     if not pythings_host_overrided:
-        pythings_host_set = globals.pythings_host
+     ''')
+        f.write('''   pythings_host_set = globals.pythings_host
         globals.pythings_host ='http://backend.pythings.io'
     
-    # Register yourself, and start a ne''')
-        f.write('''w session
+    # Register yourself, and start a new session
     from api import apost
     logger.info('Registering myself with tid={} and aid={}'.format(globals.tid,globals.aid))
     response = common.run_controlled(None,
@@ -442,9 +465,10 @@ def start(path=None):
                                      data={'tid':globals.tid,
                                            'aid': globals.aid,
                                            'running_app_version': globals.running_app_version,
-                                           'running_pythings_version': globals.running_pythings_version,
+                                           'running_os_version': globals.running_os_version,
                                            'pool': globals.pool,
-                                           'settings': globals.settings})
+                                           'settings': globals.settings,
+                                           'frozen_os':globals.frozen_os})
     if not response:
         class EmptyResponse(Exception):
             pass
@@ -476,24 +500,22 @@ def start(path=None):
 
     # Init app
     try:
-        from app import worker_task
+        from worker_task import worker_task
         globals.app_worker_task = worker_task(chronos)
     except Exception as e:
-        import sys
+        print(hal.get_traceback(e))
         from api import report
-        sys.print_exception(e)
         logger.error('Error in importing/loading app\\'s worker tasks: {} {}'.format(e.__class__.__name__, e))
-        common.run_controlled(2,report,what='worker', status='KO', message='{} {}'.format(e.__class__.__name__, e))
+        common.run_controlled(2,report,what='worker', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
 
     try:
-        from app import management_task
+        from management_task import management_task
         globals.app_management_task = management_task(chronos)
     except Exception as e:
-        import sys
+        print(hal.get_traceback(e))
         from api import report
-        sys.print_exception(e)
         logger.error('Error in importing/loading  app\\'s management tasks: {} {}'.format(e.__class__.__name__, e))
-        common.run_controlled(2,report,what='worker', status='KO', message='{} {}'.format(e.__class__.__name__, e))
+        common.run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
 
     # Setup intervals
     worker_interval = int(globals.settings['worker_interval']) if 'worker_interval' in globals.settings else 300
@@ -611,8 +633,9 @@ try:
         path='/'
 
 except Exception as e:
-    import sys
-    sys.print_exception(e)
+    # TODO: do we want the next two following lines?
+    import hal
+    print (hal.get_traceback(e))
     print('Error, proceeding with factory defaults: ',type(e), str(e))
     path='/'
 
@@ -642,6 +665,7 @@ import logger
 from api import apost, report
 import gc
 from common import run_controlled
+import hal
 
 def system_management_task(chronos):
     
@@ -657,27 +681,30 @@ def system_management_task(chronos):
     del response
     gc.collect()
 
-    # Update settings, pythings, app. TODO: move to try/except?
+    # Update settings, OS and App.
     try:
-        if 'settings' in content['data'] and content['data']['settings'] != globals.settings:   
+        if 'settings' in content['data'] and content['data']['settings'] != globals.settings:
+            updates='settings'
             from updates_settings import update_settings
-            if update_settings(content): updates='settings' 
-        
+            update_settings(content)
+
         elif globals.settings['pythings_version'].upper() != 'FACTORY' and globals.settings['pythings_version'] != globals.running_pythings_version:
+            updates='PythingsOS' 
             logger.debug('Downloading the new pythings (running version = "{}"; required version = "{}")'.format(globals.running_pythings_version, globals.settings['pythings_version']))
             from updates_pythings import update_pythings
-            if update_pythings(globals.settings['pythings_version']): updates='pythings' 
- 
+            update_pythings(globals.settings['pythings_version'])
+
         else:
             if globals.settings['app_version'] != globals.running_app_version:
+                updates='App' 
                 logger.debug('Downloading the new app (running version = "{}"; required version = "{}")'.format(globals.running_app_version, globals.settings['app_version']))
                 from updates_app import update_app
-                if update_app(globals.settings['app_version']): updates='app'  
+                update_app(globals.settings['app_version'])
 
     except Exception as e:
-        import sys
-        sys.print_exception(e)
-        logger.error('Error in checking/updating {} ({}: {}), skipping the rest...'.format(updates,type(e), e))
+        print(hal.get_traceback(e))
+        logger.error('Error in management task while updating {} ({}: {}), skipping the rest...'.format(updates, e.__class__.__name__, e))
+        run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
         return False
 
     gc.collect()
@@ -686,7 +713,6 @@ def system_management_task(chronos):
     if updates:
         logger.info('Rebooting due to update')
         run_controlled(2,report,what='pythings', status='OK', message='Resetting due to {} update'.format(updates))
-        import hal
         hal.reboot()
 
     # Data = remote command sent, here we use a sample
@@ -697,19 +723,19 @@ def system_management_task(chronos):
     # Call App's management
     if globals.app_management_task:
         try:
-            print('67----------------------------',gc.mem_free())
+            logger.debug('Mem free:', hal.mem_free())
             app_data_rep=globals.app_management_task.call(chronos, app_data)
             if app_data_id:
                 run_controlled(2,report,what='management', status='OK', message={'app_data_id':app_data_id,'app_data_rep':app_data_rep})
             else:
-                run_controlled(2,report,what='management', status='OK')
+                run_controlled(2,report,what='manage''')
+        f.write('''ment', status='OK')
                 
         except Exception as e:
             import sys
-            sys.print_excepti''')
-        f.write('''on(e)
+            hal.get_traceback(e)
             logger.error('Error in executing app\\'s management task: {} {}'.format(e.__class__.__name__, e))
-            run_controlled(2,report,what='management', status='KO', message='{} {}'.format(e.__class__.__name__, e))
+            run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
 ''')
 
     print('Writing',path+'/updates_app.py')
@@ -717,16 +743,26 @@ def system_management_task(chronos):
         f.write('''import globals
 import logger
 from utils import mv
+from api import apost
 from http import download
 
 def update_app(version):
-    try:
-        mv('/app.py','/app_bk.py')
-        if not download('{}/api/v1/apps/get/?version={}&token={}'.format(globals.pythings_host, version, globals.token), '/app.py'):  return False
-        logger.info('Got new, updated app')
-        return True
-    except:
-        return False''')
+    files = apost(api='/apps/get/', data={'version':version, 'list':True})['content']['data']
+    # First of all remove /app.py to say that there is no valid App yet (download is in progress)
+    import os
+    try: os.remove('/app.py')
+    except: pass
+    for file_name in files:
+        if file_name in ['worker_task.py','management_task.py']:
+            logger.info('Downloading "{}"'.format(file_name))
+            if not download('{}/api/v1/apps/get/?file={}&version={}&token={}'.format(globals.pythings_host, file_name, version, globals.token), '/{}'.format(file_name)): 
+                raise Exception('Error while donaloding')
+        else:
+            logger.info('NOT downloading "{}" as in forbidden list'.format(file_name))
+    with open('/app.py','w') as f:
+        f.write('version=\\'{}\\''.format(version))
+    logger.info('Got new, updated app')
+''')
         f.write('''''')
 
     print('Writing',path+'/updates_pythings.py')
@@ -746,7 +782,7 @@ def update_pythings(version):
         pass
     from http import download
     if not download(source+'/files.txt', path+'/files.txt'):
-        return False
+        raise Exception('Update aborted: error in downloading files list.')
     files_list = open(path+'/files.txt')
     for item in files_list.read().split('\\n'):
         if 'file:' in item:
@@ -755,17 +791,15 @@ def update_pythings(version):
             filesize=item.split(':')[1]
             download(source+'/'+filename, path+'/'+filename)
             if os.stat(path+'/'+filename)[6] != int(filesize):
-                logger.error('Aborting: file expected size={}, actual size={}.'.format(filesize,os.stat(path+'/'+filename)[6]))
                 os.remove(path+'/'+filename)
                 files_list.close()
-                return False
+                raise Exception('Update aborted: file expected size={}, actual size={}.'.format(filesize,os.stat(path+'/'+filename)[6]))
         else:
             if len(item)>0:
-                logger.error('Aborting: Got unexpected format in files list.')
                 files_list.close()
-                return False
+                raise Exception('Update aborted: got unexpected format in files list.')
     files_list.close()
-    return True
+
 ''')
         f.write('''''')
 
@@ -776,22 +810,19 @@ import globals
 import logger
 
 def update_settings(content):
-    try:
-        logger.debug('Storing received settings ({} <--> {})'.format(content['data']['settings'], globals.settings))
-        # TODO: Try load contents to validate?
-        # Save backup for the settings file:
-        from utils import mv
-        mv('/settings.json','/settings_bk.json')
-        # Ok, dump new settings
-        f = open('/settings.json', 'w')
-        import json
-        f.write(json.dumps(content['data']['settings']))
-        f.close()
-        globals.settings = content['data']['settings']
-        logger.info('Got new, updated settings')
-        return True
-    except:
-        return False
+    logger.debug('Storing received settings ({} <--> {})'.format(content['data']['settings'], globals.settings))
+    # TODO: Try load contents to validate?
+    # Save backup for the settings file:
+    from utils import mv
+    mv('/settings.json','/settings_bk.json')
+    # Ok, dump new settings
+    f = open('/settings.json', 'w')
+    import json
+    f.write(json.dumps(content['data']['settings']))
+    f.close()
+    globals.settings = content['data']['settings']
+    logger.info('Got new, updated settings')
+
 
 ''')
         f.write('''''')
@@ -872,7 +903,7 @@ def parseURL(url):
 
     print('Writing',path+'/version.py')
     with open(path+'/version.py','w') as f:
-        f.write('''version='v0.1'
+        f.write('''version='v0.1.1'
 ''')
         f.write('''''')
 
@@ -1091,7 +1122,9 @@ def websetup(timeout_s=60, lock_session=False):
 import logger
 from api import apost, report
 import gc
+import hal
 from common import run_controlled
+
 
 def system_worker_task(chronos):
     
@@ -1099,16 +1132,15 @@ def system_worker_task(chronos):
     if globals.app_worker_task:
         app_data = None
         try:
-            print('97----------------------------',gc.mem_free())
+            logger.debug('Mem free:', hal.mem_free())
             app_data = globals.app_worker_task.call(chronos)
             if app_data:
                 run_controlled(2,apost,api='/msg/drop/', data={'msg': app_data })
             report('worker','OK')
         except Exception as e:
-            import sys
-            sys.print_exception(e)
+            print(hal.get_traceback(e))
             logger.error('Error in executing app\\'s worker taks or sending its data: {} {}'.format(e.__class__.__name__, e))
-            run_controlled(2,report,what='worker', status='KO', message='{} {}'.format(e.__class__.__name__, e))
+            run_controlled(2,report,what='worker', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
             ''')
         f.write('''''')
 
