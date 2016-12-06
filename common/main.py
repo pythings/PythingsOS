@@ -28,8 +28,9 @@ try:
         path='/'
 
 except Exception as e:
-    import sys
-    sys.print_exception(e)
+    # TODO: do we want the next two following lines?
+    import hal
+    print (hal.get_traceback(e))
     print('Error, proceeding with factory defaults: ',type(e), str(e))
     path='/'
 

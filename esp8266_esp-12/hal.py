@@ -38,6 +38,25 @@ def get_tuuid():
     mac_s = ':'.join( [ "%02X" % x for x in mac_b ] )
     return mac_s.replace(':','')
 
+def is_os_frozen():
+    import os
+    try:
+        os.stat('/initialized')
+        return False
+    except:
+        return True
+
+def mem_free():
+    import gc
+    return gc.mem_free()
+
+def get_traceback(e):
+    import uio
+    import sys
+    s = uio.StringIO()
+    sys.print_exception(e, s)
+    return s.getvalue() 
+
 def reset_cause():
     return machine.reset_cause()
 

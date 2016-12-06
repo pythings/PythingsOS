@@ -31,6 +31,15 @@ class WLAN(object):
 def get_tuuid():
     raise NotImplementedError()
 
+def is_os_frozen():
+    raise NotImplementedError() 
+
+def mem_free():
+    raise NotImplementedError() 
+
+def get_traceback(e):
+    raise NotImplementedError() 
+
 def reset_cause():
     raise NotImplementedError() 
 

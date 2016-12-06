@@ -1,5 +1,6 @@
 import time
 import logger
+import hal
 
 class Chronos(object):
     def __init__(self, epoch_s_now=0):
@@ -19,8 +20,7 @@ def run_controlled(retr, function, **kwargs):
         try:
             return function(**kwargs)   
         except Exception as e:
-            import sys
-            sys.print_exception(e)
+            print(hal.get_traceback(e))
             logger.error('Error in executing controlled step ({}): {} {}'.format(function,e.__class__.__name__,e))
             if retr == None or count < retr:
                 count += 1
@@ -37,8 +37,7 @@ def get_running_app_version():
     try:
         from app import version as app_version
     except Exception as e:
-        import sys
-        sys.print_exception(e)
+        print(hal.get_traceback(e))
         logger.error('Error in importing version from app ({}:{}), trying obtaining it by parsing the file'.format(type(e), str(e)))
         try:
             with open('/app.py','r') as file:
@@ -47,12 +46,12 @@ def get_running_app_version():
                     last_line=line
             app_version=last_line.split('=')[1].replace('\'','')
         except Exception as e:
-            sys.print_exception(e)
+            print(hal.get_traceback(e))
             logger.error('Error in reading version form app code ({}:{}), falling back on version 0: '.format(type(e), str(e)))
             app_version='0'
     return app_version
 
-def get_running_pythings_version():
+def get_running_os_version():
     try:
         from version import version
     except Exception as e:

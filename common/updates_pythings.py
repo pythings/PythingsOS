@@ -13,7 +13,7 @@ def update_pythings(version):
         pass
     from http import download
     if not download(source+'/files.txt', path+'/files.txt'):
-        return False
+        raise Exception('Update aborted: error in downloading files list.')
     files_list = open(path+'/files.txt')
     for item in files_list.read().split('\n'):
         if 'file:' in item:
@@ -22,14 +22,12 @@ def update_pythings(version):
             filesize=item.split(':')[1]
             download(source+'/'+filename, path+'/'+filename)
             if os.stat(path+'/'+filename)[6] != int(filesize):
-                logger.error('Aborting: file expected size={}, actual size={}.'.format(filesize,os.stat(path+'/'+filename)[6]))
                 os.remove(path+'/'+filename)
                 files_list.close()
-                return False
+                raise Exception('Update aborted: file expected size={}, actual size={}.'.format(filesize,os.stat(path+'/'+filename)[6]))
         else:
             if len(item)>0:
-                logger.error('Aborting: Got unexpected format in files list.')
                 files_list.close()
-                return False
+                raise Exception('Update aborted: got unexpected format in files list.')
     files_list.close()
-    return True
+

@@ -19,12 +19,12 @@ logger.level = logger.DEBUG
 def start(path=None):
 
     # Get Pythings version
-    globals.running_pythings_version = common.get_running_pythings_version()
+    globals.running_os_version = common.get_running_os_version()
 
     print('|------------------------|')
     print('|  Starting Pythings :)  |')
     print('|------------------------|')
-    print('Version: {} (ESP8266)'.format(globals.running_pythings_version))
+    print('Version: {} (ESP8266)'.format(globals.running_os_version))
 
     if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN:
         websetup_timeout = load_param('websetup_timeout', 60)
@@ -74,6 +74,8 @@ def start(path=None):
             globals.pool = globals.settings['pool']
         else:
             globals.pool = 'production'
+            
+    globals.frozen_os = hal.is_os_frozen()
 
     # Tasks placeholders
     globals.app_worker_task = None
@@ -100,9 +102,10 @@ def start(path=None):
                                      data={'tid':globals.tid,
                                            'aid': globals.aid,
                                            'running_app_version': globals.running_app_version,
-                                           'running_pythings_version': globals.running_pythings_version,
+                                           'running_os_version': globals.running_os_version,
                                            'pool': globals.pool,
-                                           'settings': globals.settings})
+                                           'settings': globals.settings,
+                                           'frozen_os':globals.frozen_os})
     if not response:
         class EmptyResponse(Exception):
             pass
@@ -134,24 +137,22 @@ def start(path=None):
 
     # Init app
     try:
-        from app import worker_task
+        from worker_task import worker_task
         globals.app_worker_task = worker_task(chronos)
     except Exception as e:
-        import sys
+        print(hal.get_traceback(e))
         from api import report
-        sys.print_exception(e)
         logger.error('Error in importing/loading app\'s worker tasks: {} {}'.format(e.__class__.__name__, e))
-        common.run_controlled(2,report,what='worker', status='KO', message='{} {}'.format(e.__class__.__name__, e))
+        common.run_controlled(2,report,what='worker', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
 
     try:
-        from app import management_task
+        from management_task import management_task
         globals.app_management_task = management_task(chronos)
     except Exception as e:
-        import sys
+        print(hal.get_traceback(e))
         from api import report
-        sys.print_exception(e)
         logger.error('Error in importing/loading  app\'s management tasks: {} {}'.format(e.__class__.__name__, e))
-        common.run_controlled(2,report,what='worker', status='KO', message='{} {}'.format(e.__class__.__name__, e))
+        common.run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
 
     # Setup intervals
     worker_interval = int(globals.settings['worker_interval']) if 'worker_interval' in globals.settings else 300

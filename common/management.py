@@ -3,6 +3,7 @@ import logger
 from api import apost, report
 import gc
 from common import run_controlled
+import hal
 
 def system_management_task(chronos):
     
@@ -18,27 +19,30 @@ def system_management_task(chronos):
     del response
     gc.collect()
 
-    # Update settings, pythings, app. TODO: move to try/except?
+    # Update settings, OS and App.
     try:
-        if 'settings' in content['data'] and content['data']['settings'] != globals.settings:   
+        if 'settings' in content['data'] and content['data']['settings'] != globals.settings:
+            updates='settings'
             from updates_settings import update_settings
-            if update_settings(content): updates='settings' 
-        
+            update_settings(content)
+
         elif globals.settings['pythings_version'].upper() != 'FACTORY' and globals.settings['pythings_version'] != globals.running_pythings_version:
+            updates='PythingsOS' 
             logger.debug('Downloading the new pythings (running version = "{}"; required version = "{}")'.format(globals.running_pythings_version, globals.settings['pythings_version']))
             from updates_pythings import update_pythings
-            if update_pythings(globals.settings['pythings_version']): updates='pythings' 
- 
+            update_pythings(globals.settings['pythings_version'])
+
         else:
             if globals.settings['app_version'] != globals.running_app_version:
+                updates='App' 
                 logger.debug('Downloading the new app (running version = "{}"; required version = "{}")'.format(globals.running_app_version, globals.settings['app_version']))
                 from updates_app import update_app
-                if update_app(globals.settings['app_version']): updates='app'  
+                update_app(globals.settings['app_version'])
 
     except Exception as e:
-        import sys
-        sys.print_exception(e)
-        logger.error('Error in checking/updating {} ({}: {}), skipping the rest...'.format(updates,type(e), e))
+        print(hal.get_traceback(e))
+        logger.error('Error in management task while updating {} ({}: {}), skipping the rest...'.format(updates, e.__class__.__name__, e))
+        run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
         return False
 
     gc.collect()
@@ -47,7 +51,6 @@ def system_management_task(chronos):
     if updates:
         logger.info('Rebooting due to update')
         run_controlled(2,report,what='pythings', status='OK', message='Resetting due to {} update'.format(updates))
-        import hal
         hal.reboot()
 
     # Data = remote command sent, here we use a sample
@@ -58,7 +61,7 @@ def system_management_task(chronos):
     # Call App's management
     if globals.app_management_task:
         try:
-            print('67----------------------------',gc.mem_free())
+            logger.debug('Mem free:', hal.mem_free())
             app_data_rep=globals.app_management_task.call(chronos, app_data)
             if app_data_id:
                 run_controlled(2,report,what='management', status='OK', message={'app_data_id':app_data_id,'app_data_rep':app_data_rep})
@@ -67,6 +70,6 @@ def system_management_task(chronos):
                 
         except Exception as e:
             import sys
-            sys.print_exception(e)
+            hal.get_traceback(e)
             logger.error('Error in executing app\'s management task: {} {}'.format(e.__class__.__name__, e))
-            run_controlled(2,report,what='management', status='KO', message='{} {}'.format(e.__class__.__name__, e))
+            run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
