@@ -4,12 +4,12 @@ file:2235:common.py
 file:395:files.txt
 file:0:globals.py
 file:1280:hal.py
-file:688:handle_main_error.py
+file:764:handle_main_error.py
 file:3142:http.py
 file:6840:init.py
 file:662:logger.py
 file:1429:main.py
-file:3377:management.py
+file:3365:management.py
 file:987:updates_app.py
 file:1211:updates_pythings.py
 file:573:updates_settings.py

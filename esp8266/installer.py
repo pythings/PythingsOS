@@ -121,12 +121,12 @@ file:2235:common.py
 file:395:files.txt
 file:0:globals.py
 file:1214:hal.py
-file:688:handle_main_error.py
+file:764:handle_main_error.py
 file:3142:http.py
 file:6840:init.py
 file:662:logger.py
 file:1429:main.py
-file:3377:management.py
+file:3365:management.py
 file:987:updates_app.py
 file:1211:updates_pythings.py
 file:573:updates_settings.py
@@ -213,10 +213,11 @@ def reboot():
 
     print('Writing',path+'/handle_main_error.py')
     with open(path+'/handle_main_error.py','w') as f:
-        f.write('''import hal
-def handle(e):
-    print('Error in executing Pythings framework: ',type(e), str(e))
+        f.write('''def handle(e):
+    # Do not move the following import on top or code will fail (why?!)
+    import hal
     print(hal.get_traceback(e))
+    print('Error in executing Pythings framework: ',type(e), str(e))
     try:
         from api import report
         report(what='pythings', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
@@ -688,9 +689,9 @@ def system_management_task(chronos):
             from updates_settings import update_settings
             update_settings(content)
 
-        elif globals.settings['pythings_version'].upper() != 'FACTORY' and globals.settings['pythings_version'] != globals.running_pythings_version:
+        elif globals.settings['pythings_version'].upper() != 'FACTORY' and globals.settings['pythings_version'] != globals.running_os_version:
             updates='PythingsOS' 
-            logger.debug('Downloading the new pythings (running version = "{}"; required version = "{}")'.format(globals.running_pythings_version, globals.settings['pythings_version']))
+            logger.debug('Downloading the new pythings (running version = "{}"; required version = "{}")'.format(globals.running_os_version, globals.settings['pythings_version']))
             from updates_pythings import update_pythings
             update_pythings(globals.settings['pythings_version'])
 
@@ -728,8 +729,8 @@ def system_management_task(chronos):
             if app_data_id:
                 run_controlled(2,report,what='management', status='OK', message={'app_data_id':app_data_id,'app_data_rep':app_data_rep})
             else:
-                run_controlled(2,report,what='manage''')
-        f.write('''ment', status='OK')
+                run_controlled(2,report,what='management', statu''')
+        f.write('''s='OK')
                 
         except Exception as e:
             import sys
