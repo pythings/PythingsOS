@@ -150,9 +150,12 @@ class Aes128():
             decrypted_as_bytes = decrypted.to_bytes((bit_length(decrypted) + 7) // 8, 'big') or b'\0'
             logger.info(decrypted_as_bytes)
             decrypted_str = decrypted_as_bytes.decode('utf-8')
-
-            yield decrypted_str
-
+            try:
+                import ustruct
+            except:
+                yield decrypted_str
+            else:
+                yield ''.join(reversed(decrypted_str))
 
     def decrypt_text(self, text):
         decrypted_text = ''

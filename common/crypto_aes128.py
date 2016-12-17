@@ -88,6 +88,7 @@ def matrix2text(matrix):
     for i in range(4):
         for j in range(4):
             text |= (matrix[i][j] << (120 - 8 * (4 * i + j)))
+            #print(text)
     return text
 
 
@@ -134,7 +135,9 @@ class Aes128engine:
         return matrix2text(self.plain_state)
 
     def decrypt(self, ciphertext):
+        #print(ciphertext)
         self.cipher_state = text2matrix(ciphertext)
+        #print(self.cipher_state)
 
         self.__add_round_key(self.cipher_state, self.round_keys[40:])
         self.__inv_shift_rows(self.cipher_state)
@@ -142,6 +145,7 @@ class Aes128engine:
 
         for i in range(9, 0, -1):
             self.__round_decrypt(self.cipher_state, self.round_keys[4 * i : 4 * (i + 1)])
+            
 
         self.__add_round_key(self.cipher_state, self.round_keys[:4])
 
