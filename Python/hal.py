@@ -2,9 +2,9 @@ import logger
 import sys
 import time
 import calendar
-#import gc
+import ssl
 
-# Regular expression are hardware-dependant
+# Regular expression are hardware-dependent
 import re as re
 
 # Constants (settings)
@@ -12,10 +12,15 @@ HW_SUPPORTS_DEEPSLEEP  = False
 HW_SUPPORTS_RESETCAUSE = False
 HW_SUPPORTS_LED        = False
 HW_SUPPORTS_WLAN       = False
+HW_SUPPORTS_SSL        = False # You can set it to Ture, and disable payload encryption 
 
 def init():
-    # i.e. turn off extra LEDs and lower PWMs
+    # i.e. turn off extra LEDs and lower PWMs. Not yet used
     pass
+
+# Payload encryption (not needed if SSL support available)
+from crypto_aes import Aes128cbc
+payload_encrypter = Aes128cbc
 
 # Objects
 class LED(object):
@@ -48,7 +53,6 @@ def print_exception(e):
     import traceback
     traceback.print_exc()
 
-
 def mem_free():
     return None
     #return gc.mem_free()
@@ -62,31 +66,21 @@ class Chronos(object):
 
 # Must be absolute
 fspath = '/pydata'
-    
-def socket_readline(s):
-    #data = s.makefile().readline()
-    #logger.debug('Returning due to end of data=', data)
-    #return data
-    data=None
-    prev_data_len=0
-    end=False
-    while True:
-        if data is None:
-            data = s.recv(1)
-        else:
-            data += s.recv(1)
-        
-        # TODO: This is weak, if source socket is still transmitting does not work. 
-        if len(data) == prev_data_len:
-            #logger.debug('Due to end of transmission returning data=', str(data, 'utf8'))
-            if not end:
-                return data
-                end=True
-            else:
-                return None
-        
-        prev_data_len = len(data)
 
-        if b'\n' in data:
-            #logger.debug('Due to newline returning data=', str(data, 'utf8'))
-            return data
+# Socket-related
+def socket_readline(s):
+    data_tot = None
+    data = s.recv(1)
+    while data:
+        if not data_tot:
+            data_tot = data
+        else:
+            data_tot += data
+        if b'\n' in data_tot:
+            return data_tot
+        data = s.recv(1)
+    return data_tot
+
+def socket_ssl(s):
+    return ssl.wrap_socket(s)#, ssl_version=ssl.PROTOCOL_TLSv1)
+

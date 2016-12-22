@@ -1,23 +1,10 @@
 
+from crypto_common import *
 
-#-----------------------------
-# Utility functions
-#-----------------------------
+# Home-made debugging switch. TODO: use a proper logger.
+debug = False
 
-def bit_length(n):
-    res = n
-    count = 1
-    while res>1:
-        res = res>>1
-        count = count+1
-    return count
-
-
-def split_text( seq, n ):
-    """A generator to divide a sequence into chunks of n units."""
-    while seq:
-        yield seq[:n]
-        seq = seq[n:]
+# Pow implementation for correct modulus handling
 
 def pow3(x, y, z):
     ans = 1
@@ -30,95 +17,49 @@ def pow3(x, y, z):
         x = (x * x) % z
     return ans
 
-#-----------------------------
-# Keys
-#-----------------------------
 
-pubkey=90068364852450250136085463497212929703877898534585770340898518991456038104325197679167979847395872742695634771751317027247827314873735124607739473628242487791732089797915636001276502167801886101892767403979587098106248081740356915461723527354061326092801105254986448794568922848908038913584421580879950597547
+# Main Simple RSA class
 
+class Srsa(object):
+    
+    def __init__(self, pubkey, privkey=None):
+        self.pubkey  = pubkey
+        self.privkey = privkey
 
+    def encrypt_text(self, text):
+        chunks = []
+        for chunk in split_text(text,4):
+            if debug: print('RSA encrypt: encrypting chunk = ', chunk)
+            
+            chunk_as_bytes = str_to_bytes(chunk)
+            if debug: print('RSA encrypt: chunk_as_bytes = ',chunk_as_bytes)
+            
+            chunk_as_integer = bytes_to_int(chunk_as_bytes)
+            if debug: print('RSA encrypt: chunk_as_integer = ',chunk_as_integer)
 
-#-----------------------------
-# Encode
-#-----------------------------
-def encrypt(text):
-    chunks = []
-    for chunk in split_text(text,4):
-        print('Encrypting: ', chunk)
-        
-        # Convert to bytes
-        chunk_as_bytes = bytes(chunk, 'utf-8')
-        
-        # Convert to integer
-        try:
-            # Micropython
-            chunk_as_integer =  int.from_bytes(chunk_as_bytes)
-        except:
-            # Python
-            chunk_as_integer =  int.from_bytes(chunk_as_bytes, byteorder='big', signed=False)
-        
-        # Encrypt integer
-        chunk_encrypted = pow3(chunk_as_integer, 65537, pubkey)
-        
-        chunks.append(chunk_encrypted)
-        
-        print('Encrypted: ', chunk_encrypted)
-    return chunks
+            chunk_encrypted = pow3(chunk_as_integer, 65537, self.pubkey)
+            if debug: print('RSA: encrypted chunk = ', chunk_encrypted)
+            
+            chunks.append(chunk_encrypted)
 
-def decrypt(chunks):
-    message=''
-    for chunk in chunks:
-        
-        print('Decrypting: ', chunk)
-        
-        chunk_decrypted = pow3(chunk, privkey, pubkey)
-        
-        # Convert back integer to bytes
-        chunk_as_bytes = chunk_decrypted.to_bytes((bit_length(chunk_decrypted) + 7) // 8, 'big') or b'\0'
+        return chunks
 
-        # and now convert back bytes to string
-        chunk_as_string = chunk_as_bytes.decode('utf-8')
-        
-        print('Decrypted: ', chunk_as_string)
-        message += chunk_as_string
-    return message
-
-
-#-----------------------------
-# Test
-#-----------------------------
-
-input_text = 'Today is a very nice day!'
-input_text = 'hey'
-print('input_text', input_text)
-encypted = encrypt(input_text)
-print('encypted', encypted)
-output_text = decrypt(encypted)
-print('output_text', output_text)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def decrypt_text(self, chunks):
+        message=''
+        for chunk in chunks:
+            
+            if debug: print('RSA decrypt: decrypting chunk = ', chunk)
+            
+            chunk_decrypted = pow3(chunk, self.privkey, self.pubkey)
+            if debug: print ('RSA decrypt: chunk as integer = ',chunk_decrypted)
+            
+            chunk_as_bytes = int_to_bytes(chunk_decrypted)
+            if debug: print ('RSA decrypt: chunk as bytes = ',chunk_as_bytes)
+    
+            chunk_as_string = chunk_as_bytes.decode('utf-8')
+            if debug: print('RSA decrypt: decrypted chunk = ', chunk_as_string)
+            
+            message += chunk_as_string
+            
+        return message
 

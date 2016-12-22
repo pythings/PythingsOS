@@ -12,7 +12,7 @@ text = 'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusanti
 text = 'Ciao come va in questa mattinata di primavera? Piovera? verra il sole? Nuvoloni? mah.'
 #smalltext = 'ciao come va in questa mattinata?'
 text = 'Ciao come va'
-text=u"{'token': '964e15d5-02e7-4e5f-973f-36e69701c639'}"
+
 #with open('dante.txt') as f:
 #    hugetext = ''.join(f.readlines())
 
@@ -46,7 +46,7 @@ srsa = Srsa(pubkey=rsa_pubkey, privkey=rsa_privkey)
 
 # Encrypt aes_key key
 
-aes_key = 146502593206024192108094527886908405988
+aes_key = 5734657497481
 aes128CBC = Aes128cbc(key=aes_key, comp_mode=True)
 
 aes_key_encrypted = srsa.encrypt_text(str(aes_key))

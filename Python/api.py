@@ -7,26 +7,29 @@ import gc
 
 version='v1'
 
-# Generic calls
 def apost(api, data={}):
-    try:
-        data['token'] = globals.token
-    except AttributeError:
-        pass             
-    url = '{}/api/{}{}'.format(globals.pythings_host,version,api)
-    logger.debug('Calling API {} with data'.format(url),data) 
+    try: token = globals.token
+    except AttributeError: token=None
+    if  globals.payload_encrypter and token:
+        data =  {'encrypted': globals.payload_encrypter.encrypt_text(json.dumps(data))}
+    if token: data['token'] = token
+    url = '{}/api/{}{}'.format(globals.backend_addr,version,api)
+    logger.debug('Calling API {} with data'.format(url),data)
     response = post(url, data=data)
     gc.collect()
     logger.debug('Got response:',response)
-    if response['content'] :
+    if response['content'] and response['content'] != '\n':
         response['content'] = json.loads(response['content']) 
+    if globals.payload_encrypter:
+        decrypted_data = globals.payload_encrypter.decrypt_text(response['content']['data'])
+        response['content']['data'] = json.loads(decrypted_data)
     logger.debug('Loaded json content and returning')
+
+    if response['status'] != b'200':
+        raise Exception(response['content']['data'])
     return response
 
 def report(what, status, message=None):
-    try:
-        logger.info('Reporting "{}" as "{}" with message "{}"'.format(what,status,message))
-        response = apost('/things/report/', {'what':what,'status': status,'message': message})
-        logger.debug('Response:',response)
-    except Exception as e:
-        logger.error('Could not report status ({} {})'.format(e.__class__.__name__,str(e)))
+    logger.info('Reporting "{}" as "{}" with message "{}"'.format(what,status,message))
+    response = apost('/things/report/', {'what':what,'status': status,'message': message})
+    logger.debug('Response:',response)

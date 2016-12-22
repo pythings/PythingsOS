@@ -58,4 +58,4 @@ pythings_app/migrations/*.pyc
 !pythings_app/migrations/__init__.py
 aid
 aid.lock
-pythings_host
+backend_addr

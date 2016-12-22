@@ -93,7 +93,7 @@ def matrix2text(matrix):
     return text
 
 
-class Aes128engine:
+class Aes128cbc_engine:
     def __init__(self, master_key):
         self.change_key(master_key)
 

@@ -56,16 +56,16 @@ def start(path=None):
     globals.tid = load_param('tid', None)
     if globals.tid is None: globals.tid = hal.get_tuuid()
     
-    # Load pythings_host: the local param wins 
-    globals.pythings_host = load_param('pythings_host', None)
-    if not globals.pythings_host:
-        pythings_host_overrided = False
-        if 'pythings_host' in globals.settings and globals.settings['pythings_host']:
-            globals.pythings_host = 'http://'+globals.settings['pythings_host']
+    # Load backend_addr: the local param wins 
+    globals.backend_addr = load_param('backend_addr', None)
+    if not globals.backend_addr:
+        backend_addr_overrided = False
+        if 'backend_addr' in globals.settings and globals.settings['backend_addr']:
+            globals.backend_addr = 'http://'+globals.settings['backend_addr']
         else:
-            globals.pythings_host = 'http://backend.pythings.io'
+            globals.backend_addr = 'http://backend.pythings.io'
     else:
-        pythings_host_overrided = True
+        backend_addr_overrided = True
 
     # Load pool: the local param wins 
     globals.pool = load_param('pool', None)
@@ -82,16 +82,16 @@ def start(path=None):
     globals.app_management_task = None
       
     # Report
-    logger.info('Running with pythings_host="{}" and aid="{}"'.format(globals.pythings_host, globals.aid))
+    logger.info('Running with backend_addr="{}" and aid="{}"'.format(globals.backend_addr, globals.aid))
 
     # Get app version:    
     globals.running_app_version = common.get_running_app_version()
     gc.collect()
 
     # Register and perform the first management task call on "safe" backend
-    if not pythings_host_overrided:
-        pythings_host_set = globals.pythings_host
-        globals.pythings_host ='http://backend.pythings.io'
+    if not backend_addr_overrided:
+        backend_addr_set = globals.backend_addr
+        globals.backend_addr ='http://backend.pythings.io'
     
     # Register yourself, and start a new session
     from api import apost
@@ -130,9 +130,9 @@ def start(path=None):
     gc.collect()
     
     # Set back host to the proper one
-    if not pythings_host_overrided:
-        globals.pythings_host=pythings_host_set
-        del pythings_host_set
+    if not backend_addr_overrided:
+        globals.backend_addr=backend_addr_set
+        del backend_addr_set
     gc.collect()
 
     # Init app

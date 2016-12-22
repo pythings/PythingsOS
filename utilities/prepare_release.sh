@@ -20,3 +20,5 @@ do
     cd ..
 done
 
+# Create installers
+python utilities/create_installer.py

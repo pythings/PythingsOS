@@ -25,12 +25,12 @@ def apost(api, data={}):
         data['token'] = globals.token
     except AttributeError:
         pass             
-    url = '{}/api/{}{}'.format(globals.pythings_host,version,api)
+    url = '{}/api/{}{}'.format(globals.backend_addr,version,api)
     logger.debug('Calling API {} with data'.format(url),data) 
     response = post(url, data=data)
     gc.collect()
     logger.debug('Got response:',response)
-    if response['content'] :
+    if response['content'] and response['content'] != '\\n':
         response['content'] = json.loads(response['content']) 
     logger.debug('Loaded json content and returning')
     return response
@@ -115,7 +115,7 @@ def get_running_os_version():
 
     print('Writing',path+'/files.txt')
     with open(path+'/files.txt','w') as f:
-        f.write('''file:880:api.py
+        f.write('''file:910:api.py
 file:17:arch.py
 file:2235:common.py
 file:395:files.txt
@@ -123,17 +123,17 @@ file:0:globals.py
 file:1214:hal.py
 file:764:handle_main_error.py
 file:3142:http.py
-file:6840:init.py
+file:6819:init.py
 file:662:logger.py
 file:1429:main.py
 file:3365:management.py
-file:987:updates_app.py
+file:986:updates_app.py
 file:1211:updates_pythings.py
 file:573:updates_settings.py
 file:1702:utils.py
 file:7703:websetup.py
 file:855:worker.py
-file:17:version.py
+file:19:version.py
 ''')
         f.write('''''')
 
@@ -419,16 +419,16 @@ def start(path=None):
     globals.tid = load_param('tid', None)
     if globals.tid is None: globals.tid = hal.get_tuuid()
     
-    # Load pythings_host: the local param wins 
-    globals.pythings_host = load_param('pythings_host', None)
-    if not globals.pythings_host:
-        pythings_host_overrided = False
-        if 'pythings_host' in globals.settings and globals.settings['pythings_host']:
-            globals.pythings_host = 'http://'+globals.settings['pythings_host']
+    # Load backend_addr: the local param wins 
+    globals.backend_addr = load_param('backend_addr', None)
+    if not globals.backend_addr:
+        backend_addr_overrided = False
+        if 'backend_addr' in globals.settings and globals.settings['backend_addr']:
+            globals.backend_addr = 'http://'+globals.settings['backend_addr']
         else:
-            globals.pythings_host = 'http://backend.pythings.io'
+            globals.backend_addr = 'http://backend.pythings.io'
     else:
-        pythings_host_overrided = True
+        backend_addr_overrided = True
 
     # Load pool: the local param wins 
     globals.pool = load_param('pool', None)
@@ -445,17 +445,17 @@ def start(path=None):
     globals.app_management_task = None
       
     # Report
-    logger.info('Running with pythings_host="{}" and aid="{}"'.format(globals.pythings_host, globals.aid))
+    logger.info('Running with backend_addr="{}" and aid="{}"'.format(globals.backend_addr, globals.aid))
 
     # Get app version:    
     globals.running_app_version = common.get_running_app_version()
     gc.collect()
 
     # Register and perform the first management task call on "safe" backend
-    if not pythings_host_overrided:
-     ''')
-        f.write('''   pythings_host_set = globals.pythings_host
-        globals.pythings_host ='http://backend.pythings.io'
+    if not backend_addr_overrided:
+        backend_add''')
+        f.write('''r_set = globals.backend_addr
+        globals.backend_addr ='http://backend.pythings.io'
     
     # Register yourself, and start a new session
     from api import apost
@@ -494,9 +494,9 @@ def start(path=None):
     gc.collect()
     
     # Set back host to the proper one
-    if not pythings_host_overrided:
-        globals.pythings_host=pythings_host_set
-        del pythings_host_set
+    if not backend_addr_overrided:
+        globals.backend_addr=backend_addr_set
+        del backend_addr_set
     gc.collect()
 
     # Init app
@@ -756,7 +756,7 @@ def update_app(version):
     for file_name in files:
         if file_name in ['worker_task.py','management_task.py']:
             logger.info('Downloading "{}"'.format(file_name))
-            if not download('{}/api/v1/apps/get/?file={}&version={}&token={}'.format(globals.pythings_host, file_name, version, globals.token), '/{}'.format(file_name)): 
+            if not download('{}/api/v1/apps/get/?file={}&version={}&token={}'.format(globals.backend_addr, file_name, version, globals.token), '/{}'.format(file_name)): 
                 raise Exception('Error while donaloding')
         else:
             logger.info('NOT downloading "{}" as in forbidden list'.format(file_name))
@@ -904,7 +904,7 @@ def parseURL(url):
 
     print('Writing',path+'/version.py')
     with open(path+'/version.py','w') as f:
-        f.write('''version='v0.1.1'
+        f.write('''version='v0.2-pre'
 ''')
         f.write('''''')
 

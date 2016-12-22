@@ -12,6 +12,10 @@ from arch import arch
 import logger
 logger.level = logger.DEBUG
 
+# Utils
+class EmptyResponse(Exception):
+    pass
+
 #---------------------
 #  Main
 #---------------------
@@ -63,21 +67,22 @@ def start(path=None):
     globals.settings = load_settings()
 
     # Load aid and tid: only local param or default
-    globals.aid = load_param('aid', 'e22385a7-7c31-45e2-b977-20c8ad605e9a')
+    globals.aid = load_param('aid', None)
     if globals.aid is None: raise Exception('AID not provided')
-    globals.tid = load_param('tid', '000000000002')
+    globals.tid = load_param('tid', None)
     if globals.tid is None: globals.tid = hal.get_tuuid()
     
-    # Load pythings_host: the local param wins 
-    globals.pythings_host = load_param('pythings_host', None)
-    if not globals.pythings_host:
-        pythings_host_overrided = False
-        if 'pythings_host' in globals.settings and globals.settings['pythings_host']:
-            globals.pythings_host = 'http://'+globals.settings['pythings_host']
+    # Load backend_addr: the local param wins 
+    globals.backend_addr = load_param('backend_addr', None)
+
+    if not globals.backend_addr:
+        backend_addr_overrided = False
+        if 'backend_addr' in globals.settings and globals.settings['backend_addr']:
+            globals.backend_addr = globals.settings['backend_addr']
         else:
-            globals.pythings_host = 'http://backend.pythings.io'
+            globals.backend_addr = 'backend.pythings.io'
     else:
-        pythings_host_overrided = True
+        backend_addr_overrided = True
 
     # Load pool: the local param wins 
     globals.pool = load_param('pool', None)
@@ -92,19 +97,48 @@ def start(path=None):
     globals.app_management_task = None
       
     # Report
-    logger.info('Running with pythings_host="{}" and aid="{}"'.format(globals.pythings_host, globals.aid))
+    logger.info('Running with backend_addr="{}" and aid="{}"'.format(globals.backend_addr, globals.aid))
 
     # Get app version:    
     globals.running_app_version = common.get_running_app_version()
     gc.collect()
 
-    # Register and perform the first management task call on "safe" backend
-    if not pythings_host_overrided:
-        pythings_host_set = globals.pythings_host
-        globals.pythings_host ='http://backend.pythings.io'
+    # Register and perform the first management task call on "safe" backend, if not overrided
+    if not backend_addr_overrided:
+        backend_addr_set = globals.backend_addr
+        globals.backend_addr ='pythings.io'
     
-    # Register yourself, and start a new session
+    
     from api import apost
+    
+    # Activate paylpad encryption if any, and pre-register
+    if hal.payload_encrypter:
+        preregistered = True
+        globals.token = None
+        globals.payload_encrypter = hal.payload_encrypter(comp_mode=True)
+        from crypto_rsa import Srsa
+        pubkey = 28413003199647341169755148817272580434684756919496624803561225904937920874272008267922241718272669080997784342773848675977238304083346116914731539644572572184061626687258523348629880944116435872100013777281682624539900472318355160325153486782544158202452609602511838141993451856549399731403548343252478723563
+        logger.info('Pre-registering myself with aes128cbc key="{}"'.format(globals.payload_encrypter.key))
+        response = common.run_controlled(None,
+                                         apost,
+                                         api='/things/preregister/',
+                                         data={'key': Srsa(pubkey).encrypt_text(str(globals.payload_encrypter.key)),
+                                               'type': 'aes128cbc',
+                                               'enc': 'srsa1'})
+        
+        if not response:
+            raise EmptyResponse()
+
+        # Set token
+        globals.token = response['content']['data']['token']
+        logger.info('Got token: {}'.format(globals.token))
+ 
+    else:
+        preregistered = False
+        globals.payload_encrypter = None
+
+
+    # Register yourself, and start a new session
     logger.info('Registering myself with tid={} and aid={}'.format(globals.tid,globals.aid))
     response = common.run_controlled(None,
                                      apost,
@@ -116,12 +150,10 @@ def start(path=None):
                                            'pool': globals.pool,
                                            'settings': globals.settings})
     if not response:
-        class EmptyResponse(Exception):
-            pass
         raise EmptyResponse()
-    
-    globals.token = response['content']['data']['token']
-    logger.info('Got token: {}'.format(globals.token))
+    if not preregistered:
+        globals.token = response['content']['data']['token']
+        logger.info('Got token: {}'.format(globals.token))
     
     # Sync time.
     epoch_s = response['content']['data']['epoch_s']
@@ -139,9 +171,9 @@ def start(path=None):
     gc.collect()
     
     # Set back host to the proper one
-    if not pythings_host_overrided:
-        globals.pythings_host=pythings_host_set
-        del pythings_host_set
+    if not backend_addr_overrided:
+        globals.backend_addr=backend_addr_set
+        del backend_addr_set
     gc.collect()
 
     # Init app

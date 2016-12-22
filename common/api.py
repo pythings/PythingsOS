@@ -13,12 +13,12 @@ def apost(api, data={}):
         data['token'] = globals.token
     except AttributeError:
         pass             
-    url = '{}/api/{}{}'.format(globals.pythings_host,version,api)
+    url = '{}/api/{}{}'.format(globals.backend_addr,version,api)
     logger.debug('Calling API {} with data'.format(url),data) 
     response = post(url, data=data)
     gc.collect()
     logger.debug('Got response:',response)
-    if response['content'] :
+    if response['content'] and response['content'] != '\n':
         response['content'] = json.loads(response['content']) 
     logger.debug('Loaded json content and returning')
     return response

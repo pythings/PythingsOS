@@ -13,7 +13,7 @@ def update_app(version):
     for file_name in files:
         if file_name in ['worker_task.py','management_task.py']:
             logger.info('Downloading "{}"'.format(file_name))
-            if not download('{}/api/v1/apps/get/?file={}&version={}&token={}'.format(globals.pythings_host, file_name, version, globals.token), '/{}'.format(file_name)): 
+            if not download('{}/api/v1/apps/get/?file={}&version={}&token={}'.format(globals.backend_addr, file_name, version, globals.token), '/{}'.format(file_name)): 
                 raise Exception('Error while donaloding')
         else:
             logger.info('NOT downloading "{}" as in forbidden list'.format(file_name))
