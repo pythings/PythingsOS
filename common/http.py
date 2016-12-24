@@ -95,7 +95,7 @@ def download(source,dest):
     port = 443 if hal.HW_SUPPORTS_SSL else 80
     source = 'https://'+source if hal.HW_SUPPORTS_SSL else 'http://'+source
     logger.info('Downloading {} in {}'.format(source,dest)) 
-    f = open(hal.fspath+'/'+dest, 'w')
+    f = open(dest, 'w')
     _, _, host, path = (source).split('/', 3)
     if ':' in host:
         port=int(host.split(':')[1])
