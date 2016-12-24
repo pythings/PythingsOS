@@ -1,10 +1,11 @@
 import gc
 import os
 import sys
-import hal
 
 sys.path.append('/')
+import hal
 from utils import load_settings
+
 try:
     pythings_version = load_settings()['pythings_version']
     if not pythings_version.upper() == 'FACTORY':

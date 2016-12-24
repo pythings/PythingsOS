@@ -56,7 +56,6 @@ def start(path=None):
                 logger.info('Resetting...')
                 hal.reboot()
 
-    
     # Enable STA mode and Disable AP mode
     if hal.HW_SUPPORTS_WLAN:
         hal.WLAN.ap_active(False)
@@ -75,8 +74,6 @@ def start(path=None):
     if globals.aid is None: raise Exception('AID not provided')
     globals.tid = load_param('tid', None)
     if globals.tid is None: globals.tid = hal.get_tuuid()
-    
-
 
     if not globals.backend_addr:
         backend_addr_overrided = False
@@ -111,7 +108,7 @@ def start(path=None):
     # Register and perform the first management task call on "safe" backend, if not overrided
     if not backend_addr_overrided:
         backend_addr_set = globals.backend_addr
-        globals.backend_addr ='pythings.io'
+        globals.backend_addr ='backend.pythings.io'
     
     # Pre-register if payload encryption activated
     if hal.SW_PAYLOAD_ENCRYPTER:
