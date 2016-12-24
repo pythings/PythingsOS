@@ -3,9 +3,7 @@ import sys
 import time
 import calendar
 import ssl
-
-
-
+import traceback
 
 # Constants (settings)
 HW_SUPPORTS_DEEPSLEEP  = False
@@ -13,18 +11,16 @@ HW_SUPPORTS_RESETCAUSE = False
 HW_SUPPORTS_LED        = False
 HW_SUPPORTS_WLAN       = False
 
-# You can set it to Ture, and disable payload encryption
+# If set to True, disable payload encryption
 HW_SUPPORTS_SSL        = False
 
 # Payload encryption (not needed if SSL support available)
 from crypto_aes import Aes128ecb
-SW_PAYLOAD_ENCRYPTER    = Aes128ecb  
+SW_PAYLOAD_ENCRYPTER   = Aes128ecb  
 
 # HW initializer (i.e. put PWMs to zero)
 def init():
     pass
-
-payload_encrypter = Aes128ecb # PA
 
 # Objects
 class LED(object):
@@ -43,8 +39,9 @@ class WLAN(object):
     def ap_active(mode):
         raise NotImplementedError() 
 
+# Functions
 def get_tuuid():
-    raise NotImplementedError()
+    raise NotImplementedError('I have no way to obtain an UUID for myself. You have to tell me my TID.')
 
 def is_os_frozen():
     return True
@@ -53,8 +50,7 @@ def mem_free():
     return None
 
 def get_traceback(e):
-    import traceback
-    traceback.print_exc() # TODO: hetre
+    return traceback.format_exc()
 
 def reset_cause():
     raise NotImplementedError() 
@@ -63,8 +59,7 @@ def reboot():
     sys.exit(0)
 
 # Filesystem (absolute) path
-fspath = '/pydata'
-
+fspath = '/pythings_data'
 
 # Regular expression are system-dependent
 import re as re

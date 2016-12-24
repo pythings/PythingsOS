@@ -7,7 +7,7 @@ import hal
 # pages and so on (Pythings backend will always provide responses in one line).
 
 def post(url, data):
-    port = 443 if hal.HW_SUPPORTS_SSL else 80
+    port = 443 if hal.HW_SUPPORTS_SSL else 80 # TODO: port has to go after.
     url = 'https://'+url if hal.HW_SUPPORTS_SSL else 'http://'+url
     logger.info('Calling POST "{}" with data '.format(url),data)
     _, _, host, path = url.split('/', 3)
