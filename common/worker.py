@@ -5,7 +5,6 @@ import gc
 import hal
 from common import run_controlled
 
-
 def system_worker_task(chronos):
     
     # Call App's worker    

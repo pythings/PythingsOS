@@ -1,11 +1,11 @@
 
-from crypto_engine_aes128cbc import Aes128cbc_engine
+from crypto_engine_aes128ecb import Aes128ecb_engine
 from crypto_common import *
 
 # Home-made debugging switch. TODO: use a proper logger.
 debug = False
 
-class Aes128cbc():
+class Aes128ecb():
 
     def __init__(self, key=None, comp_mode=False):
         if not key:
@@ -17,7 +17,7 @@ class Aes128cbc():
             # print ('AES: initialized with key', key)
                
         self.key = key
-        self.aes = Aes128cbc_engine(self.key)
+        self.aes = Aes128ecb_engine(self.key)
         self.comp_mode = comp_mode
         self.chunk_int = 39
         self.chunk_b64 = 22

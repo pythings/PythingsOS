@@ -1,16 +1,20 @@
 
 #  Imports
-import machine
 import time
 import gc
 import globals
 import common
 import hal
 from utils import load_param
+from arch import arch
 
 # Logger
 import logger
 logger.level = logger.DEBUG
+
+# Utils
+class EmptyResponse(Exception):
+    pass
 
 #---------------------
 #  Main
@@ -21,11 +25,23 @@ def start(path=None):
     # Get Pythings version
     globals.running_os_version = common.get_running_os_version()
 
-    print('|------------------------|')
+    print('\n|------------------------|')
     print('|  Starting Pythings :)  |')
     print('|------------------------|')
-    print('Version: {} (ESP8266)'.format(globals.running_os_version))
+    print(' Version: {} ({})\n'.format(globals.running_os_version, arch))
+    import os
 
+    try:
+        os.stat(hal.fspath)
+    except:
+        try:
+            os.mkdir(hal.fspath)
+        except Exception as e:
+            raise e from None
+
+    import sys
+    sys.path.append(hal.fspath)
+    
     if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN:
         websetup_timeout = load_param('websetup_timeout', 60)
         # Start AP config mode if required
@@ -49,6 +65,10 @@ def start(path=None):
     # Start loading settings and parameters
     from utils import load_settings
     globals.settings = load_settings()
+    globals.payload_encrypter = None # Initalization
+
+    # Load backend_addr: the local param wins 
+    globals.backend_addr = load_param('backend_addr', None)
 
     # Load aid and tid: only local param or default
     globals.aid = load_param('aid', None)
@@ -56,14 +76,14 @@ def start(path=None):
     globals.tid = load_param('tid', None)
     if globals.tid is None: globals.tid = hal.get_tuuid()
     
-    # Load backend_addr: the local param wins 
-    globals.backend_addr = load_param('backend_addr', None)
+
+
     if not globals.backend_addr:
         backend_addr_overrided = False
         if 'backend_addr' in globals.settings and globals.settings['backend_addr']:
-            globals.backend_addr = 'http://'+globals.settings['backend_addr']
+            globals.backend_addr = globals.settings['backend_addr']
         else:
-            globals.backend_addr = 'http://backend.pythings.io'
+            globals.backend_addr = 'backend.pythings.io'
     else:
         backend_addr_overrided = True
 
@@ -88,42 +108,33 @@ def start(path=None):
     globals.running_app_version = common.get_running_app_version()
     gc.collect()
 
-    # Register and perform the first management task call on "safe" backend
+    # Register and perform the first management task call on "safe" backend, if not overrided
     if not backend_addr_overrided:
         backend_addr_set = globals.backend_addr
-        globals.backend_addr ='http://backend.pythings.io'
+        globals.backend_addr ='pythings.io'
     
+    # Pre-register if payload encryption activated
+    if hal.SW_PAYLOAD_ENCRYPTER:
+        globals.payload_encrypter = hal.SW_PAYLOAD_ENCRYPTER(comp_mode=True)
+        from register import preregister
+        token = preregister()
+        globals.token = token
+        logger.info('Got token: {}'.format(globals.token))
+        gc.collect()
+        
     # Register yourself, and start a new session
-    from api import apost
-    logger.info('Registering myself with tid={} and aid={}'.format(globals.tid,globals.aid))
-    response = common.run_controlled(None,
-                                     apost,
-                                     api='/things/register/',
-                                     data={'tid':globals.tid,
-                                           'aid': globals.aid,
-                                           'running_app_version': globals.running_app_version,
-                                           'running_os_version': globals.running_os_version,
-                                           'pool': globals.pool,
-                                           'settings': globals.settings,
-                                           'frozen_os':globals.frozen_os})
-    if not response:
-        class EmptyResponse(Exception):
-            pass
-        raise EmptyResponse()
-    
-    globals.token = response['content']['data']['token']
-    logger.info('Got token: {}'.format(globals.token))
+    from register import register
+    token, epoch_s = register()
+    if not globals.payload_encrypter:
+        globals.token = token
+        logger.info('Got token: {}'.format(globals.token))
+    gc.collect()
     
     # Sync time.
-    epoch_s = response['content']['data']['epoch_s']
-    chronos = common.Chronos(epoch_s)
-    del response
-    gc.collect()
+    chronos = hal.Chronos(epoch_s)
 
     # Call system management (will update App/Pythings versions  and settings if required)
-    gc.collect()
     logger.info('Calling system management (preloop)')
-
     from management import system_management_task
     system_management_task(chronos)
     del system_management_task
@@ -184,11 +195,4 @@ def start(path=None):
 
 if __name__ == "__main__":
     start()
-
-
-
-
-
-
-
 

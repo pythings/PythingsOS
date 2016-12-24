@@ -1,6 +1,8 @@
 import gc
 import os
 import sys
+import hal
+
 sys.path.append('/')
 from utils import load_settings
 try:
@@ -11,7 +13,7 @@ try:
         try:
             os.stat(path)
         except OSError:
-            print('No valid installation found for this version, proceeding with factory default version...')
+            print('Proceeding with factory default version...')
             path='/'
         else:
             print('Updated version found, checking its consistency...')
@@ -28,8 +30,6 @@ try:
         path='/'
 
 except Exception as e:
-    # TODO: do we want the next two following lines?
-    import hal
     print (hal.get_traceback(e))
     print('Error, proceeding with factory defaults: ',type(e), str(e))
     path='/'

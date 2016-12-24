@@ -1,6 +1,7 @@
 
 import globals
 import logger
+from hal import fspath
 
 def update_settings(content):
     logger.debug('Storing received settings ({} <--> {})'.format(content['data']['settings'], globals.settings))
@@ -9,7 +10,7 @@ def update_settings(content):
     from utils import mv
     mv('/settings.json','/settings_bk.json')
     # Ok, dump new settings
-    f = open('/settings.json', 'w')
+    f = open(fspath+'/settings.json', 'w')
     import json
     f.write(json.dumps(content['data']['settings']))
     f.close()

@@ -1,14 +1,15 @@
 
 import sys
-
+ 
 # Constants (settings)
 HW_SUPPORTS_DEEPSLEEP  = False
 HW_SUPPORTS_RESETCAUSE = False
 HW_SUPPORTS_LED        = False
 HW_SUPPORTS_WLAN       = False
+HW_SUPPORTS_SSL        = False # You can set it to Ture, and disable payload encryption 
+
 
 def init():
-    # i.e. turn off extra LEDs and lower PWMs
     pass
 
 # Objects
@@ -30,7 +31,7 @@ class WLAN(object):
 
 def get_tuuid():
     raise NotImplementedError()
-
+ 
 def is_os_frozen():
     raise NotImplementedError() 
 
@@ -45,3 +46,21 @@ def reset_cause():
 
 def reboot():
     sys.exit(0)
+
+# Time management
+class Chronos(object):
+    def __init__(self, epoch_s_now=0):
+        raise NotImplementedError()
+    def epoch_s(self):
+        raise NotImplementedError()
+
+# Must be absolute
+fspath = '/pydata'
+
+# Socket-related
+def socket_readline(s):
+    raise NotImplementedError()
+
+def socket_ssl(s):
+    raise NotImplementedError()
+

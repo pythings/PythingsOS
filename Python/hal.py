@@ -4,23 +4,27 @@ import time
 import calendar
 import ssl
 
-# Regular expression are hardware-dependent
-import re as re
+
+
 
 # Constants (settings)
 HW_SUPPORTS_DEEPSLEEP  = False
 HW_SUPPORTS_RESETCAUSE = False
 HW_SUPPORTS_LED        = False
 HW_SUPPORTS_WLAN       = False
-HW_SUPPORTS_SSL        = False # You can set it to Ture, and disable payload encryption 
 
-def init():
-    # i.e. turn off extra LEDs and lower PWMs. Not yet used
-    pass
+# You can set it to Ture, and disable payload encryption
+HW_SUPPORTS_SSL        = False
 
 # Payload encryption (not needed if SSL support available)
-from crypto_aes import Aes128cbc
-payload_encrypter = Aes128cbc
+from crypto_aes import Aes128ecb
+SW_PAYLOAD_ENCRYPTER    = Aes128ecb  
+
+# HW initializer (i.e. put PWMs to zero)
+def init():
+    pass
+
+payload_encrypter = Aes128ecb # PA
 
 # Objects
 class LED(object):
@@ -42,32 +46,37 @@ class WLAN(object):
 def get_tuuid():
     raise NotImplementedError()
 
+def is_os_frozen():
+    return True
+
+def mem_free():
+    return None
+
+def get_traceback(e):
+    import traceback
+    traceback.print_exc() # TODO: hetre
+
 def reset_cause():
     raise NotImplementedError() 
 
 def reboot():
     sys.exit(0)
 
-# Print exception
-def print_exception(e):
-    import traceback
-    traceback.print_exc()
+# Filesystem (absolute) path
+fspath = '/pydata'
 
-def mem_free():
-    return None
-    #return gc.mem_free()
 
-# Time management
+# Regular expression are system-dependent
+import re as re
+
+# Time management is hardware-dependent
 class Chronos(object):
     def __init__(self, epoch_s_now=0):
         pass
     def epoch_s(self):
         return calendar.timegm(time.gmtime())
 
-# Must be absolute
-fspath = '/pydata'
-
-# Socket-related
+# Socket readline and ssl wrapper are system-dependent
 def socket_readline(s):
     data_tot = None
     data = s.recv(1)
@@ -83,4 +92,3 @@ def socket_readline(s):
 
 def socket_ssl(s):
     return ssl.wrap_socket(s)#, ssl_version=ssl.PROTOCOL_TLSv1)
-

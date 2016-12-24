@@ -1,14 +1,16 @@
 import socket
 import json
 import logger
+import hal
 
 # Note: post and get will load a single line to avoid memory problems in case of error 500
 # pages and so on (Pythings backend will always provide responses in one line).
 
 def post(url, data):
-
+    port = 443 if hal.HW_SUPPORTS_SSL else 80
+    url = 'https://'+url if hal.HW_SUPPORTS_SSL else 'http://'+url
+    logger.info('Calling POST "{}" with data '.format(url),data)
     _, _, host, path = url.split('/', 3)
-    port=80
     if ':' in host:
         port=int(host.split(':')[1])
         host=host.split(':')[0]
@@ -16,44 +18,51 @@ def post(url, data):
     s = socket.socket()
     try: s.settimeout(60)
     except: pass
-    s.connect(addr) #Tryexcept this
-    s.write('%s /%s HTTP/1.0\r\nHost: %s\r\n' % ('POST', path, host))
+
+    if hal.HW_SUPPORTS_SSL:
+        s = hal.socket_ssl(s)
+
+    s.connect(addr) #TODO: Try-except this
+    s.send(bytes('%s /%s HTTP/1.0\r\nHost: %s\r\n' % ('POST', path, host), 'utf8'))
 
     content = json.dumps(data)
     content_type = 'application/json'
 
     if content is not None:
-        s.write('content-length: %s\r\n' % len(content))
-        s.write('content-type: %s\r\n' % content_type)
-        s.write('\r\n')
-        s.write(content)
+        s.send(bytes('content-length: %s\r\n' % len(content), 'utf8'))
+        s.send(bytes('content-type: %s\r\n' % content_type, 'utf8'))
+        s.send(bytes('\r\n', 'utf8'))
+        s.send(bytes(content, 'utf8'))
     else:
-        s.write('\r\n')
+        s.send(bytes('\r\n', 'utf8'))
 
     # Status, msg etc.
-    version, status, msg = s.readline().split(None, 2)
+    version, status, msg = hal.socket_readline(s).split(None, 2)
 
     # Skip headers
-    while s.readline() != b'\r\n':
+    while hal.socket_readline(s) != b'\r\n':
         pass
 
     # Read data
     content = None
     while True:
-        data = s.readline()
+        data = hal.socket_readline(s)
         if data:      
             content = str(data, 'utf8')
             break   
         else:
             break
         
+        
     s.close()
     return {'version':version, 'status':status, 'msg':msg, 'content':content}
            
 
 def get(url):
+    port = 443 if hal.HW_SUPPORTS_SSL else 80
+    url = 'https://'+url if hal.HW_SUPPORTS_SSL else 'http://'+url
+    logger.info('Calling GET "{}"'.format(url)) 
     _, _, host, path = url.split('/', 3)
-    port=80
     if ':' in host:
         port=int(host.split(':')[1])
         host=host.split(':')[0]
@@ -65,15 +74,15 @@ def get(url):
     s.send(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
 
     # Status, msg etc.
-    version, status, msg = s.readline().split(None, 2)
+    version, status, msg = hal.socket_readline(s).split(None, 2)
 
     # Skip headers
-    while s.readline() != b'\r\n':
+    while hal.socket_readline(s) != b'\r\n':
         pass
 
     # Read data
     while True:
-        data = s.readline
+        data = hal.socket_readline(s)
         if data:
             content = str(data, 'utf8')
         else:
@@ -83,10 +92,11 @@ def get(url):
 
 
 def download(source,dest):
+    port = 443 if hal.HW_SUPPORTS_SSL else 80
+    source = 'https://'+source if hal.HW_SUPPORTS_SSL else 'http://'+source
     logger.info('Downloading {} in {}'.format(source,dest)) 
-    f = open(dest, 'w')
+    f = open(hal.fspath+'/'+dest, 'w')
     _, _, host, path = (source).split('/', 3)
-    port=80
     if ':' in host:
         port=int(host.split(':')[1])
         host=host.split(':')[0]
@@ -98,7 +108,7 @@ def download(source,dest):
     s.send(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
  
     # Status, msg etc.
-    version, status, msg = s.readline().split(None, 2)
+    version, status, msg = hal.socket_readline(s).split(None, 2)
 
     if status != b'200':
         logger.error('Status {} trying to get '.format(status),source)
@@ -107,11 +117,11 @@ def download(source,dest):
         return False
 
     # Skip headers
-    while s.readline() != b'\r\n': 
+    while hal.socket_readline(s) != b'\r\n': 
         pass 
 
     while True:
-        data = s.readline() #data = s.recv(100)?
+        data = s.recv(100)
         if data:
             f.write((str(data, 'utf8')))
         else:
