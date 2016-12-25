@@ -56,11 +56,20 @@ def start(path=None):
                 logger.info('Resetting...')
                 hal.reboot()
 
-    # Enable STA mode and Disable AP mode
+    # Disable AP mode, Enable and configure STA mode 
     if hal.HW_SUPPORTS_WLAN:
         hal.WLAN.ap_active(False)
         hal.WLAN.sta_active(True)
-    
+        
+        from utils import connect_wifi,get_wifi_data
+        import network
+        sta = network.WLAN(network.STA_IF)
+        if not sta.isconnected():
+            essid,password = get_wifi_data()
+            logger.info('WiFi not connected, now connecting with essid "{}" and pass "{}"'.format(essid,password))
+            if essid:
+                connect_wifi(sta, essid, password)        
+
     # Start loading settings and parameters
     from utils import load_settings
     globals.settings = load_settings()

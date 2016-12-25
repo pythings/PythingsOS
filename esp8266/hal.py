@@ -23,8 +23,11 @@ def is_os_frozen():
 
 # Payload encryption (not needed if SSL support available)
 if is_os_frozen():
-    from crypto_aes import Aes128ecb
-    SW_PAYLOAD_ENCRYPTER = Aes128ecb
+    try:
+        from crypto_aes import Aes128ecb
+        SW_PAYLOAD_ENCRYPTER = Aes128ecb
+    except:
+        SW_PAYLOAD_ENCRYPTER = None
 else:
     SW_PAYLOAD_ENCRYPTER = None
 
