@@ -12,9 +12,21 @@ HW_SUPPORTS_WLAN       = True
 # If set to True, disable payload encryption
 HW_SUPPORTS_SSL        = False
 
+
+def is_os_frozen():
+    import os
+    try:
+        os.stat(fspath+'/initialized')
+        return False
+    except:
+        return True
+
 # Payload encryption (not needed if SSL support available)
-from crypto_aes import Aes128ecb
-SW_PAYLOAD_ENCRYPTER    = Aes128ecb 
+if is_os_frozen():
+    from crypto_aes import Aes128ecb
+    SW_PAYLOAD_ENCRYPTER = Aes128ecb
+else:
+    SW_PAYLOAD_ENCRYPTER = None
 
 # Required if RESETCAUSE is supported
 HARD_RESET = 6
@@ -46,14 +58,6 @@ def get_tuuid():
     mac_b = wlan.config('mac')
     mac_s = ':'.join( [ "%02X" % x for x in mac_b ] )
     return mac_s.replace(':','')
-
-def is_os_frozen():
-    import os
-    try:
-        os.stat(fspath+'/initialized')
-        return False
-    except:
-        return True
 
 def mem_free():
     import gc
