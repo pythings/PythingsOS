@@ -6,7 +6,7 @@ from arch import arch
 from hal import fspath
 
 def update_pythings(version):
-    source='http://backend.pythings.io/static/dist/PythingsOS/{}/{}'.format(version,arch)
+    source='backend.pythings.io/static/dist/PythingsOS/{}/{}'.format(version,arch)
     path=fspath+'/'+version
     try:
         os.mkdir(path)

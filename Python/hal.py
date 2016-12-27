@@ -71,7 +71,7 @@ class Chronos(object):
     def epoch_s(self):
         return calendar.timegm(time.gmtime())
 
-# Socket readline and ssl wrapper are system-dependent
+# Socket readline, write and ssl wrapper are system-dependent
 def socket_readline(s):
     data_tot = None
     data = s.recv(1)
@@ -84,6 +84,9 @@ def socket_readline(s):
             return data_tot
         data = s.recv(1)
     return data_tot
+
+def socket_write(s,data):
+    s.send(data)
 
 def socket_ssl(s):
     return ssl.wrap_socket(s)#, ssl_version=ssl.PROTOCOL_TLSv1)

@@ -1,6 +1,7 @@
 
 import machine
 import network
+import time
 
 # Constants (settings)
 HW_SUPPORTS_DEEPSLEEP  = True
@@ -11,9 +12,26 @@ HW_SUPPORTS_WLAN       = True
 # If set to True, disable payload encryption
 HW_SUPPORTS_SSL        = False
 
+# Filesystem (absolute) path
+fspath = '/'
+
+def is_os_frozen():
+    import os
+    try:
+        os.stat(fspath+'/initialized')
+        return False
+    except:
+        return True
+
 # Payload encryption (not needed if SSL support available)
-from crypto_aes import Aes128ecb
-SW_PAYLOAD_ENCRYPTER    = Aes128ecb 
+if is_os_frozen():
+    try:
+        from crypto_aes import Aes128ecb
+        SW_PAYLOAD_ENCRYPTER = Aes128ecb
+    except:
+        SW_PAYLOAD_ENCRYPTER = None
+else:
+    SW_PAYLOAD_ENCRYPTER = None
 
 # Required if RESETCAUSE is supported
 HARD_RESET = 6
@@ -46,14 +64,6 @@ def get_tuuid():
     mac_s = ':'.join( [ "%02X" % x for x in mac_b ] )
     return mac_s.replace(':','')
 
-def is_os_frozen():
-    import os
-    try:
-        os.stat(fspath+'/initialized')
-        return False
-    except:
-        return True
-
 def mem_free():
     import gc
     return gc.mem_free()
@@ -69,10 +79,7 @@ def reset_cause():
     return machine.reset_cause()
 
 def reboot():
-    machine.reset()
-    
-# Filesystem (absolute) path
-fspath = '/'
+    machine.reset()    
 
 # Regular expression are system-dependent
 import ure as re
@@ -89,9 +96,12 @@ class Chronos(object):
         else:
             return time.ticks_ms()/1000
 
-# Socket readline and ssl wrapper are system-dependent
+# Socket readline, write and ssl wrapper are system-dependent
 def socket_readline(s):
     return s.readline()
+
+def socket_write(s,data):
+    s.write(data)
 
 def socket_ssl(s):
     raise NotImplementedError()

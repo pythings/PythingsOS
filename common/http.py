@@ -3,9 +3,6 @@ import json
 import logger
 import hal
 
-# Note: post and get will load a single line to avoid memory problems in case of error 500
-# pages and so on (Pythings backend will always provide responses in one line).
-
 def post(url, data):
     port = 443 if hal.HW_SUPPORTS_SSL else 80 # TODO: port has to go after.
     url = 'https://'+url if hal.HW_SUPPORTS_SSL else 'http://'+url
@@ -22,7 +19,7 @@ def post(url, data):
     if hal.HW_SUPPORTS_SSL:
         s = hal.socket_ssl(s)
 
-    s.connect(addr) #TODO: Try-except this
+    s.connect(addr)
     s.send(bytes('%s /%s HTTP/1.0\r\nHost: %s\r\n' % ('POST', path, host), 'utf8'))
 
     content = json.dumps(data)
@@ -32,7 +29,7 @@ def post(url, data):
         s.send(bytes('content-length: %s\r\n' % len(content), 'utf8'))
         s.send(bytes('content-type: %s\r\n' % content_type, 'utf8'))
         s.send(bytes('\r\n', 'utf8'))
-        s.send(bytes(content, 'utf8'))
+        hal.socket_write(s, data=bytes(content, 'utf8'))
     else:
         s.send(bytes('\r\n', 'utf8'))
 
@@ -52,8 +49,7 @@ def post(url, data):
             break   
         else:
             break
-        
-        
+
     s.close()
     return {'version':version, 'status':status, 'msg':msg, 'content':content}
            
@@ -87,7 +83,8 @@ def get(url):
             content = str(data, 'utf8')
         else:
             break
-    s.close() #TODO: add a finally for closing the connnection?
+    s.close()
+    # TODO: add a finally for closing the connection!
     return {'version':version, 'status':status, 'msg':msg, 'content':content}
 
 
@@ -108,7 +105,7 @@ def download(source,dest):
     s.send(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
  
     # Status, msg etc.
-    version, status, msg = hal.socket_readline(s).split(None, 2)
+    _, status, _ = hal.socket_readline(s).split(None, 2)
 
     if status != b'200':
         logger.error('Status {} trying to get '.format(status),source)

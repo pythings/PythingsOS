@@ -64,8 +64,11 @@ class Chronos(object):
     def epoch_s(self):
         raise NotImplementedError()
 
-# Socket readline and ssl wrapper are system-dependent
+# Socket readline, write and ssl wrapper are system-dependent
 def socket_readline(s):
+    raise NotImplementedError()
+
+def socket_write(s,data):
     raise NotImplementedError()
 
 def socket_ssl(s):

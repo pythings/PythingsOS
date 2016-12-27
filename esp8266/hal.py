@@ -12,6 +12,8 @@ HW_SUPPORTS_WLAN       = True
 # If set to True, disable payload encryption
 HW_SUPPORTS_SSL        = False
 
+# Filesystem (absolute) path
+fspath = '/'
 
 def is_os_frozen():
     import os
@@ -77,10 +79,7 @@ def reset_cause():
     return machine.reset_cause()
 
 def reboot():
-    machine.reset()
-    
-# Filesystem (absolute) path
-fspath = '/'
+    machine.reset()    
 
 # Regular expression are system-dependent
 import ure as re
@@ -97,9 +96,12 @@ class Chronos(object):
         else:
             return time.ticks_ms()/1000
 
-# Socket readline and ssl wrapper are system-dependent
+# Socket readline, write and ssl wrapper are system-dependent
 def socket_readline(s):
     return s.readline()
+
+def socket_write(s,data):
+    s.write(data)
 
 def socket_ssl(s):
     raise NotImplementedError()

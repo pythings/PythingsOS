@@ -78,9 +78,12 @@ class Chronos(object):
         else:
             return time.ticks_ms()/1000
 
-# Socket readline and ssl wrapper are system-dependent
+# Socket readline, write and ssl wrapper are system-dependent
 def socket_readline(s):
     return s.readline()
+
+def socket_write(s,data):
+    s.write(data)
 
 def socket_ssl(s):
     import ussl
