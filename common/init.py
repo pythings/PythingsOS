@@ -180,6 +180,7 @@ def start(path=None):
             system_management_task(chronos)
             del system_management_task
             gc.collect()
+            logger.info('Done')
 
         if loop_count % worker_interval == 0:
             logger.info('Calling worker (loop={})'.format(loop_count))
@@ -187,6 +188,7 @@ def start(path=None):
             system_worker_task(chronos)
             del system_worker_task
             gc.collect()
+            logger.info('Done')
             
         loop_count+=1
         time.sleep(1)

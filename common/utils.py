@@ -2,8 +2,6 @@ import os
 from hal import re, fspath
 
 def connect_wifi(wlan, essid, password):
-    print("Connecting with: ", essid)
-    print("Using password: ", password)
     wlan.connect(essid, password)
 
 def unquote(s):

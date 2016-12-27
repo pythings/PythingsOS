@@ -52,7 +52,13 @@ class LED(object):
 class WLAN(object):  
     @staticmethod
     def sta_active(mode):
-        network.WLAN(network.STA_IF).active(mode)
+        sta = network.WLAN(network.STA_IF)
+        sta.active(mode)
+        if mode is True:
+            from utils import connect_wifi, get_wifi_data
+            essid,password = get_wifi_data()
+            if essid:
+                connect_wifi(sta, essid, password)
     @staticmethod
     def ap_active(mode):
         network.WLAN(network.AP_IF).active(mode)
