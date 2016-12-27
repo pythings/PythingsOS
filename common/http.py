@@ -51,45 +51,12 @@ def post(url, data):
             break
 
     s.close()
-    return {'version':version, 'status':status, 'msg':msg, 'content':content}
-           
-
-def get(url):
-    port = 443 if hal.HW_SUPPORTS_SSL else 80
-    url = 'https://'+url if hal.HW_SUPPORTS_SSL else 'http://'+url
-    logger.info('Calling GET "{}"'.format(url)) 
-    _, _, host, path = url.split('/', 3)
-    if ':' in host:
-        port=int(host.split(':')[1])
-        host=host.split(':')[0]
-    addr = socket.getaddrinfo(host, port)[0][-1]
-    s = socket.socket()
-    try: s.settimeout(60)
-    except: pass
-    s.connect(addr)
-    s.send(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
-
-    # Status, msg etc.
-    version, status, msg = hal.socket_readline(s).split(None, 2)
-
-    # Skip headers
-    while hal.socket_readline(s) != b'\r\n':
-        pass
-
-    # Read data
-    while True:
-        data = hal.socket_readline(s)
-        if data:
-            content = str(data, 'utf8')
-        else:
-            break
-    s.close()
     # TODO: add a finally for closing the connection!
     return {'version':version, 'status':status, 'msg':msg, 'content':content}
 
 
 def download(source,dest):
-    port = 443 if hal.HW_SUPPORTS_SSL else 80
+    port = 443 if hal.HW_SUPPORTS_SSL else 80 # TODO: port has to go after.
     source = 'https://'+source if hal.HW_SUPPORTS_SSL else 'http://'+source
     logger.info('Downloading {} in {}'.format(source,dest)) 
     f = open(dest, 'w')
