@@ -2,15 +2,20 @@ import socket
 import json
 import logger
 import hal
+import globals
 
-def post(url, data):
-    port = 443 if hal.HW_SUPPORTS_SSL else 80 # TODO: port has to go after.
-    url = 'https://'+url if hal.HW_SUPPORTS_SSL else 'http://'+url
-    logger.info('Calling POST "{}" with data '.format(url),data)
-    _, _, host, path = url.split('/', 3)
+def post(url, data, dest=None):
+    try: token = globals.token
+    except AttributeError: token=None
+    if  globals.payload_encrypter and token:
+        data =  {'encrypted': globals.payload_encrypter.encrypt_text(json.dumps(data))}
+    if token: data['token'] = token
+    port = 443 if hal.HW_SUPPORTS_SSL else 80
+    host, path = url.split('/', 1)
     if ':' in host:
         port=int(host.split(':')[1])
         host=host.split(':')[0]
+    logger.info('Calling POST "{}:{}" with data'.format(url,port),data)
     addr = socket.getaddrinfo(host, port)[0][-1]
     s = socket.socket()
     try: s.settimeout(60)
@@ -19,77 +24,79 @@ def post(url, data):
     if hal.HW_SUPPORTS_SSL:
         s = hal.socket_ssl(s)
 
+    if dest: f = None # If socket connect fails do not have an exception when closing file
     s.connect(addr)
-    s.send(bytes('%s /%s HTTP/1.0\r\nHost: %s\r\n' % ('POST', path, host), 'utf8'))
-
-    content = json.dumps(data)
-    content_type = 'application/json'
-
-    if content is not None:
-        s.send(bytes('content-length: %s\r\n' % len(content), 'utf8'))
-        s.send(bytes('content-type: %s\r\n' % content_type, 'utf8'))
-        s.send(bytes('\r\n', 'utf8'))
-        hal.socket_write(s, data=bytes(content, 'utf8'))
-    else:
-        s.send(bytes('\r\n', 'utf8'))
-
-    # Status, msg etc.
-    version, status, msg = hal.socket_readline(s).split(None, 2)
-
-    # Skip headers
-    while hal.socket_readline(s) != b'\r\n':
-        pass
-
-    # Read data
-    content = None
-    while True:
-        data = hal.socket_readline(s)
-        if data:      
-            content = str(data, 'utf8')
-            break   
+    if dest: f = open(dest, 'w')
+    try:
+        s.send(bytes('%s /%s HTTP/1.0\r\nHost: %s\r\n' % ('POST', path, host), 'utf8'))
+    
+        content = json.dumps(data)
+        content_type = 'application/json'
+    
+        if content is not None:
+            s.send(bytes('content-length: %s\r\n' % len(content), 'utf8'))
+            s.send(bytes('content-type: %s\r\n' % content_type, 'utf8'))
+            s.send(bytes('\r\n', 'utf8'))
+            hal.socket_write(s, data=bytes(content, 'utf8'))
         else:
-            break
+            s.send(bytes('\r\n', 'utf8'))
 
-    s.close()
-    # TODO: add a finally for closing the connection!
-    return {'version':version, 'status':status, 'msg':msg, 'content':content}
-
-
-def download(source,dest):
-    port = 443 if hal.HW_SUPPORTS_SSL else 80 # TODO: port has to go after.
-    source = 'https://'+source if hal.HW_SUPPORTS_SSL else 'http://'+source
-    logger.info('Downloading {} in {}'.format(source,dest)) 
-    f = open(dest, 'w')
-    _, _, host, path = (source).split('/', 3)
-    if ':' in host:
-        port=int(host.split(':')[1])
-        host=host.split(':')[0]
-    addr = socket.getaddrinfo(host, port)[0][-1]
-    s = socket.socket()
-    try: s.settimeout(60)
-    except: pass
-    s.connect(addr)
-    s.send(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
- 
-    # Status, msg etc.
-    _, status, _ = hal.socket_readline(s).split(None, 2)
-
-    if status != b'200':
-        logger.error('Status {} trying to get '.format(status),source)
-        f.close()
+        # Status, msg etc.
+        version, status, msg = hal.socket_readline(s).split(None, 2)
+    
+        # Skip headers
+        while hal.socket_readline(s) != b'\r\n':
+            pass
+    
+        # Read data
+        content = None
+        if globals.payload_encrypter: lenght = 40
+        prev_last = None
+        while True:
+            if globals.payload_encrypter:
+                data = str(s.recv(lenght), 'utf8')
+                if data[0]=='"':
+                    data = data[1:]
+                if len(data) != 39: 
+                    break
+                if dest:
+                    # load current, check if prev[-1] + current[1] == \n,
+                    current=globals.payload_encrypter.decrypt_text(data).replace('\\n','\n')
+                    if prev_last is not None:
+                        if prev_last =='\\' and current[0] == 'n':
+                            f.write('\n'+ current[1:-1])
+                        else:
+                            f.write(prev_last+current[:-1])
+                    else:
+                        # We start from position 1 to avoid the extra "' char added by the backend
+                        f.write(current[1:-1])
+                    prev_last=current[-1]
+                    # ..and we will never write the last prev_last as it is the '"' char added by the backend
+                else:
+                    if content is None: content=''
+                    content += globals.payload_encrypter.decrypt_text(data)
+                lenght=39
+            else:
+                data = hal.socket_readline(s)
+                if data:
+                    if dest:
+                        f.write(str(data, 'utf8').replace('\\n','\n'))
+                    else: 
+                        content = str(data, 'utf8')
+                        break   
+                else:
+                    break
+        return {'version':version, 'status':status, 'msg':msg, 'content':content}
+    except:
+        raise
+    finally:
+        if dest and f:
+            f.close()
         s.close()
-        return False
+        
+        
 
-    # Skip headers
-    while hal.socket_readline(s) != b'\r\n': 
-        pass 
+def download(file_name, version, dest):
+    logger.info('Downloading {} in'.format(file_name),dest) 
+    post(globals.backend_addr+'/api/v1/apps/get/', {'file_name':file_name, 'version':version, 'token':globals.token}, dest=dest)
 
-    while True:
-        data = s.recv(100)
-        if data:
-            f.write((str(data, 'utf8')))
-        else:
-            break
-    f.close()
-    s.close()
-    return True

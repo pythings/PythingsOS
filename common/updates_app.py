@@ -13,9 +13,7 @@ def update_app(version):
     except: pass
     for file_name in files:
         if file_name in ['worker_task.py','management_task.py']:
-            logger.info('Downloading "{}"'.format(file_name))
-            if not download('{}/api/v1/apps/get/?file={}&version={}&token={}'.format(globals.backend_addr, file_name, version, globals.token), '{}/{}'.format(fspath, file_name)): 
-                raise Exception('Error while donaloding')
+            download(file_name=file_name, version=version, dest='{}/{}'.format(fspath, file_name)) 
         else:
             logger.info('NOT downloading "{}" as in forbidden list'.format(file_name))
     with open(fspath+'/app.py','w') as f:
