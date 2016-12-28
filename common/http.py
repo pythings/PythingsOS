@@ -8,7 +8,14 @@ def post(url, data, dest=None):
     try: token = globals.token
     except AttributeError: token=None
     if  globals.payload_encrypter and token:
-        data =  {'encrypted': globals.payload_encrypter.encrypt_text(json.dumps(data))}
+        data = json.dumps(data)
+        # Encrypt progressively
+        encrypted=''
+        while data:
+            encrypted +=  globals.payload_encrypter.encrypt_text(data[:12])
+            data = data[12:]
+        data =  {'encrypted': encrypted}
+
     if token: data['token'] = token
     port = 443 if hal.HW_SUPPORTS_SSL else 80
     host, path = url.split('/', 1)
