@@ -1,1 +1,1 @@
-arch = 'Python3'
+arch = 'Python'

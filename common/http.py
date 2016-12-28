@@ -59,7 +59,7 @@ def post(url, data, dest=None):
                     data = data[1:]
                 if len(data) != 39: 
                     break
-                if dest:
+                if dest and status == b'200':
                     # load current, check if prev[-1] + current[1] == \n,
                     current=globals.payload_encrypter.decrypt_text(data).replace('\\n','\n')
                     if prev_last is not None:
@@ -93,10 +93,5 @@ def post(url, data, dest=None):
         if dest and f:
             f.close()
         s.close()
-        
-        
 
-def download(file_name, version, dest):
-    logger.info('Downloading {} in'.format(file_name),dest) 
-    post(globals.backend_addr+'/api/v1/apps/get/', {'file_name':file_name, 'version':version, 'token':globals.token}, dest=dest)
 

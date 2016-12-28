@@ -6,7 +6,7 @@ fi
 
 echo "version='$1'" > common/version.py
 
-architectures=( 'MicroPython' 'esp8266' 'esp8266_esp-12' )
+architectures=( 'MicroPython' 'esp8266' 'esp8266_esp-12' 'Python')
 for dir in "${architectures[@]}"
 do
     echo $dir
