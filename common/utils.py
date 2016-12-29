@@ -17,20 +17,20 @@ def unquote(s):
 def load_param(param, default=None):
     try:
         with open(fspath+'/{}'.format(param),'r') as f:
-            param = f.readline()
+            param = f.readline().strip()
         return param
     except Exception as e:
         return default
 
-def load_settings():
+def load_stg():
     import json
-    settings = {}
+    stg = {}
     try:
-        with open(fspath+'/settings.json','r') as f:
-            settings = json.loads(f.read())
+        with open(fspath+'/stg.json','r') as f:
+            stg = json.loads(f.read())
     except Exception as e:
-        print('Cannot open settings.py and load the json content: {}'.format(e))
-    return settings
+        print('Cannot open stg.py and load the json content: {}'.format(e))
+    return stg
 
 def mv(source,dest):
     try:

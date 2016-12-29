@@ -25,12 +25,12 @@ def start(path=None):
     hal.init()
 
     # Get Pythings version
-    globals.running_os_version = common.get_running_os_version()
+    globals.rpv = common.get_rpv()
 
     print('\n|------------------------|')
     print('|  Starting Pythings :)  |')
     print('|------------------------|')
-    print(' Version: {} ({})\n'.format(globals.running_os_version, arch))
+    print(' Version: {} ({})\n'.format(globals.rpv, arch))
     import os
 
     try:
@@ -63,13 +63,13 @@ def start(path=None):
         hal.WLAN.ap_active(False)
         hal.WLAN.sta_active(True)
 
-    # Start loading settings and parameters
-    from utils import load_settings
-    globals.settings = load_settings()
+    # Start loading stg and parameters
+    from utils import load_stg
+    globals.stg = load_stg()
     globals.payload_encrypter = None # Initalization
 
-    # Load backend_addr: the local param wins 
-    globals.backend_addr = load_param('backend_addr', None)
+    # Load bea: the local param wins 
+    globals.bea = load_param('bea', None)
 
     # Load aid and tid: only local param or default
     globals.aid = load_param('aid', None)
@@ -77,62 +77,64 @@ def start(path=None):
     globals.tid = load_param('tid', None)
     if globals.tid is None: globals.tid = hal.get_tuuid()
 
-    if not globals.backend_addr:
-        backend_addr_overrided = False
-        if 'backend_addr' in globals.settings and globals.settings['backend_addr']:
-            globals.backend_addr = globals.settings['backend_addr']
+    if not globals.bea:
+        bea_overrided = False
+        if 'bea' in globals.stg and globals.stg['bea']:
+            globals.bea = globals.stg['bea']
         else:
-            globals.backend_addr = 'backend.pythings.io'
+            globals.bea = 'backend.pythings.io'
     else:
-        backend_addr_overrided = True
+        bea_overrided = True
 
-    # Load pool: the local param wins 
-    globals.pool = load_param('pool', None)
-    if not globals.pool:
-        if 'pool' in globals.settings and globals.settings['pool']:
-            globals.pool = globals.settings['pool']
+    # Load pln: the local param wins 
+    globals.pln = load_param('pln', None)
+    if not globals.pln:
+        if 'pln' in globals.stg and globals.stg['pln']:
+            globals.pln = globals.stg['pln']
         else:
-            globals.pool = 'production'
+            globals.pln = 'production'
             
-    globals.frozen_os = hal.is_os_frozen()
+    globals.fzp = hal.is_os_frozen()
 
     # Tasks placeholders
     globals.app_worker_task = None
     globals.app_management_task = None
       
     # Report
-    logger.info('Running with backend_addr="{}" and aid="{}"'.format(globals.backend_addr, globals.aid))
+    logger.info('Running with bea="{}" and aid="{}"'.format(globals.bea, globals.aid))
 
     # Get app version:    
-    globals.running_app_version = common.get_running_app_version()
+    globals.rav = common.get_rav()
     gc.collect()
 
     # Register and perform the first management task call on "safe" backend, if not overrided
-    if not backend_addr_overrided:
-        backend_addr_set = globals.backend_addr
-        globals.backend_addr ='backend.pythings.io'
+    if not bea_overrided:
+        bea_set = globals.bea
+        globals.bea ='backend.pythings.io'
     
     # Pre-register if payload encryption activated
-    if hal.SW_PAYLOAD_ENCRYPTER:
+    use_pye = globals.stg['pye'] if 'pye' in globals.stg else True
+    if hal.SW_PAYLOAD_ENCRYPTER and use_pye:
+        logger.info('Enabling Payload Encryption and preregistering')
         globals.payload_encrypter = hal.SW_PAYLOAD_ENCRYPTER(comp_mode=True)
         from register import preregister
-        token = preregister()
-        globals.token = token
-        logger.info('Got token: {}'.format(globals.token))
+        tok = preregister()
+        globals.tok = tok
+        logger.info('Got tok: {}'.format(globals.tok))
         gc.collect()
         
     # Register yourself, and start a new session
     from register import register
-    token, epoch_s = register()
+    tok, eph = register()
     if not globals.payload_encrypter:
-        globals.token = token
-        logger.info('Got token: {}'.format(globals.token))
+        globals.tok = tok
+        logger.info('Got tok: {}'.format(globals.tok))
     gc.collect()
     
     # Sync time.
-    chronos = hal.Chronos(epoch_s)
+    chronos = hal.Chronos(eph)
 
-    # Call system management (will update App/Pythings versions  and settings if required)
+    # Call system management (will update App/Pythings versions  and stg if required)
     logger.info('Calling system management (preloop)')
     from management import system_management_task
     system_management_task(chronos)
@@ -140,9 +142,9 @@ def start(path=None):
     gc.collect()
     
     # Set back host to the proper one
-    if not backend_addr_overrided:
-        globals.backend_addr=backend_addr_set
-        del backend_addr_set
+    if not bea_overrided:
+        globals.bea=bea_set
+        del bea_set
     gc.collect()
 
     # Init app
@@ -165,8 +167,8 @@ def start(path=None):
         common.run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
 
     # Setup intervals
-    worker_interval = int(globals.settings['worker_interval']) if 'worker_interval' in globals.settings else 300
-    management_interval = int(globals.settings['management_interval']) if 'management_interval' in globals.settings else 60
+    worker_interval = int(globals.stg['worker_interval']) if 'worker_interval' in globals.stg else 300
+    management_interval = int(globals.stg['management_interval']) if 'management_interval' in globals.stg else 60
 
     # Start main loop
     loop_count = 0

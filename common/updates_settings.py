@@ -4,17 +4,11 @@ import logger
 from hal import fspath
 
 def update_settings(content):
-    logger.debug('Storing received settings ({} <--> {})'.format(content['data']['settings'], globals.settings))
-    # TODO: Try load contents to validate?
-    # Save backup for the settings file:
-    from utils import mv
-    mv('/settings.json','/settings_bk.json')
-    # Ok, dump new settings
-    f = open(fspath+'/settings.json', 'w')
+    logger.debug('Storing received settings ({} <--> {})'.format(content['stg'], globals.stg))
+    f = open(fspath+'/stg.json', 'w')
     import json
-    f.write(json.dumps(content['data']['settings']))
+    f.write(json.dumps(content['stg']))
     f.close()
-    globals.settings = content['data']['settings']
     logger.info('Got new, updated settings')
 
 

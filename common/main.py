@@ -4,10 +4,10 @@ import sys
 
 sys.path.append('/')
 import hal
-from utils import load_settings
+from utils import load_stg
 
 try:
-    pythings_version = load_settings()['pythings_version']
+    pythings_version = load_stg()['pythings_version']
     if not pythings_version.upper() == 'FACTORY':
         print('Trying to load Pythings version {}'.format(pythings_version))
         path = '/'+pythings_version
@@ -35,7 +35,7 @@ except Exception as e:
     print('Error, proceeding with factory defaults: ',type(e), str(e))
     path='/'
 
-del load_settings
+del load_stg
 
         
 # Execute Pythings framework

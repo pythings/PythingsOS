@@ -5,9 +5,10 @@ import hal
 import globals
 
 def post(url, data, dest=None):
-    try: token = globals.token
-    except AttributeError: token=None
-    if  globals.payload_encrypter and token:
+    print('POST: url',url)
+    try: tok = globals.tok
+    except AttributeError: tok=None
+    if  globals.payload_encrypter and tok:
         data = json.dumps(data)
         # Encrypt progressively
         encrypted=''
@@ -16,19 +17,20 @@ def post(url, data, dest=None):
             data = data[12:]
         data =  {'encrypted': encrypted}
 
-    if token: data['token'] = token
+    if tok: data['tok'] = tok
     port = 443 if hal.HW_SUPPORTS_SSL else 80
     host, path = url.split('/', 1)
     if ':' in host:
         port=int(host.split(':')[1])
         host=host.split(':')[0]
-    logger.info('Calling POST "{}:{}" with data'.format(url,port),data)
+    logger.info('Calling POST "{}:{}/{}" with data'.format(host,port,path),data)
     addr = socket.getaddrinfo(host, port)[0][-1]
     s = socket.socket()
     try: s.settimeout(60)
     except: pass
 
-    if hal.HW_SUPPORTS_SSL:
+    use_ssl = globals.stg['ssl'] if 'ssl' in globals.stg else True
+    if hal.HW_SUPPORTS_SSL and use_ssl:
         s = hal.socket_ssl(s)
 
     if dest: f = None # If socket connect fails do not have an exception when closing file

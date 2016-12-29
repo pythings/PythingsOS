@@ -6,7 +6,7 @@ from hal import fspath
 from arch import arch
 
 def update_app(version):
-    files = apost(api='/apps/get/', data={'version':version, 'list':True})['content']['data']
+    files = apost(api='/apps/get/', data={'version':version, 'list':True})['content']
     # First of all remove /app.py to say that there is no valid App yet (download is in progress)
     import os
     try: os.remove(fspath+'/app.py')

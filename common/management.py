@@ -14,30 +14,30 @@ def system_management_task(chronos):
     if response and 'content' in response: 
         content = response['content']
     else:
-        logger.error('Error in receiving/parsing settings, skipping the rest of the management task!')
+        logger.error('Error in receiving/parsing stg, skipping the rest of the management task!')
         return
     del response
     gc.collect()
 
-    # Update settings, OS and App.
+    # Update stg, OS and App.
     try:
-        if 'settings' in content['data'] and content['data']['settings'] != globals.settings:
-            updates='settings'
+        if 'stg' in content and content['stg'] != globals.stg:
+            updates='Settings'
             from updates_settings import update_settings
             update_settings(content)
 
-        elif not globals.frozen_os and globals.settings['pythings_version'].upper() != 'FACTORY' and globals.settings['pythings_version'] != globals.running_os_version:
-            updates='PythingsOS' 
-            logger.debug('Downloading the new pythings (running version = "{}"; required version = "{}")'.format(globals.running_os_version, globals.settings['pythings_version']))
+        elif not globals.fzp and globals.stg['pythings_version'].upper() != 'FACTORY' and globals.stg['pythings_version'] != globals.rpv:
+            updates='Pythings' 
+            logger.debug('Downloading the new pythings (running version = "{}"; required version = "{}")'.format(globals.rpv, globals.stg['pythings_version']))
             from updates_pythings import update_pythings
-            update_pythings(globals.settings['pythings_version'])
+            update_pythings(globals.stg['pythings_version'])
 
         else:
-            if globals.settings['app_version'] != globals.running_app_version:
+            if globals.stg['sav'] != globals.rav:
                 updates='App' 
-                logger.debug('Downloading the new app (running version = "{}"; required version = "{}")'.format(globals.running_app_version, globals.settings['app_version']))
+                logger.debug('Downloading the new app (running version = "{}"; required version = "{}")'.format(globals.rav, globals.stg['sav']))
                 from updates_app import update_app
-                update_app(globals.settings['app_version'])
+                update_app(globals.stg['sav'])
 
     except Exception as e:
         print(hal.get_traceback(e))
@@ -54,8 +54,8 @@ def system_management_task(chronos):
         hal.reboot()
 
     # Data = remote command sent, here we use a sample
-    app_data     = content['data']['app_data'] if 'app_data' in content['data'] else None
-    app_data_id  = content['data']['app_data_id'] if 'app_data_id' in content['data'] else None
+    app_data     = content['apd'] if 'apd' in content else None
+    app_data_id  = content['did'] if 'did' in content else None
     app_data_rep = None
 
     # Call App's management
@@ -64,7 +64,7 @@ def system_management_task(chronos):
             logger.debug('Mem free:', hal.mem_free())
             app_data_rep=globals.app_management_task.call(chronos, app_data)
             if app_data_id:
-                run_controlled(2,report,what='management', status='OK', message={'app_data_id':app_data_id,'app_data_rep':app_data_rep})
+                run_controlled(2,report,what='management', status='OK', message={'did':app_data_id,'rep':app_data_rep})
             else:
                 run_controlled(2,report,what='management', status='OK')
                 

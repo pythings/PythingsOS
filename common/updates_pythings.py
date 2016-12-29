@@ -9,7 +9,7 @@ from arch import arch
 
 def update_pythings(version):
     
-    files = apost(api='/pythings/get/', data={'version':version, 'list':True, 'arch':arch})['content']['data']
+    files = apost(api='/pythings/get/', data={'version':version, 'list':True, 'arch':arch})['content']
 
     path = fspath+'/'+version
     try:

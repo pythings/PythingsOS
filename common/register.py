@@ -12,12 +12,12 @@ def preregister():
                               apost,
                               api='/things/preregister/',
                               data={'key': Srsa(pubkey).encrypt_text(str(globals.payload_encrypter.key)),
-                                    'type': 'aes128ecb',
-                                    'enc': 'srsa1'})        
+                                    'kty': 'aes128ecb',
+                                    'ken': 'srsa1'})        
     if not response:
         raise Exception('Empty Response from preregister')
     
-    return response['content']['data']['token']
+    return response['content']['tok']
 
 
 
@@ -28,12 +28,12 @@ def register():
                                      api='/things/register/',
                                      data={'tid':globals.tid,
                                            'aid': globals.aid,
-                                           'running_app_version': globals.running_app_version,
-                                           'running_os_version': globals.running_os_version,
-                                           'pool': globals.pool,
-                                           'settings': globals.settings,
-                                           'frozen_os':globals.frozen_os})
+                                           'rav': globals.rav,
+                                           'rpv': globals.rpv,
+                                           'pln': globals.pln,
+                                           'stg': globals.stg,
+                                           'fzp':globals.fzp})
     if not response:
         raise Exception('Empty Response from register')
     
-    return (response['content']['data']['token'], response['content']['data']['epoch_s'])
+    return (response['content']['tok'], response['content']['eph'])
