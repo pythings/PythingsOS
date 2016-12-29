@@ -85,7 +85,8 @@ def reset_cause():
     return machine.reset_cause()
 
 def reboot():
-    machine.reset()    
+    machine.reset()
+    time.sleep(3)
 
 # Regular expression are system-dependent
 import ure as re

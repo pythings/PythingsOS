@@ -22,7 +22,7 @@ def post(url, data, dest=None):
     if ':' in host:
         port=int(host.split(':')[1])
         host=host.split(':')[0]
-    logger.info('Calling POST "{}:{}" with data'.format(url,port),data)
+    #logger.info('Calling POST "{}:{}" with data'.format(url,port),data)
     addr = socket.getaddrinfo(host, port)[0][-1]
     s = socket.socket()
     try: s.settimeout(60)
@@ -36,10 +36,10 @@ def post(url, data, dest=None):
     if dest: f = open(dest, 'w')
     try:
         s.send(bytes('%s /%s HTTP/1.0\r\nHost: %s\r\n' % ('POST', path, host), 'utf8'))
-    
+
         content = json.dumps(data)
         content_type = 'application/json'
-    
+
         if content is not None:
             s.send(bytes('content-length: %s\r\n' % len(content), 'utf8'))
             s.send(bytes('content-type: %s\r\n' % content_type, 'utf8'))
@@ -56,33 +56,46 @@ def post(url, data, dest=None):
             pass
     
         # Read data
-        content = None
-        if globals.payload_encrypter: lenght = 40
+        content   = None
         prev_last = None
+        stop      = False
         while True:
+            data=''
             if globals.payload_encrypter:
-                data = str(s.recv(lenght), 'utf8')
-                if data[0]=='"':
-                    data = data[1:]
-                if len(data) != 39: 
+                if content is None:
+                    str(s.recv(1), 'utf8')
+
+                while len(data) < 39:
+                    last = str(s.recv(1), 'utf8')
+                    if len(last) == 0:
+                        stop=True
+                        break
+                    data += last
+                if stop:
                     break
-                if dest and status == b'200':
-                    # load current, check if prev[-1] + current[1] == \n,
-                    current=globals.payload_encrypter.decrypt_text(data).replace('\\n','\n')
+                if data=='"':
+                    continue
+                #logger.info('Received data', data)
+                if dest and status == b'200' and data !='"':
+                    # load content, check if prev[-1] + content[1] == \n,
+                    content = globals.payload_encrypter.decrypt_text(data).replace('\\n','\n')
+                    #logger.info('Decrypted data', data)
                     if prev_last is not None:
-                        if prev_last =='\\' and current[0] == 'n':
-                            f.write('\n'+ current[1:-1])
+                        if prev_last =='\\' and content[0] == 'n':
+                            f.write('\n'+ content[1:-1])
+                            #logger.info('Writing data', content[1:-1])
                         else:
-                            f.write(prev_last+current[:-1])
+                            f.write(prev_last+content[:-1])
+                            #logger.info('Writing data', prev_last+content[:-1])
+
                     else:
                         # We start from position 1 to avoid the extra "' char added by the backend
-                        f.write(current[1:-1])
-                    prev_last=current[-1]
+                        f.write(content[1:-1])
+                    prev_last = content[-1]
                     # ..and we will never write the last prev_last as it is the '"' char added by the backend
                 else:
                     if content is None: content=''
                     content += globals.payload_encrypter.decrypt_text(data)
-                lenght=39
             else:
                 data = hal.socket_readline(s)
                 if data:
@@ -100,5 +113,4 @@ def post(url, data, dest=None):
         if dest and f:
             f.close()
         s.close()
-
 
