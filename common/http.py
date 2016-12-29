@@ -22,7 +22,7 @@ def post(url, data, dest=None):
     if ':' in host:
         port=int(host.split(':')[1])
         host=host.split(':')[0]
-    #logger.info('Calling POST "{}:{}" with data'.format(url,port),data)
+    logger.info('Calling POST "{}:{}" with data'.format(url,port),data)
     addr = socket.getaddrinfo(host, port)[0][-1]
     s = socket.socket()
     try: s.settimeout(60)
@@ -75,9 +75,9 @@ def post(url, data, dest=None):
                     break
                 if data=='"':
                     continue
-                #logger.info('Received data', data)
+                logger.info('Received encrypted data', data)
                 if dest and status == b'200' and data !='"':
-                    # load content, check if prev[-1] + content[1] == \n,
+                    # load content, check if prev_content[-1] + content[1] == \n,
                     content = globals.payload_encrypter.decrypt_text(data).replace('\\n','\n')
                     #logger.info('Decrypted data', data)
                     if prev_last is not None:
