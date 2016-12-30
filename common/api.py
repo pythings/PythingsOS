@@ -5,7 +5,7 @@ import json
 from http import post
 import gc
 
-version='v1'
+version='v0.2'
 
 # Utility
 def check_response(response):
