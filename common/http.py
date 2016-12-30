@@ -6,9 +6,9 @@ import globals
 
 def post(url, data, dest=None):
     print('POST: url',url)
-    try: tok = globals.tok
-    except AttributeError: tok=None
-    if  globals.payload_encrypter and tok:
+    try: token = globals.token
+    except AttributeError: token=None
+    if  globals.payload_encrypter and token:
         data = json.dumps(data)
         # Encrypt progressively
         encrypted=''
@@ -17,7 +17,7 @@ def post(url, data, dest=None):
             data = data[12:]
         data =  {'encrypted': encrypted}
 
-    if tok: data['tok'] = tok
+    if token: data['token'] = token
     port = 443 if hal.HW_SUPPORTS_SSL else 80
     host, path = url.split('/', 1)
     if ':' in host:
@@ -29,7 +29,7 @@ def post(url, data, dest=None):
     try: s.settimeout(60)
     except: pass
 
-    use_ssl = globals.stg['ssl'] if 'ssl' in globals.stg else True
+    use_ssl = globals.settings['ssl'] if 'ssl' in globals.settings else True
     if hal.HW_SUPPORTS_SSL and use_ssl:
         s = hal.socket_ssl(s)
 

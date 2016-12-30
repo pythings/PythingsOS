@@ -1,5 +1,5 @@
 
-# Constants (stg)
+# Constants (settings)
 HW_SUPPORTS_DEEPSLEEP  = False
 HW_SUPPORTS_RESETCAUSE = False
 HW_SUPPORTS_LED        = False
@@ -59,9 +59,9 @@ import your_regex_module as re
 
 # Time management is hardware-dependent
 class Chronos(object):
-    def __init__(self, eph_now=0):
+    def __init__(self, epoch_now=0):
         raise NotImplementedError()
-    def eph(self):
+    def epoch(self):
         raise NotImplementedError()
 
 # Socket readline, write and ssl wrapper are system-dependent

@@ -22,7 +22,7 @@ def run_controlled(retr, function, **kwargs):
             import gc
             gc.collect()
 
-def get_rav():
+def get_app_version():
     try:
         from app import version as app_version
     except Exception as e:
@@ -40,7 +40,7 @@ def get_rav():
             app_version='0'
     return app_version
 
-def get_rpv():
+def get_pythings_version():
     try:
         from version import version
     except Exception as e:

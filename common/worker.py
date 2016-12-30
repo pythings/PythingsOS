@@ -9,12 +9,12 @@ def system_worker_task(chronos):
     
     # Call App's worker    
     if globals.app_worker_task:
-        app_data = None
+        worker_msg = None
         try:
             logger.debug('Mem free:', hal.mem_free())
-            app_data = globals.app_worker_task.call(chronos)
-            if app_data:
-                run_controlled(2,apost,api='/msg/drop/', data={'msg': app_data })
+            worker_msg = globals.app_worker_task.call(chronos)
+            if worker_msg:
+                run_controlled(2,apost,api='/apps/worker/', data={'msg': worker_msg })
             report('worker','OK')
         except Exception as e:
             print(hal.get_traceback(e))

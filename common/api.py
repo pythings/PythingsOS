@@ -18,7 +18,7 @@ def check_response(response):
 
 # Apis
 def apost(api, data={}):
-    url = '{}/api/{}{}'.format(globals.bea,version,api)
+    url = '{}/api/{}{}'.format(globals.backend,version,api)
     logger.debug('Calling API {} with data'.format(url),data)
     response = post(url, data=data)
     gc.collect()
@@ -31,11 +31,11 @@ def apost(api, data={}):
 
 def download(file_name, version, dest, what, arch):
     logger.info('Downloading {} in'.format(file_name),dest) 
-    response = post(globals.bea+'/api/v1/'+what+'/get/', {'file_name':file_name, 'version':version, 'tok':globals.tok, 'arch':arch}, dest=dest)
+    response = post(globals.backend+'/api/v1/'+what+'/get/', {'file_name':file_name, 'version':version, 'token':globals.token, 'arch':arch}, dest=dest)
     check_response(response)
 
 # Report
 def report(what, status, message=None):
     logger.info('Reporting "{}" as "{}" with message "{}"'.format(what,status,message))
-    response = apost('/things/report/', {'what':what,'status': status,'message': message})
+    response = apost('/things/report/', {'what':what,'status': status,'msg': message})
     logger.debug('Response:',response)

@@ -22,15 +22,15 @@ def load_param(param, default=None):
     except Exception as e:
         return default
 
-def load_stg():
+def load_settings():
     import json
-    stg = {}
+    settings = {}
     try:
-        with open(fspath+'/stg.json','r') as f:
-            stg = json.loads(f.read())
+        with open(fspath+'/settings.json','r') as f:
+            settings = json.loads(f.read())
     except Exception as e:
-        print('Cannot open stg.py and load the json content: {}'.format(e))
-    return stg
+        print('Cannot open settings.py and load the json content: {}'.format(e))
+    return settings
 
 def mv(source,dest):
     try:

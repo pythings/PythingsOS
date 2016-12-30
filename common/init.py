@@ -25,12 +25,12 @@ def start(path=None):
     hal.init()
 
     # Get Pythings version
-    globals.rpv = common.get_rpv()
+    globals.pythings_version = common.get_pythings_version()
 
     print('\n|------------------------|')
     print('|  Starting Pythings :)  |')
     print('|------------------------|')
-    print(' Version: {} ({})\n'.format(globals.rpv, arch))
+    print(' Version: {} ({})\n'.format(globals.pythings_version, arch))
     import os
 
     try:
@@ -45,14 +45,14 @@ def start(path=None):
     sys.path.append(hal.fspath)
     
     if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN:
-        websetup_timeout = load_param('websetup_timeout', 60)
+        smt = load_param('smt', 60)
         # Start AP config mode if required
         if hal.reset_cause() == hal.HARD_RESET:
-            if websetup_timeout:
+            if smt:
                 gc.collect()
                 if hal.HW_SUPPORTS_LED: hal.LED.on()
                 from websetup import websetup
-                websetup(timeout_s=websetup_timeout, lock_session=True)
+                websetup(timeout_s=smt, lock_session=True)
                 if hal.HW_SUPPORTS_LED: hal.LED.off()
                 # Reset (will start without AP config mode since this is a soft reset)
                 logger.info('Resetting...')
@@ -63,13 +63,13 @@ def start(path=None):
         hal.WLAN.ap_active(False)
         hal.WLAN.sta_active(True)
 
-    # Start loading stg and parameters
-    from utils import load_stg
-    globals.stg = load_stg()
+    # Start loading settings and parameters
+    from utils import load_settings
+    globals.settings = load_settings()
     globals.payload_encrypter = None # Initalization
 
-    # Load bea: the local param wins 
-    globals.bea = load_param('bea', None)
+    # Load backend: the local param worker_intervals 
+    globals.backend = load_param('backend', None)
 
     # Load aid and tid: only local param or default
     globals.aid = load_param('aid', None)
@@ -77,64 +77,64 @@ def start(path=None):
     globals.tid = load_param('tid', None)
     if globals.tid is None: globals.tid = hal.get_tuuid()
 
-    if not globals.bea:
-        bea_overrided = False
-        if 'bea' in globals.stg and globals.stg['bea']:
-            globals.bea = globals.stg['bea']
+    if not globals.backend:
+        backend_overrided = False
+        if 'backend' in globals.settings and globals.settings['backend']:
+            globals.backend = globals.settings['backend']
         else:
-            globals.bea = 'backend.pythings.io'
+            globals.backend = 'backend.pythings.io'
     else:
-        bea_overrided = True
+        backend_overrided = True
 
-    # Load pln: the local param wins 
-    globals.pln = load_param('pln', None)
-    if not globals.pln:
-        if 'pln' in globals.stg and globals.stg['pln']:
-            globals.pln = globals.stg['pln']
+    # Load pool: the local param worker_intervals 
+    globals.pool = load_param('pool', None)
+    if not globals.pool:
+        if 'pool' in globals.settings and globals.settings['pool']:
+            globals.pool = globals.settings['pool']
         else:
-            globals.pln = 'production'
+            globals.pool = 'production'
             
-    globals.fzp = hal.is_os_frozen()
+    globals.frozen = hal.is_os_frozen()
 
     # Tasks placeholders
     globals.app_worker_task = None
     globals.app_management_task = None
       
     # Report
-    logger.info('Running with bea="{}" and aid="{}"'.format(globals.bea, globals.aid))
+    logger.info('Running with backend="{}" and aid="{}"'.format(globals.backend, globals.aid))
 
     # Get app version:    
-    globals.rav = common.get_rav()
+    globals.app_version = common.get_app_version()
     gc.collect()
 
     # Register and perform the first management task call on "safe" backend, if not overrided
-    if not bea_overrided:
-        bea_set = globals.bea
-        globals.bea ='backend.pythings.io'
+    if not backend_overrided:
+        backend_set = globals.backend
+        globals.backend ='backend.pythings.io'
     
     # Pre-register if payload encryption activated
-    use_pye = globals.stg['pye'] if 'pye' in globals.stg else True
-    if hal.SW_PAYLOAD_ENCRYPTER and use_pye:
+    use_payload_encryption = globals.settings['payload_encryption'] if 'payload_encryption' in globals.settings else True
+    if hal.SW_PAYLOAD_ENCRYPTER and use_payload_encryption:
         logger.info('Enabling Payload Encryption and preregistering')
         globals.payload_encrypter = hal.SW_PAYLOAD_ENCRYPTER(comp_mode=True)
         from register import preregister
-        tok = preregister()
-        globals.tok = tok
-        logger.info('Got tok: {}'.format(globals.tok))
+        token = preregister()
+        globals.token = token
+        logger.info('Got token: {}'.format(globals.token))
         gc.collect()
         
     # Register yourself, and start a new session
     from register import register
-    tok, eph = register()
+    token, epoch = register()
     if not globals.payload_encrypter:
-        globals.tok = tok
-        logger.info('Got tok: {}'.format(globals.tok))
+        globals.token = token
+        logger.info('Got token: {}'.format(globals.token))
     gc.collect()
     
     # Sync time.
-    chronos = hal.Chronos(eph)
+    chronos = hal.Chronos(epoch)
 
-    # Call system management (will update App/Pythings versions  and stg if required)
+    # Call system management (will update App/Pythings versions  and settings if required)
     logger.info('Calling system management (preloop)')
     from management import system_management_task
     system_management_task(chronos)
@@ -142,9 +142,9 @@ def start(path=None):
     gc.collect()
     
     # Set back host to the proper one
-    if not bea_overrided:
-        globals.bea=bea_set
-        del bea_set
+    if not backend_overrided:
+        globals.backend=backend_set
+        del backend_set
     gc.collect()
 
     # Init app
@@ -167,8 +167,8 @@ def start(path=None):
         common.run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
 
     # Setup intervals
-    worker_interval = int(globals.stg['worker_interval']) if 'worker_interval' in globals.stg else 300
-    management_interval = int(globals.stg['management_interval']) if 'management_interval' in globals.stg else 60
+    worker_interval = int(globals.settings['worker_interval']) if 'worker_interval' in globals.settings else 300
+    management_interval = int(globals.settings['management_interval']) if 'management_interval' in globals.settings else 60
 
     # Start main loop
     loop_count = 0
