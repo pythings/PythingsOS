@@ -17,20 +17,21 @@ import json
 from http import post
 import gc
 
-version='v0.2'
+apiver='v0.2'
 
 # Utility
 def check_response(response):
     if response['status'] != b'200':
         try:
             msg=response['content']
+            if not msg: msg=response 
         except Exception:
             msg=response
         raise Exception(msg)
 
 # Apis
 def apost(api, data={}):
-    url = '{}/api/{}{}'.format(globals.backend,version,api)
+    url = '{}/api/{}{}'.format(globals.backend,apiver,api)
     logger.debug('Calling API {} with data'.format(url),data)
     response = post(url, data=data)
     gc.collect()
@@ -43,7 +44,7 @@ def apost(api, data={}):
 
 def download(file_name, version, dest, what, arch):
     logger.info('Downloading {} in'.format(file_name),dest) 
-    response = post(globals.backend+'/api/v1/'+what+'/get/', {'file_name':file_name, 'version':version, 'token':globals.token, 'arch':arch}, dest=dest)
+    response = post(globals.backend+'/api/'+apiver+'/'+what+'/get/', {'file_name':file_name, 'version':version, 'token':globals.token, 'arch':arch}, dest=dest)
     check_response(response)
 
 # Report
@@ -115,14 +116,14 @@ def get_pythings_version():
 
     print('Writing',path+'/files.txt')
     with open(path+'/files.txt','w') as f:
-        f.write('''file:1334:api.py
+        f.write('''file:1378:api.py
 file:17:arch.py
 file:1778:common.py
 file:417:files.txt
 file:0:globals.py
 file:2652:hal.py
 file:764:handle_main_error.py
-file:4270:http.py
+file:4453:http.py
 file:6716:init.py
 file:662:logger.py
 file:1328:main.py
@@ -367,15 +368,15 @@ def post(url, data, dest=None):
                     break
                 if data=='"':
                     continue
-                logger.info('Received encrypted data', data)
+                logger.info('Received encrypted data', data.replace('\\n',''))
                 if dest and status == b'200' and data !='"':
                     # load content, check if prev_content[-1] + content[1] == \\n,
                     content = globals.payload_encrypter.decrypt_text(data).replace('\\\\n','\\n')
                     #logger.info('Decrypted data', data)
                     if prev_last is not None:
                         if prev_last =='\\\\' and content[0] == 'n':
-                            f.write('\\n'''')
-        f.write('''+ content[1:-1])
+                       ''')
+        f.write('''     f.write('\\n'+ content[1:-1])
                             #logger.info('Writing data', content[1:-1])
                         else:
                             f.write(prev_last+content[:-1])
@@ -388,7 +389,10 @@ def post(url, data, dest=None):
                     # ..and we will never write the last prev_last as it is the '"' char added by the backend
                 else:
                     if content is None: content=''
-                    content += globals.payload_encrypter.decrypt_text(data)
+                    try:
+                        content += globals.payload_encrypter.decrypt_text(data)
+                    except Exception as e:
+                        logger.error('Cannot decrypt text ({})'.format(e.__class__.__name__))
             else:
                 data = hal.socket_readline(s)
                 if data:
@@ -989,7 +993,7 @@ def parseURL(url):
 
     print('Writing',path+'/version.py')
     with open(path+'/version.py','w') as f:
-        f.write('''version='v0.2-rc1'
+        f.write('''version='v0.2-rc2'
 ''')
         f.write('''''')
 
