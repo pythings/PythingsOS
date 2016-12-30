@@ -5,20 +5,21 @@ import json
 from http import post
 import gc
 
-version='v0.2'
+apiver='v0.2'
 
 # Utility
 def check_response(response):
     if response['status'] != b'200':
         try:
             msg=response['content']
+            if not msg: msg=response 
         except Exception:
             msg=response
         raise Exception(msg)
 
 # Apis
 def apost(api, data={}):
-    url = '{}/api/{}{}'.format(globals.backend,version,api)
+    url = '{}/api/{}{}'.format(globals.backend,apiver,api)
     logger.debug('Calling API {} with data'.format(url),data)
     response = post(url, data=data)
     gc.collect()
@@ -31,7 +32,7 @@ def apost(api, data={}):
 
 def download(file_name, version, dest, what, arch):
     logger.info('Downloading {} in'.format(file_name),dest) 
-    response = post(globals.backend+'/api/v1/'+what+'/get/', {'file_name':file_name, 'version':version, 'token':globals.token, 'arch':arch}, dest=dest)
+    response = post(globals.backend+'/api/'+apiver+'/'+what+'/get/', {'file_name':file_name, 'version':version, 'token':globals.token, 'arch':arch}, dest=dest)
     check_response(response)
 
 # Report

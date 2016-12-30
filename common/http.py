@@ -77,7 +77,7 @@ def post(url, data, dest=None):
                     break
                 if data=='"':
                     continue
-                logger.info('Received encrypted data', data)
+                logger.info('Received encrypted data', data.replace('\n',''))
                 if dest and status == b'200' and data !='"':
                     # load content, check if prev_content[-1] + content[1] == \n,
                     content = globals.payload_encrypter.decrypt_text(data).replace('\\n','\n')
@@ -97,7 +97,10 @@ def post(url, data, dest=None):
                     # ..and we will never write the last prev_last as it is the '"' char added by the backend
                 else:
                     if content is None: content=''
-                    content += globals.payload_encrypter.decrypt_text(data)
+                    try:
+                        content += globals.payload_encrypter.decrypt_text(data)
+                    except Exception as e:
+                        logger.error('Cannot decrypt text ({})'.format(e.__class__.__name__))
             else:
                 data = hal.socket_readline(s)
                 if data:
