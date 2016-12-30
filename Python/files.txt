@@ -1,13 +1,13 @@
 file:1334:api.py
-file:21:arch.py
+file:16:arch.py
 file:1778:common.py
 file:6224:crypto_aes.py
 file:1696:crypto_common.py
 file:9476:crypto_engine_aes128ecb.py
 file:1899:crypto_rsa.py
-file:507:files.txt
+file:529:files.txt
 file:0:globals.py
-file:2118:hal.py
+file:1970:hal.py
 file:764:handle_main_error.py
 file:4270:http.py
 file:6716:init.py
@@ -19,5 +19,6 @@ file:854:updates_app.py
 file:880:updates_pythings.py
 file:354:updates_settings.py
 file:1636:utils.py
+file:7703:websetup.py
 file:865:worker.py
-file:19:version.py
+file:15:version.py

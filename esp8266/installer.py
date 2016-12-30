@@ -17,35 +17,40 @@ import json
 from http import post
 import gc
 
-version='v1'
+version='v0.2'
 
+# Utility
+def check_response(response):
+    if response['status'] != b'200':
+        try:
+            msg=response['content']
+        except Exception:
+            msg=response
+        raise Exception(msg)
+
+# Apis
 def apost(api, data={}):
-    try: token = globals.token
-    except AttributeError: token=None
-    if  globals.payload_encrypter and token:
-        data =  {'encrypted': globals.payload_encrypter.encrypt_text(json.dumps(data))}
-    if token: data['token'] = token
-    url = '{}/api/{}{}'.format(globals.backend_addr,version,api)
+    url = '{}/api/{}{}'.format(globals.backend,version,api)
     logger.debug('Calling API {} with data'.format(url),data)
     response = post(url, data=data)
     gc.collect()
     logger.debug('Got response:',response)
     if response['content'] and response['content'] != '\\n':
         response['content'] = json.loads(response['content']) 
-    if globals.payload_encrypter:
-        decrypted_data = globals.payload_encrypter.decrypt_text(response['content']['data'])
-        response['content']['data'] = json.loads(decrypted_data)
-    logger.debug('Loaded json content and returning')
-
-    if response['status'] != b'200':
-        raise Exception(response['content']['data'])
+    logger.debug('Loaded json content and returning') 
+    check_response(response)
     return response
 
+def download(file_name, version, dest, what, arch):
+    logger.info('Downloading {} in'.format(file_name),dest) 
+    response = post(globals.backend+'/api/v1/'+what+'/get/', {'file_name':file_name, 'version':version, 'token':globals.token, 'arch':arch}, dest=dest)
+    check_response(response)
+
+# Report
 def report(what, status, message=None):
     logger.info('Reporting "{}" as "{}" with message "{}"'.format(what,status,message))
-    response = apost('/things/report/', {'what':what,'status': status,'message': message})
-    logger.debug('Response:',response)
-''')
+    response = apost('/things/report/', {'what':what,'status': status,'msg': message})
+    logger.debug('Response:',response)''')
         f.write('''''')
 
     print('Writing',path+'/arch.py')
@@ -80,7 +85,7 @@ def run_controlled(retr, function, **kwargs):
             import gc
             gc.collect()
 
-def get_running_app_version():
+def get_app_version():
     try:
         from app import version as app_version
     except Exception as e:
@@ -98,7 +103,7 @@ def get_running_app_version():
             app_version='0'
     return app_version
 
-def get_running_os_version():
+def get_pythings_version():
     try:
         from version import version
     except Exception as e:
@@ -110,24 +115,25 @@ def get_running_os_version():
 
     print('Writing',path+'/files.txt')
     with open(path+'/files.txt','w') as f:
-        f.write('''file:1314:api.py
+        f.write('''file:1334:api.py
 file:17:arch.py
-file:1788:common.py
-file:397:files.txt
+file:1778:common.py
+file:417:files.txt
 file:0:globals.py
-file:2241:hal.py
+file:2652:hal.py
 file:764:handle_main_error.py
-file:3828:http.py
-file:6571:init.py
+file:4270:http.py
+file:6716:init.py
 file:662:logger.py
 file:1328:main.py
-file:3365:management.py
-file:1035:updates_app.py
-file:1186:updates_pythings.py
-file:603:updates_settings.py
-file:1706:utils.py
+file:3216:management.py
+file:1962:register.py
+file:854:updates_app.py
+file:880:updates_pythings.py
+file:354:updates_settings.py
+file:1636:utils.py
 file:7703:websetup.py
-file:854:worker.py
+file:865:worker.py
 file:19:version.py
 ''')
         f.write('''''')
@@ -153,9 +159,26 @@ HW_SUPPORTS_WLAN       = True
 # If set to True, disable payload encryption
 HW_SUPPORTS_SSL        = False
 
+# Filesystem (absolute) path
+fspath = '/'
+
+def is_os_frozen():
+    import os
+    try:
+        os.stat(fspath+'/initialized')
+        return False
+    except:
+        return True
+
 # Payload encryption (not needed if SSL support available)
-from crypto_aes import Aes128ecb
-SW_PAYLOAD_ENCRYPTER    = Aes128ecb 
+if is_os_frozen():
+    try:
+        from crypto_aes import Aes128ecb
+        SW_PAYLOAD_ENCRYPTER = Aes128ecb
+    except:
+        SW_PAYLOAD_ENCRYPTER = None
+else:
+    SW_PAYLOAD_ENCRYPTER = None
 
 # Required if RESETCAUSE is supported
 HARD_RESET = 6
@@ -176,7 +199,13 @@ class LED(object):
 class WLAN(object):  
     @staticmethod
     def sta_active(mode):
-        network.WLAN(network.STA_IF).active(mode)
+        sta = network.WLAN(network.STA_IF)
+        sta.active(mode)
+        if mode is True:
+            from utils import connect_wifi, get_wifi_data
+            essid,password = get_wifi_data()
+            if essid:
+                connect_wifi(sta, essid, password)
     @staticmethod
     def ap_active(mode):
         network.WLAN(network.AP_IF).active(mode)
@@ -187,14 +216,6 @@ def get_tuuid():
     mac_b = wlan.config('mac')
     mac_s = ':'.join( [ "%02X" % x for x in mac_b ] )
     return mac_s.replace(':','')
-
-def is_os_frozen():
-    import os
-    try:
-        os.stat(fspath+'/initialized')
-        return False
-    except:
-        return True
 
 def mem_free():
     import gc
@@ -212,9 +233,7 @@ def reset_cause():
 
 def reboot():
     machine.reset()
-    
-# Filesystem (absolute) path
-fspath = '/'
+    time.sleep(3)
 
 # Regular expression are system-dependent
 import ure as re
@@ -231,9 +250,12 @@ class Chronos(object):
         else:
             return time.ticks_ms()/1000
 
-# Socket readline and ssl wrapper are system-dependent
+# Socket readline, write and ssl wrapper are system-dependent
 def socket_readline(s):
     return s.readline()
+
+def socket_write(s,data):
+    s.write(data)
 
 def socket_ssl(s):
     raise NotImplementedError()
@@ -270,134 +292,121 @@ def socket_ssl(s):
 import json
 import logger
 import hal
+import globals
 
-# Note: post and get will load a single line to avoid memory problems in case of error 500
-# pages and so on (Pythings backend will always provide responses in one line).
+def post(url, data, dest=None):
+    print('POST: url',url)
+    try: token = globals.token
+    except AttributeError: token=None
+    if  globals.payload_encrypter and token:
+        data = json.dumps(data)
+        # Encrypt progressively
+        encrypted=''
+        while data:
+            encrypted +=  globals.payload_encrypter.encrypt_text(data[:12])
+            data = data[12:]
+        data =  {'encrypted': encrypted}
 
-def post(url, data):
-    port = 443 if hal.HW_SUPPORTS_SSL else 80 # TODO: port has to go after.
-    url = 'https://'+url if hal.HW_SUPPORTS_SSL else 'http://'+url
-    logger.info('Calling POST "{}" with data '.format(url),data)
-    _, _, host, path = url.split('/', 3)
+    if token: data['token'] = token
+    port = 443 if hal.HW_SUPPORTS_SSL else 80
+    host, path = url.split('/', 1)
     if ':' in host:
         port=int(host.split(':')[1])
         host=host.split(':')[0]
+    logger.info('Calling POST "{}:{}/{}" with data'.format(host,port,path),data)
     addr = socket.getaddrinfo(host, port)[0][-1]
     s = socket.socket()
     try: s.settimeout(60)
     except: pass
 
-    if hal.HW_SUPPORTS_SSL:
+    use_ssl = globals.settings['ssl'] if 'ssl' in globals.settings else True
+    if hal.HW_SUPPORTS_SSL and use_ssl:
         s = hal.socket_ssl(s)
 
-    s.connect(addr) #TODO: Try-except this
-    s.send(bytes('%s /%s HTTP/1.0\\r\\nHost: %s\\r\\n' % ('POST', path, host), 'utf8'))
-
-    content = json.dumps(data)
-    content_type = 'application/json'
-
-    if content is not None:
-        s.send(bytes('content-length: %s\\r\\n' % len(content), 'utf8'))
-        s.send(bytes('content-type: %s\\r\\n' % content_type, 'utf8'))
-        s.send(bytes('\\r\\n', 'utf8'))
-        s.send(bytes(content, 'utf8'))
-    else:
-        s.send(bytes('\\r\\n', 'utf8'))
-
-    # Status, msg etc.
-    version, status, msg = hal.socket_readline(s).split(None, 2)
-
-    # Skip headers
-    while hal.socket_readline(s) != b'\\r\\n':
-        pass
-
-    # Read data
-    content = None
-    while True:
-        data = hal.socket_readline(s)
-        if data:      
-            content = str(data, 'utf8')
-            break   
-        else:
-            break
-        
-        
-    s.close()
-    return {'version':version, 'status':status, 'msg':msg, 'content':content}
-           
-
-def get(url):
-    port = 443 if hal.HW_SUPPORTS_SSL else 80
-    url = 'https://'+url if hal.HW_SUPPORTS_SSL else 'http://'+url
-    logger.info('Calling GET "{}"'.format(url)) 
-    _, _, host, path = url.split('/', 3)
-    if ':' in host:
-        port=int(host.split(':')[1])
-        host=host.split(':')[0]
-    addr = socket.getaddrinfo(host, port)[0][-1]
-    s = socket.socket()
-    try: s.settimeout(60)
-    except: pass
+    if dest: f = None # If socket connect fails do not have an exception when closing file
     s.connect(addr)
-    s.send(bytes('GET /%s HTTP/1.0\\r\\nHost: %s\\r\\n\\r\\n' % (path, host), 'utf8'))
+    if dest: f = open(dest, 'w')
+    try:
+        s.send(bytes('%s /%s HTTP/1.0\\r\\nHost: %s\\r\\n' % ('POST', path, host), 'utf8'))
 
-    # Status, msg etc.
-    version, status, msg = hal.socket_readline(s).split(None, 2)
+        content = json.dumps(data)
+        content_type = 'application/json'
 
-    # Skip headers
-    while hal.socket_readline(s) != b'\\r\\n':
-        pass
-
-    # Read data
-    while True:
-        data = hal.socket_readline(s)
-        if data:
-            content = str(data, 'utf8')
+        if content is not None:
+            s.send(bytes('content-length: %s\\r\\n' % len(content), 'utf8'))
+            s.send(bytes('content-type: %s\\r\\n' % content_type, 'utf8'))
+            s.send(bytes('\\r\\n', 'utf8'))
+            hal.socket_write(s, data=bytes(content, 'utf8'))
         else:
-            break
-    s.close() #TODO: add a finally for closing the connnection?
-    return {'version':version, 'status':status, 'msg':msg, 'content':content}
+            s.send(bytes('\\r\\n', 'utf8'))
 
+        # Status, msg etc.
+        version, status, msg = hal.socket_readline(s).split(None, 2)
+    
+        # Skip headers
+        while hal.socket_readline(s) != b'\\r\\n':
+            pass
+    
+        # Read data
+        content   = None
+        prev_last = None
+        stop      = False
+        while True:
+            data=''
+            if globals.payload_encrypter:
+                if content is None:
+                    str(s.recv(1), 'utf8')
 
-def download(source,dest):
-    port = 443 if hal.HW_SUPPORTS_SSL else 80
-    source = 'https://'+source if hal.HW_SUPPORTS_SSL else 'http://'+source
-    logger.info('Downloading {} in {}'.format(source,dest)) 
-    f = open(dest, 'w')
-    _, _, host, path = (so''')
-        f.write('''urce).split('/', 3)
-    if ':' in host:
-        port=int(host.split(':')[1])
-        host=host.split(':')[0]
-    addr = socket.getaddrinfo(host, port)[0][-1]
-    s = socket.socket()
-    try: s.settimeout(60)
-    except: pass
-    s.connect(addr)
-    s.send(bytes('GET /%s HTTP/1.0\\r\\nHost: %s\\r\\n\\r\\n' % (path, host), 'utf8'))
- 
-    # Status, msg etc.
-    version, status, msg = hal.socket_readline(s).split(None, 2)
+                while len(data) < 39:
+                    last = str(s.recv(1), 'utf8')
+                    if len(last) == 0:
+                        stop=True
+                        break
+                    data += last
+                if stop:
+                    break
+                if data=='"':
+                    continue
+                logger.info('Received encrypted data', data)
+                if dest and status == b'200' and data !='"':
+                    # load content, check if prev_content[-1] + content[1] == \\n,
+                    content = globals.payload_encrypter.decrypt_text(data).replace('\\\\n','\\n')
+                    #logger.info('Decrypted data', data)
+                    if prev_last is not None:
+                        if prev_last =='\\\\' and content[0] == 'n':
+                            f.write('\\n'''')
+        f.write('''+ content[1:-1])
+                            #logger.info('Writing data', content[1:-1])
+                        else:
+                            f.write(prev_last+content[:-1])
+                            #logger.info('Writing data', prev_last+content[:-1])
 
-    if status != b'200':
-        logger.error('Status {} trying to get '.format(status),source)
-        f.close()
+                    else:
+                        # We start from position 1 to avoid the extra "' char added by the backend
+                        f.write(content[1:-1])
+                    prev_last = content[-1]
+                    # ..and we will never write the last prev_last as it is the '"' char added by the backend
+                else:
+                    if content is None: content=''
+                    content += globals.payload_encrypter.decrypt_text(data)
+            else:
+                data = hal.socket_readline(s)
+                if data:
+                    if dest:
+                        f.write(str(data, 'utf8').replace('\\\\n','\\n'))
+                    else: 
+                        content = str(data, 'utf8')
+                        break   
+                else:
+                    break
+        return {'version':version, 'status':status, 'msg':msg, 'content':content}
+    except:
+        raise
+    finally:
+        if dest and f:
+            f.close()
         s.close()
-        return False
 
-    # Skip headers
-    while hal.socket_readline(s) != b'\\r\\n': 
-        pass 
-
-    while True:
-        data = s.recv(100)
-        if data:
-            f.write((str(data, 'utf8')))
-        else:
-            break
-    f.close()
-    s.close()
-    return True
 ''')
 
     print('Writing',path+'/init.py')
@@ -426,13 +435,15 @@ class EmptyResponse(Exception):
 
 def start(path=None):
 
+    hal.init()
+
     # Get Pythings version
-    globals.running_os_version = common.get_running_os_version()
+    globals.pythings_version = common.get_pythings_version()
 
     print('\\n|------------------------|')
     print('|  Starting Pythings :)  |')
     print('|------------------------|')
-    print(' Version: {} ({})\\n'.format(globals.running_os_version, arch))
+    print(' Version: {} ({})\\n'.format(globals.pythings_version, arch))
     import os
 
     try:
@@ -447,31 +458,31 @@ def start(path=None):
     sys.path.append(hal.fspath)
     
     if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN:
-        websetup_timeout = load_param('websetup_timeout', 60)
+        smt = load_param('smt', 60)
         # Start AP config mode if required
         if hal.reset_cause() == hal.HARD_RESET:
-            if websetup_timeout:
+            if smt:
                 gc.collect()
                 if hal.HW_SUPPORTS_LED: hal.LED.on()
                 from websetup import websetup
-                websetup(timeout_s=websetup_timeout, lock_session=True)
+                websetup(timeout_s=smt, lock_session=True)
                 if hal.HW_SUPPORTS_LED: hal.LED.off()
                 # Reset (will start without AP config mode since this is a soft reset)
                 logger.info('Resetting...')
                 hal.reboot()
 
-    # Enable STA mode and Disable AP mode
+    # Disable AP mode, Enable and configure STA mode 
     if hal.HW_SUPPORTS_WLAN:
         hal.WLAN.ap_active(False)
         hal.WLAN.sta_active(True)
-    
+
     # Start loading settings and parameters
     from utils import load_settings
     globals.settings = load_settings()
     globals.payload_encrypter = None # Initalization
 
-    # Load backend_addr: the local param wins 
-    globals.backend_addr = load_param('backend_addr', None)
+    # Load backend: the local param worker_intervals 
+    globals.backend = load_param('backend', None)
 
     # Load aid and tid: only local param or default
     globals.aid = load_param('aid', None)
@@ -479,16 +490,16 @@ def start(path=None):
     globals.tid = load_param('tid', None)
     if globals.tid is None: globals.tid = hal.get_tuuid()
 
-    if not globals.backend_addr:
-        backend_addr_overrided = False
-        if 'backend_addr' in globals.settings and globals.settings['backend_addr']:
-            globals.backend_addr = globals.settings['backend_addr']
+    if not globals.backend:
+        backend_overrided = False
+        if 'backend' in globals.settings and globals.settings['backend']:
+            globals.backend = globals.settings['backend']
         else:
-            globals.backend_addr = 'backend.pythings.io'
+            globals.backend = 'backend.pythings.io'
     else:
-        backend_addr_overrided = True
+        backend_overrided = True
 
-    # Load pool: the local param wins 
+    # Load pool: the local param worker_intervals 
     globals.pool = load_param('pool', None)
     if not globals.pool:
         if 'pool' in globals.settings and globals.settings['pool']:
@@ -496,27 +507,29 @@ def start(path=None):
         else:
             globals.pool = 'production'
             
-    globals.frozen_os = hal.is_os_frozen()
+    globals.frozen = hal.is_os_frozen()
 
     # Tasks placeholders
     globals.app_worker_task = None
     globals.app_management_task = None
       
     # Report
-    logger.info('Running with back''')
-        f.write('''end_addr="{}" and aid="{}"'.format(globals.backend_addr, globals.aid))
+    logger.info('Running with backend="{}" and aid="{}"'.format(globals.backend, globals.aid))
 
-    # Get app version:    
-    globals.running_app_version = common.get_running_app_version()
+    # ''')
+        f.write('''Get app version:    
+    globals.app_version = common.get_app_version()
     gc.collect()
 
     # Register and perform the first management task call on "safe" backend, if not overrided
-    if not backend_addr_overrided:
-        backend_addr_set = globals.backend_addr
-        globals.backend_addr ='backend.pythings.io'
+    if not backend_overrided:
+        backend_set = globals.backend
+        globals.backend ='backend.pythings.io'
     
     # Pre-register if payload encryption activated
-    if hal.SW_PAYLOAD_ENCRYPTER:
+    use_payload_encryption = globals.settings['payload_encryption'] if 'payload_encryption' in globals.settings else True
+    if hal.SW_PAYLOAD_ENCRYPTER and use_payload_encryption:
+        logger.info('Enabling Payload Encryption and preregistering')
         globals.payload_encrypter = hal.SW_PAYLOAD_ENCRYPTER(comp_mode=True)
         from register import preregister
         token = preregister()
@@ -526,14 +539,14 @@ def start(path=None):
         
     # Register yourself, and start a new session
     from register import register
-    token, epoch_s = register()
+    token, epoch = register()
     if not globals.payload_encrypter:
         globals.token = token
         logger.info('Got token: {}'.format(globals.token))
     gc.collect()
     
     # Sync time.
-    chronos = hal.Chronos(epoch_s)
+    chronos = hal.Chronos(epoch)
 
     # Call system management (will update App/Pythings versions  and settings if required)
     logger.info('Calling system management (preloop)')
@@ -543,9 +556,9 @@ def start(path=None):
     gc.collect()
     
     # Set back host to the proper one
-    if not backend_addr_overrided:
-        globals.backend_addr=backend_addr_set
-        del backend_addr_set
+    if not backend_overrided:
+        globals.backend=backend_set
+        del backend_set
     gc.collect()
 
     # Init app
@@ -583,6 +596,7 @@ def start(path=None):
             system_management_task(chronos)
             del system_management_task
             gc.collect()
+            logger.info('Done')
 
         if loop_count % worker_interval == 0:
             logger.info('Calling worker (loop={})'.format(loop_count))
@@ -590,6 +604,7 @@ def start(path=None):
             system_worker_task(chronos)
             del system_worker_task
             gc.collect()
+            logger.info('Done')
             
         loop_count+=1
         time.sleep(1)
@@ -727,21 +742,21 @@ def system_management_task(chronos):
 
     # Update settings, OS and App.
     try:
-        if 'settings' in content['data'] and content['data']['settings'] != globals.settings:
-            updates='settings'
+        if 'settings' in content and content['settings'] != globals.settings:
+            updates='Settings'
             from updates_settings import update_settings
             update_settings(content)
 
-        elif globals.settings['pythings_version'].upper() != 'FACTORY' and globals.settings['pythings_version'] != globals.running_os_version:
-            updates='PythingsOS' 
-            logger.debug('Downloading the new pythings (running version = "{}"; required version = "{}")'.format(globals.running_os_version, globals.settings['pythings_version']))
+        elif not globals.frozen and globals.settings['pythings_version'].upper() != 'FACTORY' and globals.settings['pythings_version'] != globals.pythings_version:
+            updates='Pythings' 
+            logger.debug('Downloading new Pythings (running version = "{}"; required version = "{}")'.format(globals.pythings_version, globals.settings['pythings_version']))
             from updates_pythings import update_pythings
             update_pythings(globals.settings['pythings_version'])
 
         else:
-            if globals.settings['app_version'] != globals.running_app_version:
+            if globals.settings['app_version'] != globals.app_version:
                 updates='App' 
-                logger.debug('Downloading the new app (running version = "{}"; required version = "{}")'.format(globals.running_app_version, globals.settings['app_version']))
+                logger.debug('Downloading new App (running version = "{}"; required version = "{}")'.format(globals.app_version, globals.settings['app_version']))
                 from updates_app import update_app
                 update_app(globals.settings['app_version'])
 
@@ -759,49 +774,91 @@ def system_management_task(chronos):
         run_controlled(2,report,what='pythings', status='OK', message='Resetting due to {} update'.format(updates))
         hal.reboot()
 
-    # Data = remote command sent, here we use a sample
-    app_data     = content['data']['app_data'] if 'app_data' in content['data'] else None
-    app_data_id  = content['data']['app_data_id'] if 'app_data_id' in content['data'] else None
-    app_data_rep = None
+    # Management Command (cmd), Command ID (cid) and Management Reply
+    msg = content['msg'] if 'msg' in content else None
+    mid = content['mid'] if 'mid' in content else None
+    rep = None
 
     # Call App's management
     if globals.app_management_task:
         try:
             logger.debug('Mem free:', hal.mem_free())
-            app_data_rep=globals.app_management_task.call(chronos, app_data)
-            if app_data_id:
-                run_controlled(2,report,what='management', status='OK', message={'app_data_id':app_data_id,'app_data_rep':app_data_rep})
+            rep=globals.app_management_task.call(chronos, msg)
+            if mid:
+                run_controlled(2,report,what='management', status='OK', message={'mid':mid,'rep':rep})
             else:
-                run_controlled(2,report,what='management', statu''')
-        f.write('''s='OK')
+                run_controlled(2,report,what='management', status='OK')
                 
         except Exception as e:
             import sys
             hal.get_traceback(e)
-            logger.error('Error in executing app\\'s management task: {} {}'.format(e.__class__.__name__, e))
+            logger.error('Error in ex''')
+        f.write('''ecuting app\\'s management task: {} {}'.format(e.__class__.__name__, e))
             run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
 ''')
+
+    print('Writing',path+'/register.py')
+    with open(path+'/register.py','w') as f:
+        f.write('''import hal
+import logger
+import globals
+from common import run_controlled
+from api import apost
+
+def preregister():
+    from crypto_rsa import Srsa
+    pubkey = 28413003199647341169755148817272580434684756919496624803561225904937920874272008267922241718272669080997784342773848675977238304083346116914731539644572572184061626687258523348629880944116435872100013777281682624539900472318355160325153486782544158202452609602511838141993451856549399731403548343252478723563
+    logger.info('Pre-registering myself with aes128ecb key="{}"'.format(globals.payload_encrypter.key))
+    response = run_controlled(None,
+                              apost,
+                              api='/things/preregister/',
+                              data={'key': Srsa(pubkey).encrypt_text(str(globals.payload_encrypter.key)),
+                                    'kty': 'aes128ecb',
+                                    'ken': 'srsa1'})        
+    if not response:
+        raise Exception('Empty Response from preregister')
+    
+    return response['content']['token']
+
+
+
+def register():
+    logger.info('Registering myself with tid={} and aid={}'.format(globals.tid,globals.aid))
+    response = run_controlled(None,
+                                     apost,
+                                     api='/things/register/',
+                                     data={'tid': globals.tid,
+                                           'aid': globals.aid,
+                                           'app_version': globals.app_version,
+                                           'pythings_version': globals.pythings_version,
+                                           'pool': globals.pool,
+                                           'settings': globals.settings,
+                                           'frozen':globals.frozen})
+    if not response:
+        raise Exception('Empty Response from register')
+    
+    return (response['content']['token'], response['content']['epoch'])
+''')
+        f.write('''''')
 
     print('Writing',path+'/updates_app.py')
     with open(path+'/updates_app.py','w') as f:
         f.write('''import globals
 import logger
 from utils import mv
-from api import apost
-from http import download
+from api import apost,download
 from hal import fspath
+from arch import arch
 
 def update_app(version):
-    files = apost(api='/apps/get/', data={'version':version, 'list':True})['content']['data']
+    files = apost(api='/apps/get/', data={'version':version, 'list':True})['content']
     # First of all remove /app.py to say that there is no valid App yet (download is in progress)
     import os
     try: os.remove(fspath+'/app.py')
     except: pass
     for file_name in files:
         if file_name in ['worker_task.py','management_task.py']:
-            logger.info('Downloading "{}"'.format(file_name))
-            if not download('{}/api/v1/apps/get/?file={}&version={}&token={}'.format(globals.backend_addr, file_name, version, globals.token), '{}/{}'.format(fspath, file_name)): 
-                raise Exception('Error while donaloding')
+            download(file_name=file_name, version=version, dest='{}/{}'.format(fspath, file_name),what='apps',arch=arch) 
         else:
             logger.info('NOT downloading "{}" as in forbidden list'.format(file_name))
     with open(fspath+'/app.py','w') as f:
@@ -818,33 +875,27 @@ import logger
 import os
 from arch import arch
 from hal import fspath
+from api import apost, download
+from arch import arch
 
 def update_pythings(version):
-    source='http://backend.pythings.io/static/dist/PythingsOS/{}/{}'.format(version,arch)
-    path=fspath+'/'+version
+    
+    files = apost(api='/pythings/get/', data={'version':version, 'list':True, 'arch':arch})['content']
+
+    path = fspath+'/'+version
     try:
         os.mkdir(path)
     except OSError as e:
         pass
-    from http import download
-    if not download(source+'/files.txt', path+'/files.txt'):
-        raise Exception('PythingsOS download failed')
-    files_list = open(path+'/files.txt')
-    for item in files_list.read().split('\\n'):
-        if 'file:' in item:
-            filename=item.split(':')[2]
-            if filename=='app.py': continue
-            filesize=item.split(':')[1]
-            download(source+'/'+filename, path+'/'+filename)
-            if os.stat(path+'/'+filename)[6] != int(filesize):
-                os.remove(path+'/'+filename)
-                files_list.close()
-                raise Exception('File expected size={}, actual size={}.'.format(filesize,os.stat(path+'/'+filename)[6]))
-        else:
-            if len(item)>0:
-                raise Exception('Got unexpected format in files list.')
-                files_list.close()
-    files_list.close()
+
+    for file_name in files:
+        if file_name != 'version.py':
+            print('FILE::', file_name, files[file_name])
+            download(file_name=file_name, version=version, arch=arch, dest='{}/{}'.format(fspath, file_name), what='pythings')
+    for file_name in files:
+        if file_name == 'version.py':
+            print('FILE::', file_name, files[file_name])
+            download(file_name=file_name, version=version, arch=arch, dest='{}/{}'.format(fspath, file_name), what='pythings')
 ''')
         f.write('''''')
 
@@ -856,17 +907,11 @@ import logger
 from hal import fspath
 
 def update_settings(content):
-    logger.debug('Storing received settings ({} <--> {})'.format(content['data']['settings'], globals.settings))
-    # TODO: Try load contents to validate?
-    # Save backup for the settings file:
-    from utils import mv
-    mv('/settings.json','/settings_bk.json')
-    # Ok, dump new settings
+    logger.debug('Storing received settings ({} <--> {})'.format(content['settings'], globals.settings))
     f = open(fspath+'/settings.json', 'w')
     import json
-    f.write(json.dumps(content['data']['settings']))
+    f.write(json.dumps(content['settings']))
     f.close()
-    globals.settings = content['data']['settings']
     logger.info('Got new, updated settings')
 
 
@@ -879,8 +924,6 @@ def update_settings(content):
 from hal import re, fspath
 
 def connect_wifi(wlan, essid, password):
-    print("Connecting with: ", essid)
-    print("Using password: ", password)
     wlan.connect(essid, password)
 
 def unquote(s):
@@ -896,7 +939,7 @@ def unquote(s):
 def load_param(param, default=None):
     try:
         with open(fspath+'/{}'.format(param),'r') as f:
-            param = f.readline()
+            param = f.readline().strip()
         return param
     except Exception as e:
         return default
@@ -946,7 +989,7 @@ def parseURL(url):
 
     print('Writing',path+'/version.py')
     with open(path+'/version.py','w') as f:
-        f.write('''version='v0.2-pre'
+        f.write('''version='v0.2-rc1'
 ''')
         f.write('''''')
 
@@ -1172,12 +1215,12 @@ def system_worker_task(chronos):
     
     # Call App's worker    
     if globals.app_worker_task:
-        app_data = None
+        worker_msg = None
         try:
             logger.debug('Mem free:', hal.mem_free())
-            app_data = globals.app_worker_task.call(chronos)
-            if app_data:
-                run_controlled(2,apost,api='/msg/drop/', data={'msg': app_data })
+            worker_msg = globals.app_worker_task.call(chronos)
+            if worker_msg:
+                run_controlled(2,apost,api='/apps/worker/', data={'msg': worker_msg })
             report('worker','OK')
         except Exception as e:
             print(hal.get_traceback(e))

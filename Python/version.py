@@ -1,1 +1,1 @@
-version='v0.1'
+../common/version.py
