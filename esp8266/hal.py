@@ -15,23 +15,25 @@ HW_SUPPORTS_SSL        = False
 # Filesystem (absolute) path
 fspath = '/'
 
-def is_os_frozen():
+# Frozen 
+def is_frozen():
     import os
     try:
-        os.stat(fspath+'/initialized')
+        os.stat(fspath+'/updates_pythings.py')
         return False
     except:
         return True
 
 # Payload encryption (not needed if SSL support available)
-if is_os_frozen():
-    try:
-        from crypto_aes import Aes128ecb
-        SW_PAYLOAD_ENCRYPTER = Aes128ecb
-    except:
-        SW_PAYLOAD_ENCRYPTER = None
-else:
-    SW_PAYLOAD_ENCRYPTER = None
+def payload_encrypter():  
+    if is_frozen():
+        try:
+            from crypto_aes import Aes128ecb
+            return Aes128ecb      
+        except:
+            return None
+    else:
+        return None
 
 # Required if RESETCAUSE is supported
 HARD_RESET = 6
@@ -96,10 +98,10 @@ class Chronos(object):
     def __init__(self, epoch_s_now=0):
         self.epoch_baseline_s    = epoch_s_now
         self.internal_baseline_s = int(time.ticks_ms()/1000)
-    def epoch_s(self):
+    def epoch(self):
         if self.epoch_baseline_s is not None and self.internal_baseline_s is not None:
-            current_epoch_ms = (int(time.ticks_ms()/1000) - self.internal_baseline_s) + self.epoch_baseline_s        
-            return current_epoch_ms
+            current_epoch_s = (int(time.ticks_ms()/1000) - self.internal_baseline_s) + self.epoch_baseline_s        
+            return current_epoch_s
         else:
             return time.ticks_ms()/1000
 

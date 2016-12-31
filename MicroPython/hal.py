@@ -11,9 +11,20 @@ HW_SUPPORTS_WLAN       = False
 # If set to True, disable payload encryption
 HW_SUPPORTS_SSL        = False
 
+# Frozen
+def is_frozen():
+    return False
+
 # Payload encryption (not needed if SSL support available)
-from crypto_aes import Aes128ecb
-SW_PAYLOAD_ENCRYPTER    = Aes128ecb  
+def payload_encrypter():  
+    if is_frozen():
+        try:
+            from crypto_aes import Aes128ecb
+            return Aes128ecb      
+        except:
+            return None
+    else:
+        return None
 
 # HW initializer (i.e. put PWMs to zero)
 def init():
@@ -40,9 +51,6 @@ class WLAN(object):
 def get_tuuid():
     raise NotImplementedError('I have no way to obtain an UUID for myself. You have to tell me my TID.')
  
-def is_os_frozen():
-    return False
-
 def mem_free():
     import gc
     return gc.mem_free()
@@ -71,10 +79,10 @@ class Chronos(object):
     def __init__(self, epoch_s_now=0):
         self.epoch_baseline_s    = epoch_s_now
         self.internal_baseline_s = int(time.ticks_ms()/1000)
-    def epoch_s(self):
+    def epoch(self):
         if self.epoch_baseline_s is not None and self.internal_baseline_s is not None:
-            current_epoch_ms = (int(time.ticks_ms()/1000) - self.internal_baseline_s) + self.epoch_baseline_s        
-            return current_epoch_ms
+            current_epoch_s = (int(time.ticks_ms()/1000) - self.internal_baseline_s) + self.epoch_baseline_s        
+            return current_epoch_s
         else:
             return time.ticks_ms()/1000
 

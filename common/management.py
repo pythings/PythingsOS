@@ -19,7 +19,7 @@ def system_management_task(chronos):
     del response
     gc.collect()
 
-    # Update settings, OS and App.
+    # Update settings, Pythings and App.
     try:
         if 'settings' in content and content['settings'] != globals.settings:
             updates='Settings'

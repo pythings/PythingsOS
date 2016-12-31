@@ -94,7 +94,7 @@ def start(path=None):
         else:
             globals.pool = 'production'
             
-    globals.frozen = hal.is_os_frozen()
+    globals.frozen = hal.is_frozen()
 
     # Tasks placeholders
     globals.app_worker_task = None
@@ -114,9 +114,9 @@ def start(path=None):
     
     # Pre-register if payload encryption activated
     use_payload_encryption = globals.settings['payload_encryption'] if 'payload_encryption' in globals.settings else True
-    if hal.SW_PAYLOAD_ENCRYPTER and use_payload_encryption:
+    if use_payload_encryption and hal.payload_encrypter():
         logger.info('Enabling Payload Encryption and preregistering')
-        globals.payload_encrypter = hal.SW_PAYLOAD_ENCRYPTER(comp_mode=True)
+        globals.payload_encrypter = hal.payload_encrypter()(comp_mode=True)
         from register import preregister
         token = preregister()
         globals.token = token
