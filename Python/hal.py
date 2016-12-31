@@ -19,15 +19,13 @@ def is_frozen():
     return True
 
 # Payload encryption (not needed if SSL support available)
-def payload_encrypter():  
-    if is_frozen():
-        try:
-            from crypto_aes import Aes128ecb
-            return Aes128ecb      
-        except:
-            return None
-    else:
+def payload_encrypter():
+    try:
+        from crypto_aes import Aes128ecb
+        return Aes128ecb
+    except:
         return None
+
 
 # HW initializer (i.e. put PWMs to zero)
 def init():
