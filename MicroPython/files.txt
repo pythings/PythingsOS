@@ -9,14 +9,14 @@ file:507:files.txt
 file:0:globals.py
 file:2259:hal.py
 file:764:handle_main_error.py
-file:4453:http.py
+file:4451:http.py
 file:6711:init.py
 file:662:logger.py
 file:1328:main.py
 file:3222:management.py
 file:1962:register.py
 file:854:updates_app.py
-file:880:updates_pythings.py
+file:762:updates_pythings.py
 file:354:updates_settings.py
 file:1636:utils.py
 file:865:worker.py
