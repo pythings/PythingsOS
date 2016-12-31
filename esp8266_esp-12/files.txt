@@ -3,13 +3,13 @@ file:24:arch.py
 file:1778:common.py
 file:417:files.txt
 file:0:globals.py
-file:2720:hal.py
+file:2745:hal.py
 file:764:handle_main_error.py
 file:4453:http.py
-file:6716:init.py
+file:6711:init.py
 file:662:logger.py
 file:1328:main.py
-file:3216:management.py
+file:3222:management.py
 file:1962:register.py
 file:854:updates_app.py
 file:880:updates_pythings.py

@@ -7,13 +7,13 @@ file:9476:crypto_engine_aes128ecb.py
 file:1899:crypto_rsa.py
 file:529:files.txt
 file:0:globals.py
-file:1970:hal.py
+file:2115:hal.py
 file:764:handle_main_error.py
 file:4453:http.py
-file:6716:init.py
+file:6711:init.py
 file:662:logger.py
 file:1328:main.py
-file:3216:management.py
+file:3222:management.py
 file:1962:register.py
 file:854:updates_app.py
 file:880:updates_pythings.py

@@ -121,13 +121,13 @@ file:17:arch.py
 file:1778:common.py
 file:417:files.txt
 file:0:globals.py
-file:2652:hal.py
+file:2677:hal.py
 file:764:handle_main_error.py
 file:4453:http.py
-file:6716:init.py
+file:6711:init.py
 file:662:logger.py
 file:1328:main.py
-file:3216:management.py
+file:3222:management.py
 file:1962:register.py
 file:854:updates_app.py
 file:880:updates_pythings.py
@@ -163,23 +163,25 @@ HW_SUPPORTS_SSL        = False
 # Filesystem (absolute) path
 fspath = '/'
 
-def is_os_frozen():
+# Frozen 
+def is_frozen():
     import os
     try:
-        os.stat(fspath+'/initialized')
+        os.stat(fspath+'/updates_pythings.py')
         return False
     except:
         return True
 
 # Payload encryption (not needed if SSL support available)
-if is_os_frozen():
-    try:
-        from crypto_aes import Aes128ecb
-        SW_PAYLOAD_ENCRYPTER = Aes128ecb
-    except:
-        SW_PAYLOAD_ENCRYPTER = None
-else:
-    SW_PAYLOAD_ENCRYPTER = None
+def payload_encrypter():  
+    if is_frozen():
+        try:
+            from crypto_aes import Aes128ecb
+            return Aes128ecb      
+        except:
+            return None
+    else:
+        return None
 
 # Required if RESETCAUSE is supported
 HARD_RESET = 6
@@ -244,10 +246,10 @@ class Chronos(object):
     def __init__(self, epoch_s_now=0):
         self.epoch_baseline_s    = epoch_s_now
         self.internal_baseline_s = int(time.ticks_ms()/1000)
-    def epoch_s(self):
+    def epoch(self):
         if self.epoch_baseline_s is not None and self.internal_baseline_s is not None:
-            current_epoch_ms = (int(time.ticks_ms()/1000) - self.internal_baseline_s) + self.epoch_baseline_s        
-            return current_epoch_ms
+            current_epoch_s = (int(time.ticks_ms()/1000) - self.internal_baseline_s) + self.epoch_baseline_s        
+            return current_epoch_s
         else:
             return time.ticks_ms()/1000
 
@@ -511,7 +513,7 @@ def start(path=None):
         else:
             globals.pool = 'production'
             
-    globals.frozen = hal.is_os_frozen()
+    globals.frozen = hal.is_frozen()
 
     # Tasks placeholders
     globals.app_worker_task = None
@@ -520,8 +522,8 @@ def start(path=None):
     # Report
     logger.info('Running with backend="{}" and aid="{}"'.format(globals.backend, globals.aid))
 
-    # ''')
-        f.write('''Get app version:    
+    # Get''')
+        f.write(''' app version:    
     globals.app_version = common.get_app_version()
     gc.collect()
 
@@ -532,9 +534,9 @@ def start(path=None):
     
     # Pre-register if payload encryption activated
     use_payload_encryption = globals.settings['payload_encryption'] if 'payload_encryption' in globals.settings else True
-    if hal.SW_PAYLOAD_ENCRYPTER and use_payload_encryption:
+    if use_payload_encryption and hal.payload_encrypter():
         logger.info('Enabling Payload Encryption and preregistering')
-        globals.payload_encrypter = hal.SW_PAYLOAD_ENCRYPTER(comp_mode=True)
+        globals.payload_encrypter = hal.payload_encrypter()(comp_mode=True)
         from register import preregister
         token = preregister()
         globals.token = token
@@ -744,7 +746,7 @@ def system_management_task(chronos):
     del response
     gc.collect()
 
-    # Update settings, OS and App.
+    # Update settings, Pythings and App.
     try:
         if 'settings' in content and content['settings'] != globals.settings:
             updates='Settings'
@@ -796,8 +798,8 @@ def system_management_task(chronos):
         except Exception as e:
             import sys
             hal.get_traceback(e)
-            logger.error('Error in ex''')
-        f.write('''ecuting app\\'s management task: {} {}'.format(e.__class__.__name__, e))
+            logger.error('Error''')
+        f.write(''' in executing app\\'s management task: {} {}'.format(e.__class__.__name__, e))
             run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
 ''')
 
@@ -993,7 +995,7 @@ def parseURL(url):
 
     print('Writing',path+'/version.py')
     with open(path+'/version.py','w') as f:
-        f.write('''version='v0.2-rc2'
+        f.write('''version='v0.2-rc3'
 ''')
         f.write('''''')
 
