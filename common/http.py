@@ -3,6 +3,7 @@ import json
 import logger
 import hal
 import globals
+import gc
 
 def post(url, data, dest=None):
     print('POST: url',url)
@@ -33,7 +34,8 @@ def post(url, data, dest=None):
     if hal.HW_SUPPORTS_SSL and use_ssl:
         s = hal.socket_ssl(s)
 
-    if dest: f = None # If socket connect fails do not have an exception when closing file
+    # If socket connect fails do not have an exception when closing file
+    if dest: f = None 
     s.connect(addr)
     if dest: f = open(dest, 'w')
     try:
@@ -59,58 +61,68 @@ def post(url, data, dest=None):
     
         # Read data
         content   = None
-        prev_last = None
+        prev_last = ''
         stop      = False
         while True:
             data=''
-            if globals.payload_encrypter:
-                if content is None:
-                    str(s.recv(1), 'utf8')
 
-                while len(data) < 39:
-                    last = str(s.recv(1), 'utf8')
-                    if len(last) == 0:
+            while len(data) < 39:
+                last = str(s.recv(1), 'utf8')
+                if len(last) == 0:
+                    stop=True
+                    break
+                else:
+                    # If newline and not dest, likely it is not a JSON but an error page. Break to avoid memory problems.
+                    if not dest and last == '\n':
                         stop=True
                         break
                     data += last
-                if stop:
-                    break
-                if data=='"':
-                    continue
-                logger.info('Received encrypted data', data.replace('\n',''))
-                if dest and status == b'200' and data !='"':
-                    # load content, check if prev_content[-1] + content[1] == \n,
-                    content = globals.payload_encrypter.decrypt_text(data).replace('\\n','\n')
-                    #logger.info('Decrypted data', data)
-                    if prev_last is not None:
-                        if prev_last =='\\' and content[0] == 'n':
-                            f.write('\n'+ content[1:-1])
-                            #logger.info('Writing data', content[1:-1])
-                        else:
-                            f.write(prev_last+content[:-1])
-                            #logger.info('Writing data', prev_last+content[:-1])
 
-                    else:
-                        # We start from position 1 to avoid the extra "' char added by the backend
-                        f.write(content[1:-1])
-                    prev_last = content[-1]
-                    # ..and we will never write the last prev_last as it is the '"' char added by the backend
+            # Break now if len(data) == 0 which means that there is no more data in the socket at all.
+            if len(data) == 0:
+                break
+
+            logger.info('Received data', data.replace('\n',''))
+            if dest and status == b'200' and data !='"':
+                # load content, check if prev_content[-1] + content[1] == \n,
+                if globals.payload_encrypter:
+                    content = globals.payload_encrypter.decrypt_text(data).replace('\\n','\n')
+                    #logger.info('Decrypted data', content)
                 else:
-                    if content is None: content=''
+                    content = data
+                if prev_last =='\\' and content[0] == 'n':
+                    f.write('\n'+ content[1:-1])
+                    #logger.info('Writing data', content[1:-1])
+                else:
+                    f.write(prev_last+content[:-1])
+                    #logger.info('Writing data', prev_last+content[:-1])
+
+                # Set new prev_last
+                prev_last = content[-1]
+
+            else:
+                if content is None:
+                    content=''
+
+                if globals.payload_encrypter:
                     try:
                         content += globals.payload_encrypter.decrypt_text(data)
+                        #logger.info('Decrypted data', content)
                     except Exception as e:
                         logger.error('Cannot decrypt text ({})'.format(e.__class__.__name__))
-            else:
-                data = hal.socket_readline(s)
-                if data:
-                    if dest:
-                        f.write(str(data, 'utf8').replace('\\n','\n'))
-                    else: 
-                        content = str(data, 'utf8')
-                        break   
                 else:
-                    break
+                    content +=data
+
+            # Cleanup & stop if it was the last data chunk
+            del data
+            gc.collect()
+            if stop:
+                break
+
+        # Write last byte of the file
+        if prev_last and f:
+            f.write(prev_last)
+
         return {'version':version, 'status':status, 'msg':msg, 'content':content}
     except:
         raise
