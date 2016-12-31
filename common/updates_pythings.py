@@ -19,9 +19,7 @@ def update_pythings(version):
 
     for file_name in files:
         if file_name != 'version.py':
-            print('FILE::', file_name, files[file_name])
-            download(file_name=file_name, version=version, arch=arch, dest='{}/{}'.format(fspath, file_name), what='pythings')
+            download(file_name=file_name, version=version, arch=arch, dest='{}/{}'.format(path, file_name), what='pythings')
     for file_name in files:
         if file_name == 'version.py':
-            print('FILE::', file_name, files[file_name])
-            download(file_name=file_name, version=version, arch=arch, dest='{}/{}'.format(fspath, file_name), what='pythings')
+            download(file_name=file_name, version=version, arch=arch, dest='{}/{}'.format(path, file_name), what='pythings')
