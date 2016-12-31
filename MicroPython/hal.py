@@ -14,16 +14,15 @@ HW_SUPPORTS_SSL        = False
 # Frozen
 def is_frozen():
     return False
+def is_os_frozen():
+    return is_frozen()
 
 # Payload encryption (not needed if SSL support available)
 def payload_encrypter():  
-    if is_frozen():
-        try:
-            from crypto_aes import Aes128ecb
-            return Aes128ecb      
-        except:
-            return None
-    else:
+    try:
+        from crypto_aes import Aes128ecb
+        return Aes128ecb
+    except:
         return None
 
 # HW initializer (i.e. put PWMs to zero)
