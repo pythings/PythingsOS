@@ -3,7 +3,7 @@ file:17:arch.py
 file:1778:common.py
 file:417:files.txt
 file:0:globals.py
-file:2677:hal.py
+file:2720:hal.py
 file:764:handle_main_error.py
 file:4451:http.py
 file:6711:init.py

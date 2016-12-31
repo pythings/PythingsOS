@@ -121,7 +121,7 @@ file:24:arch.py
 file:1778:common.py
 file:417:files.txt
 file:0:globals.py
-file:2745:hal.py
+file:2788:hal.py
 file:764:handle_main_error.py
 file:4451:http.py
 file:6711:init.py
@@ -171,6 +171,8 @@ def is_frozen():
         return False
     except:
         return True
+def is_os_frozen():
+    return is_frozen()
 
 # Payload encryption (not needed if SSL support available)
 def payload_encrypter():  
@@ -1005,7 +1007,7 @@ def parseURL(url):
 
     print('Writing',path+'/version.py')
     with open(path+'/version.py','w') as f:
-        f.write('''version='v0.2-rc4'
+        f.write('''version='v0.2-rc5'
 ''')
         f.write('''''')
 
