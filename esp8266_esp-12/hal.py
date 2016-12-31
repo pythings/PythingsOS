@@ -23,6 +23,8 @@ def is_frozen():
         return False
     except:
         return True
+def is_os_frozen():
+    return is_frozen()
 
 # Payload encryption (not needed if SSL support available)
 def payload_encrypter():  

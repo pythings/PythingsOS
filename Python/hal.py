@@ -17,6 +17,8 @@ HW_SUPPORTS_SSL        = False
 # Frozen 
 def is_frozen():
     return True
+def is_os_frozen():
+    return is_frozen()
 
 # Payload encryption (not needed if SSL support available)
 def payload_encrypter():
