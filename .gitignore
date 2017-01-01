@@ -59,3 +59,9 @@ pythings_app/migrations/*.pyc
 aid
 aid.lock
 backend_addr
+
+# Builds
+builds/Python/*.py
+builds/Python/*.txt
+builds/MicropPython/*.py
+builds/MicroPython/*.txt
