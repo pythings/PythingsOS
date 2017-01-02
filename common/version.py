@@ -1,1 +1,1 @@
-version='v0.2-rc5'
+version='v0.3pre1'

@@ -1,5 +1,7 @@
 import os
-from hal import re, fspath
+from sal import get_re
+from hal import get_fs_path
+
 
 def connect_wifi(wlan, essid, password):
     wlan.connect(essid, password)
@@ -16,7 +18,7 @@ def unquote(s):
 
 def load_param(param, default=None):
     try:
-        with open(fspath+'/{}'.format(param),'r') as f:
+        with open(get_fs_path()+'/{}'.format(param),'r') as f:
             param = f.readline().strip()
         return param
     except Exception as e:
@@ -26,7 +28,7 @@ def load_settings():
     import json
     settings = {}
     try:
-        with open(fspath+'/settings.json','r') as f:
+        with open(get_fs_path()+'/settings.json','r') as f:
             settings = json.loads(f.read())
     except Exception as e:
         print('Cannot open settings.py and load the json content: {}'.format(e))
@@ -35,16 +37,16 @@ def load_settings():
 def mv(source,dest):
     try:
         try:
-            os.remove(fspath+'/'+dest)
+            os.remove(get_fs_path()+'/'+dest)
         except:
             pass
-        os.rename(fspath+'/'+source, fspath+'/'+dest)
+        os.rename(get_fs_path()+'/'+source, get_fs_path()+'/'+dest)
     except:
         pass
 
 def get_wifi_data():
     try:
-        with open(fspath+'/wifi','r') as f:
+        with open(get_fs_path()+'/wifi','r') as f:
             essid = f.readline()[0:-1]
             password = f.readline()
     except:
@@ -54,7 +56,7 @@ def get_wifi_data():
 
 def parseURL(url):
     parameters = {}
-    path = re.search("(.*?)(\?|$)", url).group(1)
+    path = get_re().search("(.*?)(\?|$)", url).group(1)
     if '?' in url:
         try:
             for keyvalue in url.split('?')[1].split('&'):

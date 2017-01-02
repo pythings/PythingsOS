@@ -5,8 +5,9 @@ import gc
 import globals
 import common
 import hal
+import sal
 from utils import load_param
-from arch import arch
+from system import system
 
 # Logger
 import logger
@@ -20,7 +21,7 @@ class EmptyResponse(Exception):
 #  Main
 #---------------------
 
-def start(path=None):
+def start():
 
     hal.init()
 
@@ -30,24 +31,24 @@ def start(path=None):
     print('\n|------------------------|')
     print('|  Starting Pythings :)  |')
     print('|------------------------|')
-    print(' Version: {} ({})\n'.format(globals.pythings_version, arch))
+    print('Version: {} ({})\n'.format(globals.pythings_version, system))
     import os
 
     try:
-        os.stat(hal.fspath)
+        os.stat(hal.get_fs_path())
     except:
         try:
-            os.mkdir(hal.fspath)
+            os.mkdir(hal.get_fs_path())
         except Exception as e:
             raise e from None
 
     import sys
-    sys.path.append(hal.fspath)
+    sys.path.append(hal.get_fs_path())
     
     if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN:
         smt = load_param('smt', 60)
         # Start AP config mode if required
-        if hal.reset_cause() == hal.HARD_RESET:
+        if hal.get_reset_cause() == hal.HW_RESETCAUSE_HARD:
             if smt:
                 gc.collect()
                 if hal.HW_SUPPORTS_LED: hal.LED.on()
@@ -114,9 +115,9 @@ def start(path=None):
     
     # Pre-register if payload encryption activated
     use_payload_encryption = globals.settings['payload_encryption'] if 'payload_encryption' in globals.settings else True
-    if use_payload_encryption and hal.payload_encrypter():
+    if use_payload_encryption and hal.HW_SUPPORTS_ENCRYPTION and sal.get_payload_encrypter():
         logger.info('Enabling Payload Encryption and preregistering')
-        globals.payload_encrypter = hal.payload_encrypter()(comp_mode=True)
+        globals.payload_encrypter = sal.get_payload_encrypter()(comp_mode=True)
         from register import preregister
         token = preregister()
         globals.token = token
@@ -152,19 +153,19 @@ def start(path=None):
         from worker_task import worker_task
         globals.app_worker_task = worker_task(chronos)
     except Exception as e:
-        print(hal.get_traceback(e))
+        print(sal.get_traceback(e))
         from api import report
         logger.error('Error in importing/loading app\'s worker tasks: {} {}'.format(e.__class__.__name__, e))
-        common.run_controlled(2,report,what='worker', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
+        common.run_controlled(2,report,what='worker', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
 
     try:
         from management_task import management_task
         globals.app_management_task = management_task(chronos)
     except Exception as e:
-        print(hal.get_traceback(e))
+        print(sal.get_traceback(e))
         from api import report
         logger.error('Error in importing/loading  app\'s management tasks: {} {}'.format(e.__class__.__name__, e))
-        common.run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
+        common.run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
 
     # Setup intervals
     worker_interval = int(globals.settings['worker_interval']) if 'worker_interval' in globals.settings else 300

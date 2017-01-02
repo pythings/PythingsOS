@@ -1,6 +1,6 @@
 import time
 import logger
-import hal
+import sal
 
 def run_controlled(retr, function, **kwargs):
     count=0
@@ -9,7 +9,7 @@ def run_controlled(retr, function, **kwargs):
         try:
             return function(**kwargs)   
         except Exception as e:
-            print(hal.get_traceback(e))
+            print(sal.get_traceback(e))
             logger.error('Error in executing controlled step ({}): {} {}'.format(function,e.__class__.__name__,e))
             if retr == None or count < retr:
                 count += 1
@@ -26,7 +26,7 @@ def get_app_version():
     try:
         from app import version as app_version
     except Exception as e:
-        print(hal.get_traceback(e))
+        print(sal.get_traceback(e))
         logger.error('Error in importing version from app ({}:{}), trying obtaining it by parsing the file...'.format(e.__class__.__name__, str(e)))
         try:
             with open('/app.py','r') as file:
@@ -35,7 +35,7 @@ def get_app_version():
                     last_line=line
             app_version=last_line.split('=')[1].replace('\'','')
         except Exception as e:
-            print(hal.get_traceback(e))
+            print(sal.get_traceback(e))
             logger.error('Error in reading version form app code ({}:{}), falling back on version 0: '.format(e.__class__.__name__, str(e)))
             app_version='0'
     return app_version

@@ -2,16 +2,15 @@
 import globals
 import logger
 import os
-from arch import arch
-from hal import fspath
+from system import system
+from hal import get_fs_path
 from api import apost, download
-from arch import arch
 
 def update_pythings(version):
     
-    files = apost(api='/pythings/get/', data={'version':version, 'list':True, 'arch':arch})['content']
+    files = apost(api='/pythings/get/', data={'version':version, 'list':True, 'system':system})['content']
 
-    path = fspath+'/'+version
+    path = get_fs_path()+'/'+version
     try:
         os.mkdir(path)
     except OSError as e:
@@ -19,7 +18,7 @@ def update_pythings(version):
 
     for file_name in files:
         if file_name != 'version.py':
-            download(file_name=file_name, version=version, arch=arch, dest='{}/{}'.format(path, file_name), what='pythings')
+            download(file_name=file_name, version=version, system=system, dest='{}/{}'.format(path, file_name), what='pythings')
     for file_name in files:
         if file_name == 'version.py':
-            download(file_name=file_name, version=version, arch=arch, dest='{}/{}'.format(path, file_name), what='pythings')
+            download(file_name=file_name, version=version, system=system, dest='{}/{}'.format(path, file_name), what='pythings')

@@ -17,7 +17,7 @@ import json
 from http import post
 import gc
 
-apiver='v0.2'
+apiver='v0.3'
 
 # Utility
 def check_response(response):
@@ -29,7 +29,7 @@ def check_response(response):
             msg=response
         raise Exception(msg)
 
-# Apis
+# Apis
 def apost(api, data={}):
     url = '{}/api/{}{}'.format(globals.backend,apiver,api)
     logger.debug('Calling API {} with data'.format(url),data)
@@ -42,9 +42,9 @@ def apost(api, data={}):
     check_response(response)
     return response
 
-def download(file_name, version, dest, what, arch):
+def download(file_name, version, dest, what, system):
     logger.info('Downloading {} in'.format(file_name),dest) 
-    response = post(globals.backend+'/api/'+apiver+'/'+what+'/get/', {'file_name':file_name, 'version':version, 'token':globals.token, 'arch':arch}, dest=dest)
+    response = post(globals.backend+'/api/'+apiver+'/'+what+'/get/', {'file_name':file_name, 'version':version, 'token':globals.token, 'system':system}, dest=dest)
     check_response(response)
 
 # Report
@@ -54,9 +54,69 @@ def report(what, status, message=None):
     logger.debug('Response:',response)''')
         f.write('''''')
 
-    print('Writing',path+'/arch.py')
-    with open(path+'/arch.py','w') as f:
-        f.write('''arch = 'esp8266'
+    print('Writing',path+'/boot.py')
+    with open(path+'/boot.py','w') as f:
+        f.write('''import gc
+import os
+import sys
+import json
+import hal
+
+# TODO: not sure if we need it anymore
+#sys.path.append('/')
+
+fs_path= hal.get_fs_path()
+try:
+    try:
+        with open(fs_path+'/settings.json','r') as f:
+            settings = json.loads(f.read())
+    except Exception as e:
+        settings = {}
+        print('Cannot open settings.py and load the json content: {}'.format(e))    
+    pythings_version = settings['pythings_version'] if 'pythings_version' in settings else 'FACTORY'
+    
+    if not pythings_version.upper() == 'FACTORY':
+        path = fs_path+'/'+pythings_version
+        print('Trying to load Pythings version {} from {}'.format(pythings_version,path))
+        try:
+            os.stat(path)
+        except OSError:
+            print('Proceeding with factory default version...')
+            path=fs_path
+        else:
+            print('Updated version found, checking its consistency...')
+            try:
+                os.stat(path+'/version.py')
+            except OSError:
+                print('Error, proceeding with factory default version...')
+                path=fs_path
+            else:
+                print('Valid updated version found.')
+                sys.path.insert(0, path)
+    else:
+        path=fs_path
+
+except Exception as e:
+    print('Error, proceeding with factory defaults: ',type(e), str(e))
+    path=fs_path
+
+# Cleanup & un-load SAL if got loaded by hal
+del settings
+try: del sys.modules['sal']
+except: pass
+ 
+# Execute Pythings framework (from right path inserted above)
+try:
+    import init
+    gc.collect()
+    init.start()
+except Exception as e:
+    import handle_main_error
+    handle_main_error.handle(e) 
+    # TODO: Fallback on factory version?
+
+    
+
 ''')
         f.write('''''')
 
@@ -64,7 +124,7 @@ def report(what, status, message=None):
     with open(path+'/common.py','w') as f:
         f.write('''import time
 import logger
-import hal
+import sal
 
 def run_controlled(retr, function, **kwargs):
     count=0
@@ -73,7 +133,7 @@ def run_controlled(retr, function, **kwargs):
         try:
             return function(**kwargs)   
         except Exception as e:
-            print(hal.get_traceback(e))
+            print(sal.get_traceback(e))
             logger.error('Error in executing controlled step ({}): {} {}'.format(function,e.__class__.__name__,e))
             if retr == None or count < retr:
                 count += 1
@@ -90,7 +150,7 @@ def get_app_version():
     try:
         from app import version as app_version
     except Exception as e:
-        print(hal.get_traceback(e))
+        print(sal.get_traceback(e))
         logger.error('Error in importing version from app ({}:{}), trying obtaining it by parsing the file...'.format(e.__class__.__name__, str(e)))
         try:
             with open('/app.py','r') as file:
@@ -99,7 +159,7 @@ def get_app_version():
                     last_line=line
             app_version=last_line.split('=')[1].replace('\\'','')
         except Exception as e:
-            print(hal.get_traceback(e))
+            print(sal.get_traceback(e))
             logger.error('Error in reading version form app code ({}:{}), falling back on version 0: '.format(e.__class__.__name__, str(e)))
             app_version='0'
     return app_version
@@ -116,25 +176,25 @@ def get_pythings_version():
 
     print('Writing',path+'/files.txt')
     with open(path+'/files.txt','w') as f:
-        f.write('''file:1378:api.py
-file:17:arch.py
+        f.write('''file:1383:api.py
+file:1719:boot.py
 file:1778:common.py
-file:417:files.txt
+file:419:files.txt
 file:0:globals.py
 file:2720:hal.py
 file:764:handle_main_error.py
-file:4451:http.py
-file:6711:init.py
+file:3925:http.py
+file:6790:init.py
 file:662:logger.py
-file:1328:main.py
-file:3222:management.py
+file:3237:management.py
 file:1962:register.py
-file:854:updates_app.py
-file:762:updates_pythings.py
-file:354:updates_settings.py
-file:1636:utils.py
+file:19:system.py
+file:888:updates_app.py
+file:768:updates_pythings.py
+file:366:updates_settings.py
+file:1709:utils.py
 file:7703:websetup.py
-file:865:worker.py
+file:869:worker.py
 file:19:version.py
 ''')
         f.write('''''')
@@ -273,15 +333,15 @@ def socket_ssl(s):
     with open(path+'/handle_main_error.py','w') as f:
         f.write('''def handle(e):
     # Do not move the following import on top or code will fail (why?!)
-    import hal
-    print(hal.get_traceback(e))
+    import sal
+    print(sal.get_traceback(e))
     print('Error in executing Pythings framework: ',type(e), str(e))
     try:
         from api import report
-        report(what='pythings', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
+        report(what='pythings', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
     except Exception as e2:
         print('Error in reporting error to Pythings framework: ',type(e2), str(e2))
-        print(hal.get_traceback(e2))
+        print(sal.get_traceback(e2))
         # TODO: try except also the prints as they can fail due to uncode   
     print('\\n{}: I will reboot in 5 seconds. CTRL-C now to stop the reboot.'.format(e.__class__.__name__)) 
     import time
@@ -297,6 +357,7 @@ def socket_ssl(s):
 import json
 import logger
 import hal
+import sal
 import globals
 import gc
 
@@ -327,7 +388,7 @@ def post(url, data, dest=None):
 
     use_ssl = globals.settings['ssl'] if 'ssl' in globals.settings else True
     if hal.HW_SUPPORTS_SSL and use_ssl:
-        s = hal.socket_ssl(s)
+        s = sal.socket_ssl(s)
 
     # If socket connect fails do not have an exception when closing file
     if dest: f = None 
@@ -343,20 +404,19 @@ def post(url, data, dest=None):
             s.send(bytes('content-length: %s\\r\\n' % len(content), 'utf8'))
             s.send(bytes('content-type: %s\\r\\n' % content_type, 'utf8'))
             s.send(bytes('\\r\\n', 'utf8'))
-            hal.socket_write(s, data=bytes(content, 'utf8'))
+            sal.socket_write(s, data=bytes(content, 'utf8'))
         else:
             s.send(bytes('\\r\\n', 'utf8'))
 
         # Status, msg etc.
-        version, status, msg = hal.socket_readline(s).split(None, 2)
+        version, status, msg = sal.socket_readline(s).split(None, 2)
     
         # Skip headers
-        while hal.socket_readline(s) != b'\\r\\n':
+        while sal.socket_readline(s) != b'\\r\\n':
             pass
     
         # Read data
         content   = None
-        prev_last = ''
         stop      = False
         while True:
             data=''
@@ -377,25 +437,16 @@ def post(url, data, dest=None):
             if len(data) == 0:
                 break
 
-            logger.info('Received data', data.replace('\\n',''))
-            if dest and status == b'200' and data !='"':
+            logger.info('Received data', data)
+            if dest and status == b'200':
                 # load content, check if prev_content[-1] + content[1] == \\n,
                 if globals.payload_encrypter:
-                    content = globals.payload_encrypter.decrypt_text(data).replace('\\\\''')
-        f.write('''n','\\n')
-                    #logger.info('Decrypted data', content)
+                    content = globals.payload_encrypter.decrypt_text(data)
+                    #logger.info('Decrypted data', cont''')
+        f.write('''ent)
                 else:
                     content = data
-                if prev_last =='\\\\' and content[0] == 'n':
-                    f.write('\\n'+ content[1:-1])
-                    #logger.info('Writing data', content[1:-1])
-                else:
-                    f.write(prev_last+content[:-1])
-                    #logger.info('Writing data', prev_last+content[:-1])
-
-                # Set new prev_last
-                prev_last = content[-1]
-
+                f.write(content)
             else:
                 if content is None:
                     content=''
@@ -414,10 +465,6 @@ def post(url, data, dest=None):
             gc.collect()
             if stop:
                 break
-
-        # Write last byte of the file
-        if prev_last and f:
-            f.write(prev_last)
 
         return {'version':version, 'status':status, 'msg':msg, 'content':content}
     except:
@@ -438,8 +485,9 @@ import gc
 import globals
 import common
 import hal
+import sal
 from utils import load_param
-from arch import arch
+from system import system
 
 # Logger
 import logger
@@ -453,7 +501,7 @@ class EmptyResponse(Exception):
 #  Main
 #---------------------
 
-def start(path=None):
+def start():
 
     hal.init()
 
@@ -463,24 +511,24 @@ def start(path=None):
     print('\\n|------------------------|')
     print('|  Starting Pythings :)  |')
     print('|------------------------|')
-    print(' Version: {} ({})\\n'.format(globals.pythings_version, arch))
+    print('Version: {} ({})\\n'.format(globals.pythings_version, system))
     import os
 
     try:
-        os.stat(hal.fspath)
+        os.stat(hal.get_fs_path())
     except:
         try:
-            os.mkdir(hal.fspath)
+            os.mkdir(hal.get_fs_path())
         except Exception as e:
             raise e from None
 
     import sys
-    sys.path.append(hal.fspath)
+    sys.path.append(hal.get_fs_path())
     
     if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN:
         smt = load_param('smt', 60)
         # Start AP config mode if required
-        if hal.reset_cause() == hal.HARD_RESET:
+        if hal.get_reset_cause() == hal.HW_RESETCAUSE_HARD:
             if smt:
                 gc.collect()
                 if hal.HW_SUPPORTS_LED: hal.LED.on()
@@ -534,10 +582,10 @@ def start(path=None):
     globals.app_management_task = None
       
     # Report
-    logger.info('Running with backend="{}" and aid="{}"'.format(globals.backend, globals.aid))
+    logger.info('Running with backend="{}" and aid="{}"'.format(g''')
+        f.write('''lobals.backend, globals.aid))
 
-    # Get''')
-        f.write(''' app version:    
+    # Get app version:    
     globals.app_version = common.get_app_version()
     gc.collect()
 
@@ -548,9 +596,9 @@ def start(path=None):
     
     # Pre-register if payload encryption activated
     use_payload_encryption = globals.settings['payload_encryption'] if 'payload_encryption' in globals.settings else True
-    if use_payload_encryption and hal.payload_encrypter():
+    if use_payload_encryption and hal.HW_SUPPORTS_ENCRYPTION and sal.get_payload_encrypter():
         logger.info('Enabling Payload Encryption and preregistering')
-        globals.payload_encrypter = hal.payload_encrypter()(comp_mode=True)
+        globals.payload_encrypter = sal.get_payload_encrypter()(comp_mode=True)
         from register import preregister
         token = preregister()
         globals.token = token
@@ -586,19 +634,19 @@ def start(path=None):
         from worker_task import worker_task
         globals.app_worker_task = worker_task(chronos)
     except Exception as e:
-        print(hal.get_traceback(e))
+        print(sal.get_traceback(e))
         from api import report
         logger.error('Error in importing/loading app\\'s worker tasks: {} {}'.format(e.__class__.__name__, e))
-        common.run_controlled(2,report,what='worker', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
+        common.run_controlled(2,report,what='worker', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
 
     try:
         from management_task import management_task
         globals.app_management_task = management_task(chronos)
     except Exception as e:
-        print(hal.get_traceback(e))
+        print(sal.get_traceback(e))
         from api import report
         logger.error('Error in importing/loading  app\\'s management tasks: {} {}'.format(e.__class__.__name__, e))
-        common.run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
+        common.run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
 
     # Setup intervals
     worker_interval = int(globals.settings['worker_interval']) if 'worker_interval' in globals.settings else 300
@@ -679,64 +727,6 @@ def critical(msg,det=''):
 ''')
         f.write('''''')
 
-    print('Writing',path+'/main.py')
-    with open(path+'/main.py','w') as f:
-        f.write('''import gc
-import os
-import sys
-
-sys.path.append('/')
-import hal
-from utils import load_settings
-
-try:
-    pythings_version = load_settings()['pythings_version']
-    if not pythings_version.upper() == 'FACTORY':
-        print('Trying to load Pythings version {}'.format(pythings_version))
-        path = '/'+pythings_version
-        try:
-            os.stat(path)
-        except OSError:
-            print('Proceeding with factory default version...')
-            path='/'
-        else:
-            print('Updated version found, checking its consistency...')
-            try:
-                os.stat(path+'/version.py')
-            except OSError:
-                print('Error, proceeding with factory default version...')
-                path='/'
-            else:
-                print('Valid updated version found.')
-                sys.path.append(path)
-                os.chdir(path)
-    else:
-        path='/'
-
-except Exception as e:
-    print (hal.get_traceback(e))
-    print('Error, proceeding with factory defaults: ',type(e), str(e))
-    path='/'
-
-del load_settings
-
-        
-# Execute Pythings framework
-try:
-    import init
-    gc.collect()
-    init.start(path=path)
-
-except Exception as e:
-    import handle_main_error
-    handle_main_error.handle(e) # Fallback on factory defaults?
-finally:
-    os.chdir('/')
-    
-
-''')
-        f.write('''''')
-
     print('Writing',path+'/management.py')
     with open(path+'/management.py','w') as f:
         f.write('''import globals
@@ -745,6 +735,7 @@ from api import apost, report
 import gc
 from common import run_controlled
 import hal
+import sal
 
 def system_management_task(chronos):
     
@@ -781,9 +772,9 @@ def system_management_task(chronos):
                 update_app(globals.settings['app_version'])
 
     except Exception as e:
-        print(hal.get_traceback(e))
+        print(sal.get_traceback(e))
         logger.error('Error in management task while updating {} ({}: {}), skipping the rest...'.format(updates, e.__class__.__name__, e))
-        run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
+        run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
         return False
 
     gc.collect()
@@ -802,7 +793,7 @@ def system_management_task(chronos):
     # Call App's management
     if globals.app_management_task:
         try:
-            logger.debug('Mem free:', hal.mem_free())
+            logger.debug('Mem free:', sal.get_mem_free())
             rep=globals.app_management_task.call(chronos, msg)
             if mid:
                 run_controlled(2,report,what='management', status='OK', message={'mid':mid,'rep':rep})
@@ -811,10 +802,10 @@ def system_management_task(chronos):
                 
         except Exception as e:
             import sys
-            hal.get_traceback(e)
-            logger.error('Error''')
-        f.write(''' in executing app\\'s management task: {} {}'.format(e.__class__.__name__, e))
-            run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
+            sal.get_traceback(e)
+            logg''')
+        f.write('''er.error('Error in executing app\\'s management task: {} {}'.format(e.__class__.__name__, e))
+            run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
 ''')
 
     print('Writing',path+'/register.py')
@@ -861,27 +852,33 @@ def register():
 ''')
         f.write('''''')
 
+    print('Writing',path+'/system.py')
+    with open(path+'/system.py','w') as f:
+        f.write('''system = 'esp8266'
+''')
+        f.write('''''')
+
     print('Writing',path+'/updates_app.py')
     with open(path+'/updates_app.py','w') as f:
         f.write('''import globals
 import logger
 from utils import mv
 from api import apost,download
-from hal import fspath
-from arch import arch
+from hal import get_fs_path
+from system import system
 
 def update_app(version):
     files = apost(api='/apps/get/', data={'version':version, 'list':True})['content']
     # First of all remove /app.py to say that there is no valid App yet (download is in progress)
     import os
-    try: os.remove(fspath+'/app.py')
+    try: os.remove(get_fs_path()+'/app.py')
     except: pass
     for file_name in files:
         if file_name in ['worker_task.py','management_task.py']:
-            download(file_name=file_name, version=version, dest='{}/{}'.format(fspath, file_name),what='apps',arch=arch) 
+            download(file_name=file_name, version=version, dest='{}/{}'.format(get_fs_path(), file_name),what='apps',system=system) 
         else:
             logger.info('NOT downloading "{}" as in forbidden list'.format(file_name))
-    with open(fspath+'/app.py','w') as f:
+    with open(get_fs_path()+'/app.py','w') as f:
         f.write('\\nversion=\\'{}\\''.format(version))
     logger.info('Got new, updated app')
 ''')
@@ -893,16 +890,15 @@ def update_app(version):
 import globals
 import logger
 import os
-from arch import arch
-from hal import fspath
+from system import system
+from hal import get_fs_path
 from api import apost, download
-from arch import arch
 
 def update_pythings(version):
     
-    files = apost(api='/pythings/get/', data={'version':version, 'list':True, 'arch':arch})['content']
+    files = apost(api='/pythings/get/', data={'version':version, 'list':True, 'system':system})['content']
 
-    path = fspath+'/'+version
+    path = get_fs_path()+'/'+version
     try:
         os.mkdir(path)
     except OSError as e:
@@ -910,10 +906,10 @@ def update_pythings(version):
 
     for file_name in files:
         if file_name != 'version.py':
-            download(file_name=file_name, version=version, arch=arch, dest='{}/{}'.format(path, file_name), what='pythings')
+            download(file_name=file_name, version=version, system=system, dest='{}/{}'.format(path, file_name), what='pythings')
     for file_name in files:
         if file_name == 'version.py':
-            download(file_name=file_name, version=version, arch=arch, dest='{}/{}'.format(path, file_name), what='pythings')
+            download(file_name=file_name, version=version, system=system, dest='{}/{}'.format(path, file_name), what='pythings')
 ''')
         f.write('''''')
 
@@ -922,11 +918,11 @@ def update_pythings(version):
         f.write('''
 import globals
 import logger
-from hal import fspath
+from hal import get_fs_path
 
 def update_settings(content):
     logger.debug('Storing received settings ({} <--> {})'.format(content['settings'], globals.settings))
-    f = open(fspath+'/settings.json', 'w')
+    f = open(get_fs_path()+'/settings.json', 'w')
     import json
     f.write(json.dumps(content['settings']))
     f.close()
@@ -939,7 +935,9 @@ def update_settings(content):
     print('Writing',path+'/utils.py')
     with open(path+'/utils.py','w') as f:
         f.write('''import os
-from hal import re, fspath
+from sal import get_re
+from hal import get_fs_path
+
 
 def connect_wifi(wlan, essid, password):
     wlan.connect(essid, password)
@@ -956,7 +954,7 @@ def unquote(s):
 
 def load_param(param, default=None):
     try:
-        with open(fspath+'/{}'.format(param),'r') as f:
+        with open(get_fs_path()+'/{}'.format(param),'r') as f:
             param = f.readline().strip()
         return param
     except Exception as e:
@@ -966,7 +964,7 @@ def load_settings():
     import json
     settings = {}
     try:
-        with open(fspath+'/settings.json','r') as f:
+        with open(get_fs_path()+'/settings.json','r') as f:
             settings = json.loads(f.read())
     except Exception as e:
         print('Cannot open settings.py and load the json content: {}'.format(e))
@@ -975,16 +973,16 @@ def load_settings():
 def mv(source,dest):
     try:
         try:
-            os.remove(fspath+'/'+dest)
+            os.remove(get_fs_path()+'/'+dest)
         except:
             pass
-        os.rename(fspath+'/'+source, fspath+'/'+dest)
+        os.rename(get_fs_path()+'/'+source, get_fs_path()+'/'+dest)
     except:
         pass
 
 def get_wifi_data():
     try:
-        with open(fspath+'/wifi','r') as f:
+        with open(get_fs_path()+'/wifi','r') as f:
             essid = f.readline()[0:-1]
             password = f.readline()
     except:
@@ -994,7 +992,7 @@ def get_wifi_data():
 
 def parseURL(url):
     parameters = {}
-    path = re.search("(.*?)(\\?|$)", url).group(1)
+    path = get_re().search("(.*?)(\\?|$)", url).group(1)
     if '?' in url:
         try:
             for keyvalue in url.split('?')[1].split('&'):
@@ -1007,7 +1005,7 @@ def parseURL(url):
 
     print('Writing',path+'/version.py')
     with open(path+'/version.py','w') as f:
-        f.write('''version='v0.2-rc5'
+        f.write('''version='v0.3pre1'
 ''')
         f.write('''''')
 
@@ -1226,7 +1224,7 @@ def websetup(timeout_s=60, lock_session=False):
 import logger
 from api import apost, report
 import gc
-import hal
+import sal
 from common import run_controlled
 
 def system_worker_task(chronos):
@@ -1235,15 +1233,15 @@ def system_worker_task(chronos):
     if globals.app_worker_task:
         worker_msg = None
         try:
-            logger.debug('Mem free:', hal.mem_free())
+            logger.debug('Mem free:', sal.get_mem_free())
             worker_msg = globals.app_worker_task.call(chronos)
             if worker_msg:
                 run_controlled(2,apost,api='/apps/worker/', data={'msg': worker_msg })
             report('worker','OK')
         except Exception as e:
-            print(hal.get_traceback(e))
+            print(sal.get_traceback(e))
             logger.error('Error in executing app\\'s worker taks or sending its data: {} {}'.format(e.__class__.__name__, e))
-            run_controlled(2,report,what='worker', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, hal.get_traceback(e)))
+            run_controlled(2,report,what='worker', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
             ''')
         f.write('''''')
 

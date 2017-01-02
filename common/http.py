@@ -2,6 +2,7 @@ import socket
 import json
 import logger
 import hal
+import sal
 import globals
 import gc
 
@@ -32,7 +33,7 @@ def post(url, data, dest=None):
 
     use_ssl = globals.settings['ssl'] if 'ssl' in globals.settings else True
     if hal.HW_SUPPORTS_SSL and use_ssl:
-        s = hal.socket_ssl(s)
+        s = sal.socket_ssl(s)
 
     # If socket connect fails do not have an exception when closing file
     if dest: f = None 
@@ -48,20 +49,19 @@ def post(url, data, dest=None):
             s.send(bytes('content-length: %s\r\n' % len(content), 'utf8'))
             s.send(bytes('content-type: %s\r\n' % content_type, 'utf8'))
             s.send(bytes('\r\n', 'utf8'))
-            hal.socket_write(s, data=bytes(content, 'utf8'))
+            sal.socket_write(s, data=bytes(content, 'utf8'))
         else:
             s.send(bytes('\r\n', 'utf8'))
 
         # Status, msg etc.
-        version, status, msg = hal.socket_readline(s).split(None, 2)
+        version, status, msg = sal.socket_readline(s).split(None, 2)
     
         # Skip headers
-        while hal.socket_readline(s) != b'\r\n':
+        while sal.socket_readline(s) != b'\r\n':
             pass
     
         # Read data
         content   = None
-        prev_last = ''
         stop      = False
         while True:
             data=''
@@ -82,24 +82,15 @@ def post(url, data, dest=None):
             if len(data) == 0:
                 break
 
-            logger.info('Received data', data.replace('\n',''))
-            if dest and status == b'200' and data !='"':
+            logger.info('Received data', data)
+            if dest and status == b'200':
                 # load content, check if prev_content[-1] + content[1] == \n,
                 if globals.payload_encrypter:
-                    content = globals.payload_encrypter.decrypt_text(data).replace('\\n','\n')
+                    content = globals.payload_encrypter.decrypt_text(data)
                     #logger.info('Decrypted data', content)
                 else:
                     content = data
-                if prev_last =='\\' and content[0] == 'n':
-                    f.write('\n'+ content[1:-1])
-                    #logger.info('Writing data', content[1:-1])
-                else:
-                    f.write(prev_last+content[:-1])
-                    #logger.info('Writing data', prev_last+content[:-1])
-
-                # Set new prev_last
-                prev_last = content[-1]
-
+                f.write(content)
             else:
                 if content is None:
                     content=''
@@ -118,10 +109,6 @@ def post(url, data, dest=None):
             gc.collect()
             if stop:
                 break
-
-        # Write last byte of the file
-        if prev_last and f:
-            f.write(prev_last)
 
         return {'version':version, 'status':status, 'msg':msg, 'content':content}
     except:
