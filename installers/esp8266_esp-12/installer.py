@@ -144,8 +144,7 @@ def get_app_version():
     try:
         from app import version as app_version
     except Exception as e:
-        print(sal.get_traceback(e))
-        logger.error('Error in importing version from App ({}:{}), falling back on version 0'.format(e.__class__.__name__, str(e)))
+        logger.info('Cannot obtain App version ({}:{}), falling back on version 0'.format(e.__class__.__name__, e))
         app_version='0'
     return app_version
 
@@ -153,7 +152,7 @@ def get_pythings_version():
     try:
         from version import version
     except Exception as e:
-        logger.error('Error in obtaining Pythings version: ({}: {}), skipping...'.format(e.__class__.__name__, str(e)))
+        logger.error('Error in obtaining Pythings version ({}: {}), skipping...'.format(e.__class__.__name__, e))
         version='Unknown'
     return version
 ''')
@@ -162,11 +161,11 @@ def get_pythings_version():
     print('Writing',path+'/files.txt')
     with open(path+'/files.txt','w') as f:
         f.write('''file:1327:api.py
-file:1293:common.py
+file:1235:common.py
 file:425:files.txt
 file:0:globals.py
 file:687:handle_main_error.py
-file:3899:http.py
+file:3731:http.py
 file:6465:init.py
 file:642:logger.py
 file:3237:management.py
@@ -344,9 +343,9 @@ def post(url, data, dest=None):
                 # load content, check if prev_content[-1] + content[1] == \\n,
                 if globals.payload_encrypter:
                     content = globals.payload_encrypter.decrypt_text(data)
-                    #logger.info('Decrypted data', content)
-                else:''')
-        f.write('''
+                    #logger.debug('Decrypted data', content)
+                else''')
+        f.write(''':
                     content = data
                 f.write(content)
             else:
@@ -354,11 +353,8 @@ def post(url, data, dest=None):
                     content=''
 
                 if globals.payload_encrypter:
-                    try:
-                        content += globals.payload_encrypter.decrypt_text(data)
-                        #logger.info('Decrypted data', content)
-                    except Exception as e:
-                        logger.error('Cannot decrypt text ({})'.format(e.__class__.__name__))
+                    content += globals.payload_encrypter.decrypt_text(data)
+                    #logger.debug('Decrypted data', content)
                 else:
                     content +=data
 
