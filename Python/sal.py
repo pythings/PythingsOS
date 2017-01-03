@@ -36,7 +36,7 @@ class Chronos(object):
         return calendar.timegm(time.gmtime())
     
 def is_frozen():
-    return True
+    return False
 
 def get_tuuid():
     raise NotImplementedError('I have no way to obtain an UUID for myself. You have to tell me my TID.')
