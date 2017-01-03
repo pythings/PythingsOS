@@ -6,7 +6,7 @@ import globals
 gc.collect()
 
 # Set root path
-globals.root = '/'
+globals.root = './'
 
 print('')
 try:
