@@ -13,10 +13,9 @@ print('')
 try:
     try:
         with open(globals.root+'/settings.json','r') as f:
-            globals.settings = json.loads(f.read())
+            pythings_version = json.loads(f.read())['pythings_version'] 
     except Exception as e:
-        globals.settings = {}
-    pythings_version = globals.settings['pythings_version'] if 'pythings_version' in globals.settings else 'FACTORY'
+        pythings_version = 'FACTORY'
     
     if not pythings_version.upper() == 'FACTORY':
         path = globals.root+'/'+pythings_version
