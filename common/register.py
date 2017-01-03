@@ -13,7 +13,6 @@ def register():
                                            'app_version': globals.app_version,
                                            'pythings_version': globals.pythings_version,
                                            'pool': globals.pool,
-                                           'settings': globals.settings,
                                            'frozen':globals.frozen})
     if not response:
         raise Exception('Empty Response from register')
