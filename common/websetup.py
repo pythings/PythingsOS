@@ -27,12 +27,12 @@ def websetup(timeout_s=60, lock_session=False):
     
     while True:
         try:
-            #logger.info('Waiting for a connection..')
+            logger.info('Done, waiting for a connection..')
             gc.collect
             
             # Handle client connection
             cl, addr = s.accept()
-            #logger.debug('Client connected from ', addr)
+            logger.info('Client connected from', addr[0])
             s.settimeout(None)
 
             # Read request
@@ -73,7 +73,7 @@ def websetup(timeout_s=60, lock_session=False):
             
             # This is an API call
             elif 'cmd' in parameters:
-                #logger.debug('Called API with cmd={}'.format(parameters['cmd']))
+                logger.info('Called API with cmd={}'.format(parameters['cmd']))
                 set_api()
                 cmd = parameters['cmd']
                 essid = None
