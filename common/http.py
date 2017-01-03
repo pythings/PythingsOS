@@ -86,7 +86,7 @@ def post(url, data, dest=None):
                 # load content, check if prev_content[-1] + content[1] == \n,
                 if globals.payload_encrypter:
                     content = globals.payload_encrypter.decrypt_text(data)
-                    #logger.info('Decrypted data', content)
+                    #logger.debug('Decrypted data', content)
                 else:
                     content = data
                 f.write(content)
@@ -96,7 +96,7 @@ def post(url, data, dest=None):
 
                 if globals.payload_encrypter:
                     content += globals.payload_encrypter.decrypt_text(data)
-                    #logger.info('Decrypted data', content)
+                    #logger.debug('Decrypted data', content)
                 else:
                     content +=data
 

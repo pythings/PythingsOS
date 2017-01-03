@@ -25,8 +25,7 @@ def get_app_version():
     try:
         from app import version as app_version
     except Exception as e:
-        print(sal.get_traceback(e))
-        logger.error('Error in importing version from App ({}:{}), falling back on version 0'.format(e.__class__.__name__, str(e)))
+        logger.info('Cannot obtain App version ({}:{}), falling back on version 0'.format(e.__class__.__name__, e))
         app_version='0'
     return app_version
 
@@ -34,6 +33,6 @@ def get_pythings_version():
     try:
         from version import version
     except Exception as e:
-        logger.error('Error in obtaining Pythings version: ({}: {}), skipping...'.format(e.__class__.__name__, str(e)))
+        logger.error('Error in obtaining Pythings version ({}: {}), skipping...'.format(e.__class__.__name__, e))
         version='Unknown'
     return version
