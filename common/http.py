@@ -95,11 +95,8 @@ def post(url, data, dest=None):
                     content=''
 
                 if globals.payload_encrypter:
-                    try:
-                        content += globals.payload_encrypter.decrypt_text(data)
-                        #logger.info('Decrypted data', content)
-                    except Exception as e:
-                        logger.error('Cannot decrypt text ({})'.format(e.__class__.__name__))
+                    content += globals.payload_encrypter.decrypt_text(data)
+                    #logger.info('Decrypted data', content)
                 else:
                     content +=data
 
