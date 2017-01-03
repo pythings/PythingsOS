@@ -1,2 +1,2 @@
 #!/bin/bash
-micropython main.py
+micropython boot.py

@@ -47,7 +47,7 @@ def get_reset_cause():
     return machine.reset_cause()
 
 def reboot():
-    machine.reset()
+    sys.exit()
 
 
 # The following are just system-dependent, not hardware, and cannot be overwritten or extended.
