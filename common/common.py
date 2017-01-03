@@ -4,7 +4,6 @@ import sal
 
 def run_controlled(retr, function, **kwargs):
     count=0
-    sleep=3
     while True:
         try:
             return function(**kwargs)   
@@ -13,11 +12,11 @@ def run_controlled(retr, function, **kwargs):
             logger.error('Error in executing controlled step ({}): {} {}'.format(function,e.__class__.__name__,e))
             if retr == None or count < retr:
                 count += 1
-                logger.info('Retrying (#{}) in {} seconds...'.format(count,sleep))
-                time.sleep(sleep)
+                logger.info('Retrying (#{}) in 3 seconds...'.format(count))
+                time.sleep(3)
             else:
                 logger.info('Exiting due to maximum retries reached')
-                return None
+                return
         finally:
             import gc
             gc.collect()
@@ -27,17 +26,8 @@ def get_app_version():
         from app import version as app_version
     except Exception as e:
         print(sal.get_traceback(e))
-        logger.error('Error in importing version from app ({}:{}), trying obtaining it by parsing the file...'.format(e.__class__.__name__, str(e)))
-        try:
-            with open('/app.py','r') as file:
-                last_line=None
-                for line in file:
-                    last_line=line
-            app_version=last_line.split('=')[1].replace('\'','')
-        except Exception as e:
-            print(sal.get_traceback(e))
-            logger.error('Error in reading version form app code ({}:{}), falling back on version 0: '.format(e.__class__.__name__, str(e)))
-            app_version='0'
+        logger.error('Error in importing version from App ({}:{}), falling back on version 0'.format(e.__class__.__name__, str(e)))
+        app_version='0'
     return app_version
 
 def get_pythings_version():

@@ -9,7 +9,6 @@ def handle(e):
     except Exception as e2:
         print('Error in reporting error to Pythings framework: ',type(e2), str(e2))
         print(sal.get_traceback(e2))
-        # TODO: try except also the prints as they can fail due to uncode   
     print('\n{}: I will reboot in 5 seconds. CTRL-C now to stop the reboot.'.format(e.__class__.__name__)) 
     import time
     time.sleep(5)

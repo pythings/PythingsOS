@@ -8,7 +8,8 @@ import time
 import calendar
 import ssl
 import traceback
-
+import os
+import globals
 
 # The following can be overwritten or extended in the Hardware Abstraction Layer
 
@@ -46,15 +47,23 @@ def get_reset_cause():
 def reboot():
     sys.exit(0)
 
-def get_fs_path():
-    from os.path import expanduser
-    return(expanduser('~')+'/.pythings')
-
 
 # The following are just system-dependent, not hardware, and cannot be overwritten or extended.
 
 def init():
-    pass
+        
+    # Create root path if not existent
+    try:
+        os.stat(globals.root)
+    except:
+        try:
+            os.mkdir(globals.root)
+        except Exception as e:
+            raise e from None
+        
+    # Append root to the sys path
+    sys.path.append(globals.root)
+
 
 def get_payload_encrypter():
     try:

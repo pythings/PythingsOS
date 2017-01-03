@@ -1,7 +1,6 @@
 import os
 from sal import get_re
-from hal import get_fs_path
-
+import globals
 
 def connect_wifi(wlan, essid, password):
     wlan.connect(essid, password)
@@ -18,7 +17,7 @@ def unquote(s):
 
 def load_param(param, default=None):
     try:
-        with open(get_fs_path()+'/{}'.format(param),'r') as f:
+        with open(globals.root+'/{}'.format(param),'r') as f:
             param = f.readline().strip()
         return param
     except Exception as e:
@@ -28,7 +27,7 @@ def load_settings():
     import json
     settings = {}
     try:
-        with open(get_fs_path()+'/settings.json','r') as f:
+        with open(globals.root+'/settings.json','r') as f:
             settings = json.loads(f.read())
     except Exception as e:
         print('Cannot open settings.py and load the json content: {}'.format(e))
@@ -37,16 +36,16 @@ def load_settings():
 def mv(source,dest):
     try:
         try:
-            os.remove(get_fs_path()+'/'+dest)
+            os.remove(globals.root+'/'+dest)
         except:
             pass
-        os.rename(get_fs_path()+'/'+source, get_fs_path()+'/'+dest)
+        os.rename(globals.root+'/'+source, globals.root+'/'+dest)
     except:
         pass
 
 def get_wifi_data():
     try:
-        with open(get_fs_path()+'/wifi','r') as f:
+        with open(globals.root+'/wifi','r') as f:
             essid = f.readline()[0:-1]
             password = f.readline()
     except:

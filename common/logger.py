@@ -12,28 +12,24 @@ def emit(level,msg, det):
         print(msg, end='')
         print(' ', end='')
         print(det, end='')
-        print('')  
+        print('')
 
 def debug(msg,det=''):
     if level <= DEBUG:
-        emit('DEBUG',msg,det) 
-  
+        emit('DEBUG',msg,det)
+
 def info(msg,det=''):
-    if level <= INFO: 
-        emit('INFO',msg,det) 
-    
+    if level <= INFO:
+        emit('INFO',msg,det)
+
 def warning(msg,det=''):
-    if level <= WARNING: 
-        emit('WARNING',msg,det) 
+    if level <= WARNING:
+        emit('WARNING',msg,det)
 
 def error(msg,det=''):
-    if level <= ERROR: 
+    if level <= ERROR:
         emit('ERROR',msg,det) 
 
 def critical(msg,det=''):
-    if level <= CRITICAL: 
-        emit('CRITICAL',msg,det) 
-
-
-
-
+    if level <= CRITICAL:
+        emit('CRITICAL',msg,det)

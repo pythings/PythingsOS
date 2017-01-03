@@ -1,120 +1,39 @@
 
-import machine
-import network
-import time
+#----------------------------
+# Hardware Abstraction Layer
+#----------------------------
 
-# Constants (settings)
-HW_SUPPORTS_DEEPSLEEP  = True
+# Hardware settings
+HW_SUPPORTS_DEEPSLEEP  = False
 HW_SUPPORTS_RESETCAUSE = True
 HW_SUPPORTS_LED        = False
 HW_SUPPORTS_WLAN       = True
-
-# If set to True, disable payload encryption
 HW_SUPPORTS_SSL        = False
+HW_SUPPORTS_ENCRYPTION = True
+HW_RESETCAUSE_HARD     = 6
 
-# Filesystem (absolute) path
-fspath = '/'
-
-# Frozen 
-def is_frozen():
-    import os
-    try:
-        os.stat(fspath+'/updates_pythings.py')
-        return False
-    except:
-        return True
-def is_os_frozen():
-    return is_frozen()
-
-# Payload encryption (not needed if SSL support available)
-def payload_encrypter():  
-    if is_frozen():
-        try:
-            from crypto_aes import Aes128ecb
-            return Aes128ecb      
-        except:
-            return None
-    else:
-        return None
-
-# Required if RESETCAUSE is supported
-HARD_RESET = 6
-
-# HW initializer (i.e. put PWMs to zero)
+# Hardware initialization (i.e. put PWMs to zero)
 def init():
     pass
 
-# Objects
-class LED(object):
-    @staticmethod
-    def on():
-        pass     
-    @staticmethod
-    def off():
-        pass 
+# Hardware-dependent platform objects and routines which can
+# (or might have to) be overwritten here. Note that if you
+# overwrite them here, they won't be OTA-updatable anymore.
+from sal import LED
+from sal import WLAN
+from sal import Chronos
+from sal import get_tuuid
+from sal import get_reset_cause
+from sal import is_frozen
+from sal import reboot
 
-class WLAN(object):  
-    @staticmethod
-    def sta_active(mode):
-        sta = network.WLAN(network.STA_IF)
-        sta.active(mode)
-        if mode is True:
-            from utils import connect_wifi, get_wifi_data
-            essid,password = get_wifi_data()
-            if essid:
-                connect_wifi(sta, essid, password)
-    @staticmethod
-    def ap_active(mode):
-        network.WLAN(network.AP_IF).active(mode)
-
-# Functions
-def get_tuuid():
-    wlan = network.WLAN(network.STA_IF)
-    mac_b = wlan.config('mac')
-    mac_s = ':'.join( [ "%02X" % x for x in mac_b ] )
-    return mac_s.replace(':','')
-
-def mem_free():
-    import gc
-    return gc.mem_free()
-
-def get_traceback(e):
-    import uio
-    import sys
-    s = uio.StringIO()
-    sys.print_exception(e, s)
-    return s.getvalue() 
-
-def reset_cause():
-    return machine.reset_cause()
-
-def reboot():
-    machine.reset()
-    time.sleep(3)
-
-# Regular expression are system-dependent
+# Back compatibility
+def is_os_frozen():
+    return is_frozen()
+from sal import get_traceback
 import ure as re
-
-# Time management is hardware-dependent
-class Chronos(object):
-    def __init__(self, epoch_s_now=0):
-        self.epoch_baseline_s    = epoch_s_now
-        self.internal_baseline_s = int(time.ticks_ms()/1000)
-    def epoch(self):
-        if self.epoch_baseline_s is not None and self.internal_baseline_s is not None:
-            current_epoch_s = (int(time.ticks_ms()/1000) - self.internal_baseline_s) + self.epoch_baseline_s        
-            return current_epoch_s
-        else:
-            return time.ticks_ms()/1000
-
-# Socket readline, write and ssl wrapper are system-dependent
-def socket_readline(s):
-    return s.readline()
-
-def socket_write(s,data):
-    s.write(data)
-
-def socket_ssl(s):
-    raise NotImplementedError()
-
-
+fspath='/'
+def reset_cause():
+    import machine
+    return machine.reset_cause()
+HARD_RESET=4

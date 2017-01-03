@@ -7,7 +7,6 @@ import globals
 import gc
 
 def post(url, data, dest=None):
-    print('POST: url',url)
     try: token = globals.token
     except AttributeError: token=None
     if  globals.payload_encrypter and token:
@@ -82,7 +81,7 @@ def post(url, data, dest=None):
             if len(data) == 0:
                 break
 
-            logger.info('Received data', data)
+            logger.debug('Received data', data)
             if dest and status == b'200':
                 # load content, check if prev_content[-1] + content[1] == \n,
                 if globals.payload_encrypter:

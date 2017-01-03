@@ -38,7 +38,6 @@ def apost(api, data={}):
     logger.debug('Got response:',response)
     if response['content'] and response['content'] != '\\n':
         response['content'] = json.loads(response['content']) 
-    logger.debug('Loaded json content and returning') 
     check_response(response)
     return response
 
@@ -51,7 +50,8 @@ def download(file_name, version, dest, what, system):
 def report(what, status, message=None):
     logger.info('Reporting "{}" as "{}" with message "{}"'.format(what,status,message))
     response = apost('/things/report/', {'what':what,'status': status,'msg': message})
-    logger.debug('Response:',response)''')
+    logger.debug('Response:',response)
+''')
         f.write('''''')
 
     print('Writing',path+'/boot.py')
@@ -60,51 +60,45 @@ def report(what, status, message=None):
 import os
 import sys
 import json
-import hal
+import globals
+gc.collect()
 
-# TODO: not sure if we need it anymore
-#sys.path.append('/')
+globals.root = '/'
 
-fs_path= hal.get_fs_path()
+print('')
 try:
     try:
-        with open(fs_path+'/settings.json','r') as f:
-            settings = json.loads(f.read())
+        with open(globals.root+'/settings.json','r') as f:
+            globals.settings = json.loads(f.read())
     except Exception as e:
-        settings = {}
-        print('Cannot open settings.py and load the json content: {}'.format(e))    
-    pythings_version = settings['pythings_version'] if 'pythings_version' in settings else 'FACTORY'
+        globals.settings = {}
+    pythings_version = globals.settings['pythings_version'] if 'pythings_version' in globals.settings else 'FACTORY'
     
     if not pythings_version.upper() == 'FACTORY':
-        path = fs_path+'/'+pythings_version
-        print('Trying to load Pythings version {} from {}'.format(pythings_version,path))
+        path = globals.root+'/'+pythings_version
+        print('BOOT: Trying to load Pythings version {} from {}'.format(pythings_version,path))
         try:
             os.stat(path)
         except OSError:
-            print('Proceeding with factory default version...')
-            path=fs_path
+            print('BOOT: Proceeding with factory default version...')
+            path=globals.root
         else:
-            print('Updated version found, checking its consistency...')
             try:
                 os.stat(path+'/version.py')
             except OSError:
-                print('Error, proceeding with factory default version...')
-                path=fs_path
+                print('BOOT: Error, proceeding with factory default version...')
+                path=globals.root
             else:
-                print('Valid updated version found.')
+                print('BOOT: OK, valid version {} found and loading...'.format(pythings_version))
                 sys.path.insert(0, path)
     else:
-        path=fs_path
+        path=globals.root
 
 except Exception as e:
-    print('Error, proceeding with factory defaults: ',type(e), str(e))
-    path=fs_path
+    print('BOOT: Error, proceeding with factory defaults: ',e.__class.__.__name__, str(e))
+    path=globals.root
+print('')
 
-# Cleanup & un-load SAL if got loaded by hal
-del settings
-try: del sys.modules['sal']
-except: pass
- 
 # Execute Pythings framework (from right path inserted above)
 try:
     import init
@@ -114,6 +108,8 @@ except Exception as e:
     import handle_main_error
     handle_main_error.handle(e) 
     # TODO: Fallback on factory version?
+finally:
+    del globals
 
     
 
@@ -128,7 +124,6 @@ import sal
 
 def run_controlled(retr, function, **kwargs):
     count=0
-    sleep=3
     while True:
         try:
             return function(**kwargs)   
@@ -137,11 +132,11 @@ def run_controlled(retr, function, **kwargs):
             logger.error('Error in executing controlled step ({}): {} {}'.format(function,e.__class__.__name__,e))
             if retr == None or count < retr:
                 count += 1
-                logger.info('Retrying (#{}) in {} seconds...'.format(count,sleep))
-                time.sleep(sleep)
+                logger.info('Retrying (#{}) in 3 seconds...'.format(count))
+                time.sleep(3)
             else:
                 logger.info('Exiting due to maximum retries reached')
-                return None
+                return
         finally:
             import gc
             gc.collect()
@@ -151,17 +146,8 @@ def get_app_version():
         from app import version as app_version
     except Exception as e:
         print(sal.get_traceback(e))
-        logger.error('Error in importing version from app ({}:{}), trying obtaining it by parsing the file...'.format(e.__class__.__name__, str(e)))
-        try:
-            with open('/app.py','r') as file:
-                last_line=None
-                for line in file:
-                    last_line=line
-            app_version=last_line.split('=')[1].replace('\\'','')
-        except Exception as e:
-            print(sal.get_traceback(e))
-            logger.error('Error in reading version form app code ({}:{}), falling back on version 0: '.format(e.__class__.__name__, str(e)))
-            app_version='0'
+        logger.error('Error in importing version from App ({}:{}), falling back on version 0'.format(e.__class__.__name__, str(e)))
+        app_version='0'
     return app_version
 
 def get_pythings_version():
@@ -176,24 +162,25 @@ def get_pythings_version():
 
     print('Writing',path+'/files.txt')
     with open(path+'/files.txt','w') as f:
-        f.write('''file:1383:api.py
-file:1719:boot.py
-file:1778:common.py
-file:419:files.txt
+        f.write('''file:1329:api.py
+file:1598:boot.py
+file:1293:common.py
+file:435:files.txt
 file:0:globals.py
-file:2788:hal.py
-file:764:handle_main_error.py
-file:3925:http.py
-file:6790:init.py
-file:662:logger.py
+file:981:hal.py
+file:687:handle_main_error.py
+file:3898:http.py
+file:6688:init.py
+file:642:logger.py
 file:3237:management.py
 file:1962:register.py
+file:2547:sal.py
 file:26:system.py
-file:888:updates_app.py
-file:768:updates_pythings.py
-file:366:updates_settings.py
-file:1709:utils.py
-file:7703:websetup.py
+file:857:updates_app.py
+file:739:updates_pythings.py
+file:337:updates_settings.py
+file:1689:utils.py
+file:6924:websetup.py
 file:869:worker.py
 file:19:version.py
 ''')
@@ -207,125 +194,47 @@ file:19:version.py
     print('Writing',path+'/hal.py')
     with open(path+'/hal.py','w') as f:
         f.write('''
-import machine
-import network
-import time
+#----------------------------
+# Hardware Abstraction Layer
+#----------------------------
 
-# Constants (settings)
+# Hardware settings
 HW_SUPPORTS_DEEPSLEEP  = True
 HW_SUPPORTS_RESETCAUSE = True
-HW_SUPPORTS_LED        = False
+HW_SUPPORTS_LED        = True
 HW_SUPPORTS_WLAN       = True
-
-# If set to True, disable payload encryption
 HW_SUPPORTS_SSL        = False
+HW_SUPPORTS_ENCRYPTION = True
+HW_RESETCAUSE_HARD     = 6
 
-# Filesystem (absolute) path
-fspath = '/'
-
-# Frozen 
-def is_frozen():
-    import os
-    try:
-        os.stat(fspath+'/updates_pythings.py')
-        return False
-    except:
-        return True
-def is_os_frozen():
-    return is_frozen()
-
-# Payload encryption (not needed if SSL support available)
-def payload_encrypter():  
-    if is_frozen():
-        try:
-            from crypto_aes import Aes128ecb
-            return Aes128ecb      
-        except:
-            return None
-    else:
-        return None
-
-# Required if RESETCAUSE is supported
-HARD_RESET = 6
-
-# HW initializer (i.e. put PWMs to zero)
+# Hardware initialization (i.e. put PWMs to zero)
 def init():
     pass
 
-# Objects
-class LED(object):
-    @staticmethod
-    def on():
-        machine.Pin(2, machine.Pin.OUT).low()     
-    @staticmethod
-    def off():
-        machine.Pin(2, machine.Pin.OUT).high()  
+# Hardware-dependent platform objects and routines which can
+# (or might have to) be overwritten here. Note that if you
+# overwrite them here, they won't be OTA-updatable anymore.
+from sal import LED
+from sal import WLAN
+from sal import Chronos
 
-class WLAN(object):  
-    @staticmethod
-    def sta_active(mode):
-        sta = network.WLAN(network.STA_IF)
-        sta.active(mode)
-        if mode is True:
-            from utils import connect_wifi, get_wifi_data
-            essid,password = get_wifi_data()
-            if essid:
-                connect_wifi(sta, essid, password)
-    @staticmethod
-    def ap_active(mode):
-        network.WLAN(network.AP_IF).active(mode)
+from sal import get_tuuid
+from sal import get_reset_cause
+from sal import get_fs_path
 
-# Functions
-def get_tuuid():
-    wlan = network.WLAN(network.STA_IF)
-    mac_b = wlan.config('mac')
-    mac_s = ':'.join( [ "%02X" % x for x in mac_b ] )
-    return mac_s.replace(':','')
+from sal import is_frozen
+from sal import reboot
 
-def mem_free():
-    import gc
-    return gc.mem_free()
-
-def get_traceback(e):
-    import uio
-    import sys
-    s = uio.StringIO()
-    sys.print_exception(e, s)
-    return s.getvalue() 
-
-def reset_cause():
-    return machine.reset_cause()
-
-def reboot():
-    machine.reset()
-    time.sleep(3)
-
-# Regular expression are system-dependent
+# Back compatibility
+def is_os_frozen():
+    return is_frozen()
+from sal import get_traceback
 import ure as re
-
-# Time management is hardware-dependent
-class Chronos(object):
-    def __init__(self, epoch_s_now=0):
-        self.epoch_baseline_s    = epoch_s_now
-        self.internal_baseline_s = int(time.ticks_ms()/1000)
-    def epoch(self):
-        if self.epoch_baseline_s is not None and self.internal_baseline_s is not None:
-            current_epoch_s = (int(time.ticks_ms()/1000) - self.internal_baseline_s) + self.epoch_baseline_s        
-            return current_epoch_s
-        else:
-            return time.ticks_ms()/1000
-
-# Socket readline, write and ssl wrapper are system-dependent
-def socket_readline(s):
-    return s.readline()
-
-def socket_write(s,data):
-    s.write(data)
-
-def socket_ssl(s):
-    raise NotImplementedError()
-
-
+fspath='/'
+def reset_cause():
+    import machine
+    return machine.reset_cause()
+HARD_RESET=4
 ''')
         f.write('''''')
 
@@ -342,7 +251,6 @@ def socket_ssl(s):
     except Exception as e2:
         print('Error in reporting error to Pythings framework: ',type(e2), str(e2))
         print(sal.get_traceback(e2))
-        # TODO: try except also the prints as they can fail due to uncode   
     print('\\n{}: I will reboot in 5 seconds. CTRL-C now to stop the reboot.'.format(e.__class__.__name__)) 
     import time
     time.sleep(5)
@@ -362,7 +270,6 @@ import globals
 import gc
 
 def post(url, data, dest=None):
-    print('POST: url',url)
     try: token = globals.token
     except AttributeError: token=None
     if  globals.payload_encrypter and token:
@@ -442,10 +349,10 @@ def post(url, data, dest=None):
                 # load content, check if prev_content[-1] + content[1] == \\n,
                 if globals.payload_encrypter:
                     content = globals.payload_encrypter.decrypt_text(data)
-                    #logger.info('Decrypted data', cont''')
-        f.write('''ent)
+                    #logger.info('Decrypted data', content)
                 else:
-                    content = data
+''')
+        f.write('''                    content = data
                 f.write(content)
             else:
                 if content is None:
@@ -480,7 +387,7 @@ def post(url, data, dest=None):
     with open(path+'/init.py','w') as f:
         f.write('''
 #  Imports
-import time
+from time import sleep
 import gc
 import globals
 import common
@@ -493,14 +400,7 @@ from system import system
 import logger
 logger.level = logger.DEBUG
 
-# Utils
-class EmptyResponse(Exception):
-    pass
-
-#---------------------
-#  Main
-#---------------------
-
+# Start
 def start():
 
     hal.init()
@@ -511,19 +411,20 @@ def start():
     print('\\n|------------------------|')
     print('|  Starting Pythings :)  |')
     print('|------------------------|')
-    print('Version: {} ({})\\n'.format(globals.pythings_version, system))
+    print(' Version: {}'.format(globals.pythings_version))
+    print(' System: {}\\n'.format(system))
     import os
 
     try:
-        os.stat(hal.get_fs_path())
+        os.stat(globals.root)
     except:
         try:
-            os.mkdir(hal.get_fs_path())
+            os.mkdir(globals.root)
         except Exception as e:
             raise e from None
 
     import sys
-    sys.path.append(hal.get_fs_path())
+    sys.path.append(globals.root)
     
     if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN:
         smt = load_param('smt', 60)
@@ -533,7 +434,7 @@ def start():
                 gc.collect()
                 if hal.HW_SUPPORTS_LED: hal.LED.on()
                 from websetup import websetup
-                websetup(timeout_s=smt, lock_session=True)
+                websetup(timeout_s=smt)
                 if hal.HW_SUPPORTS_LED: hal.LED.off()
                 # Reset (will start without AP config mode since this is a soft reset)
                 logger.info('Resetting...')
@@ -582,11 +483,11 @@ def start():
     globals.app_management_task = None
       
     # Report
-    logger.info('Running with backend="{}" and aid="{}"'.format(g''')
-        f.write('''lobals.backend, globals.aid))
+    logger.info('Running with backend="{}" and aid="{}"'.format(globals.backend, globals.aid))
 
     # Get app version:    
-    globals.app_version = common.get_app_version()
+    globals.app_version = common.g''')
+        f.write('''et_app_version()
     gc.collect()
 
     # Register and perform the first management task call on "safe" backend, if not overrided
@@ -659,7 +560,7 @@ def start():
         if loop_count % management_interval == 0:
             logger.info('Calling management (loop={})'.format(loop_count))
             if hal.HW_SUPPORTS_LED:
-                hal.LED.on(); time.sleep(0.05); hal.LED.off()
+                hal.LED.on(); sleep(0.05); hal.LED.off()
             from management import system_management_task
             system_management_task(chronos)
             del system_management_task
@@ -675,7 +576,7 @@ def start():
             logger.info('Done')
             
         loop_count+=1
-        time.sleep(1)
+        sleep(1)
 
 
 if __name__ == "__main__":
@@ -699,31 +600,27 @@ def emit(level,msg, det):
         print(msg, end='')
         print(' ', end='')
         print(det, end='')
-        print('')  
+        print('')
 
 def debug(msg,det=''):
     if level <= DEBUG:
-        emit('DEBUG',msg,det) 
-  
+        emit('DEBUG',msg,det)
+
 def info(msg,det=''):
-    if level <= INFO: 
-        emit('INFO',msg,det) 
-    
+    if level <= INFO:
+        emit('INFO',msg,det)
+
 def warning(msg,det=''):
-    if level <= WARNING: 
-        emit('WARNING',msg,det) 
+    if level <= WARNING:
+        emit('WARNING',msg,det)
 
 def error(msg,det=''):
-    if level <= ERROR: 
+    if level <= ERROR:
         emit('ERROR',msg,det) 
 
 def critical(msg,det=''):
-    if level <= CRITICAL: 
-        emit('CRITICAL',msg,det) 
-
-
-
-
+    if level <= CRITICAL:
+        emit('CRITICAL',msg,det)
 ''')
         f.write('''''')
 
@@ -852,6 +749,120 @@ def register():
 ''')
         f.write('''''')
 
+    print('Writing',path+'/sal.py')
+    with open(path+'/sal.py','w') as f:
+        f.write('''
+#----------------------------
+# System Abstraction Layer
+#----------------------------
+
+import sys
+import time
+import machine
+import network
+
+# The following can be overwritten or extended in the Hardware Abstraction Layer
+
+class LED(object):
+    @staticmethod
+    def on():
+        machine.Pin(2, machine.Pin.OUT).low()     
+    @staticmethod
+    def off():
+        machine.Pin(2, machine.Pin.OUT).high()  
+
+class WLAN(object):  
+    @staticmethod
+    def sta_active(mode):
+        sta = network.WLAN(network.STA_IF)
+        sta.active(mode)
+        if mode is True:
+            from utils import connect_wifi, get_wifi_data
+            essid,password = get_wifi_data()
+            if essid:
+                connect_wifi(sta, essid, password)
+    @staticmethod
+    def ap_active(mode):
+        network.WLAN(network.AP_IF).active(mode)
+    
+class Chronos(object):
+    def __init__(self, epoch_s_now=0):
+        self.epoch_baseline_s    = epoch_s_now
+        self.internal_baseline_s = int(time.ticks_ms()/1000)
+    def epoch(self):
+        if self.epoch_baseline_s is not None and self.internal_baseline_s is not None:
+            current_epoch_s = (int(time.ticks_ms()/1000) - self.internal_baseline_s) + self.epoch_baseline_s        
+            return current_epoch_s
+        else:
+            return time.ticks_ms()/1000
+    
+def get_tuuid():
+    wlan = network.WLAN(network.STA_IF)
+    mac_b = wlan.config('mac')
+    mac_s = ':'.join( [ "%02X" % x for x in mac_b ] )
+    return mac_s.replace(':','')
+
+def get_reset_cause():
+    return machine.reset_cause()
+
+def reboot():
+    machine.reset()
+    time.sleep(3)
+
+def get_fs_path():
+    # from boot import fs_path
+    return '/'
+
+def is_frozen():
+    import os
+    try:
+        os.stat(get_fs_path()+'/updates_pythings.py')
+        return False
+    except:
+        return True
+
+
+# The following are just system-dependent, not hardware, and cannot be overwritten or extended.
+
+def init():
+    pass
+
+def get_payload_encrypter():  
+    if is_frozen():
+        try:
+            from crypto_aes import Aes128ecb
+            return Aes128ecb      
+        except:
+            return None
+    else:
+        return None
+
+def get_mem_free():
+    import gc
+    return gc.mem_free()
+
+def get_traceback(e):
+    import uio
+    import sys
+    s = uio.StringIO()
+    sys.print_exception(e, s)
+    return s.getvalue() 
+
+def get_re():
+    import ure
+    return ure
+
+def socket_readline(s):
+    return s.readline()
+
+def socket_write(s,data):
+    s.write(data)
+
+def socket_ssl(s):
+    raise NotImplementedError()
+''')
+        f.write('''''')
+
     print('Writing',path+'/system.py')
     with open(path+'/system.py','w') as f:
         f.write('''system = 'esp8266_esp-12'
@@ -864,21 +875,20 @@ def register():
 import logger
 from utils import mv
 from api import apost,download
-from hal import get_fs_path
 from system import system
 
 def update_app(version):
     files = apost(api='/apps/get/', data={'version':version, 'list':True})['content']
     # First of all remove /app.py to say that there is no valid App yet (download is in progress)
     import os
-    try: os.remove(get_fs_path()+'/app.py')
+    try: os.remove(globals.root+'/app.py')
     except: pass
     for file_name in files:
         if file_name in ['worker_task.py','management_task.py']:
-            download(file_name=file_name, version=version, dest='{}/{}'.format(get_fs_path(), file_name),what='apps',system=system) 
+            download(file_name=file_name, version=version, dest='{}/{}'.format(globals.root, file_name),what='apps',system=system) 
         else:
             logger.info('NOT downloading "{}" as in forbidden list'.format(file_name))
-    with open(get_fs_path()+'/app.py','w') as f:
+    with open(globals.root+'/app.py','w') as f:
         f.write('\\nversion=\\'{}\\''.format(version))
     logger.info('Got new, updated app')
 ''')
@@ -891,14 +901,13 @@ import globals
 import logger
 import os
 from system import system
-from hal import get_fs_path
 from api import apost, download
 
 def update_pythings(version):
     
     files = apost(api='/pythings/get/', data={'version':version, 'list':True, 'system':system})['content']
 
-    path = get_fs_path()+'/'+version
+    path = globals.root+'/'+version
     try:
         os.mkdir(path)
     except OSError as e:
@@ -918,11 +927,10 @@ def update_pythings(version):
         f.write('''
 import globals
 import logger
-from hal import get_fs_path
 
 def update_settings(content):
     logger.debug('Storing received settings ({} <--> {})'.format(content['settings'], globals.settings))
-    f = open(get_fs_path()+'/settings.json', 'w')
+    f = open(globals.root+'/settings.json', 'w')
     import json
     f.write(json.dumps(content['settings']))
     f.close()
@@ -936,8 +944,7 @@ def update_settings(content):
     with open(path+'/utils.py','w') as f:
         f.write('''import os
 from sal import get_re
-from hal import get_fs_path
-
+import globals
 
 def connect_wifi(wlan, essid, password):
     wlan.connect(essid, password)
@@ -954,7 +961,7 @@ def unquote(s):
 
 def load_param(param, default=None):
     try:
-        with open(get_fs_path()+'/{}'.format(param),'r') as f:
+        with open(globals.root+'/{}'.format(param),'r') as f:
             param = f.readline().strip()
         return param
     except Exception as e:
@@ -964,7 +971,7 @@ def load_settings():
     import json
     settings = {}
     try:
-        with open(get_fs_path()+'/settings.json','r') as f:
+        with open(globals.root+'/settings.json','r') as f:
             settings = json.loads(f.read())
     except Exception as e:
         print('Cannot open settings.py and load the json content: {}'.format(e))
@@ -973,16 +980,16 @@ def load_settings():
 def mv(source,dest):
     try:
         try:
-            os.remove(get_fs_path()+'/'+dest)
+            os.remove(globals.root+'/'+dest)
         except:
             pass
-        os.rename(get_fs_path()+'/'+source, get_fs_path()+'/'+dest)
+        os.rename(globals.root+'/'+source, globals.root+'/'+dest)
     except:
         pass
 
 def get_wifi_data():
     try:
-        with open(get_fs_path()+'/wifi','r') as f:
+        with open(globals.root+'/wifi','r') as f:
             essid = f.readline()[0:-1]
             password = f.readline()
     except:
@@ -1005,7 +1012,7 @@ def parseURL(url):
 
     print('Writing',path+'/version.py')
     with open(path+'/version.py','w') as f:
-        f.write('''version='v0.3pre1'
+        f.write('''version='v0.2-rc6'
 ''')
         f.write('''''')
 
@@ -1015,14 +1022,12 @@ def parseURL(url):
 import network
 import socket
 import time
-import machine
 import logger
 import json
 import ure
-import gc
-
 from utils import *
 import hal
+import gc
 
 def websetup(timeout_s=60, lock_session=False):
     logger.info('Starting WebSetup')
@@ -1031,8 +1036,7 @@ def websetup(timeout_s=60, lock_session=False):
     s.bind(addr)
     s.listen(0)
     s.settimeout(timeout_s)
-    logger.info('Listening on ', addr)
-    CONF_PAGE_ACCESSED = False
+    #logger.info('Listening on ', addr)
     
     # Start AP mode and disable client mode
     sta = network.WLAN(network.STA_IF)
@@ -1043,15 +1047,13 @@ def websetup(timeout_s=60, lock_session=False):
     
     while True:
         try:
-            logger.info('Waiting for a connection..')
+            #logger.info('Waiting for a connection..')
             gc.collect
             
             # Handle client connection
             cl, addr = s.accept()
-            logger.info('Client connected from ', addr)
-            if lock_session:
-                s.settimeout(None)
-            CONF_PAGE_ACCESSED = True
+            #logger.debug('Client connected from ', addr)
+            s.settimeout(None)
 
             # Read request
             request = str(cl.recv(1024))
@@ -1060,7 +1062,7 @@ def websetup(timeout_s=60, lock_session=False):
             get_request_data = ure.search("GET (.*?) HTTP\\/1\\.1", request)
             if get_request_data:
                 path, parameters = parseURL(get_request_data.group(1))
-                logger.debug('Got request for path = "{}" with params = "{}"'.format(path, parameters))
+                #logger.debug('Got request for path = "{}" with params = "{}"'.format(path, parameters))
             else:
                 path = []
                 parameters = []
@@ -1068,12 +1070,11 @@ def websetup(timeout_s=60, lock_session=False):
             cl.write('HTTP/1.0 200 OK\\r\\n')
             cl.write('Access-Control-Allow-Methods: POST, GET, OPTIONS\\r\\n');
             cl.write("Access-Control-Allow-Origin: *\\r\\n");
-            #cl.write('Access-Control-Allow-Origin: http://localhost:8080\\n');
             cl.write("Access-Control-Allow-Credentials: true\\r\\n");
             cl.write("Access-Control-Allow-Headers: X-CSRFToken, ACCEPT, CONTENT-TYPE, X-CSRF-TOKEN, Content-Type, Authorization, X-Requested-With\\r\\n");
 
             if not get_request_data: # an OPTIONS, basically
-                logger.debug('no GET data in request')
+                #logger.debug('no GET data in request')
                 cl.write('Content-Length: 0\\r\\n\\r\\n')
                 cl.close()
                 continue
@@ -1086,22 +1087,22 @@ def websetup(timeout_s=60, lock_session=False):
 
             # Close connection if requesting favicon
             if 'favicon' in path:
-                logger.debug('Requested favicon, closing connection')
+                #logger.debug('Requested favicon, closing connection')
                 set_api()
                 cl.close()
             
             # This is an API call
             elif 'cmd' in parameters:
-                logger.debug('Called API with cmd={}'.format(parameters['cmd']))
+                #logger.debug('Called API with cmd={}'.format(parameters['cmd']))
                 set_api()
                 cmd = parameters['cmd']
                 essid = None
-                if 'essid' in parameters: essid = para''')
-        f.write('''meters['essid']   
+                if 'essid' in parameters: essid = parameters['essid']   
                 password = None
                 if 'password' in parameters: password = parameters['password']                    
 
-                if hal.HW_SUPPORTS_LED:
+                if hal.HW_SUPPORTS_LED''')
+        f.write(''':
                     hal.LED.off()
                     time.sleep(0.3)
                     hal.LED.on()
@@ -1110,7 +1111,7 @@ def websetup(timeout_s=60, lock_session=False):
 
                 # Set app command
                 if cmd=='set_app':
-                    logger.debug('Called set app API')
+                    #logger.debug('Called set app API')
                     aid = None
                     aid = parameters['aid']
                     if aid is None:
@@ -1123,12 +1124,12 @@ def websetup(timeout_s=60, lock_session=False):
                 # Check command
                 if cmd=='check':
                     import os
-                    logger.debug('Called check API')
+                    #logger.debug('Called check API')
                     cl.write(json.dumps({'status':'OK', 'info': str(os.uname().version),'aid':load_param('aid',None)}))
                 
                 # Check_wifi command
                 if cmd=='check_wifi':
-                    logger.debug('Called check_wifi API')
+                    #logger.debug('Called check_wifi API')
                     sta.active(True)
                     essid='Unknown'
                     isconnected=False
@@ -1142,7 +1143,7 @@ def websetup(timeout_s=60, lock_session=False):
                 
                 # Scan command
                 elif cmd == 'scan':
-                    logger.debug('Called scan API')
+                    #logger.debug('Called scan API')
                     sta.active(True)
                     nets = sta.scan() 
                     sta.active(False)
@@ -1150,7 +1151,7 @@ def websetup(timeout_s=60, lock_session=False):
                           
                 # Join command                  
                 elif cmd == 'join':
-                    logger.debug('Called join API')
+                    #logger.debug('Called join API')
                     if password is None or essid is None:
                         cl.write(json.dumps({'status': 'ERROR'}))
                     else:
@@ -1171,46 +1172,29 @@ def websetup(timeout_s=60, lock_session=False):
                 
                 # Close command
                 elif cmd == 'close':
-                    logger.debug('Called close API')
+                    #logger.debug('Called close API')
                     cl.write(json.dumps({'status': 'OK'}))
                     cl.close()
                     s.close()
                     break
 
-            #elif 'jquery' in path:
-            #    logger.debug('Serving jquery')
-            #    set_page()
-            #    with open('/jquery.js') as f:
-            #        for line in f:
-            #            cl.write(line)
-
             else:
-                logger.debug('Serving main page')
+                #logger.debug('Serving main page')
                 set_page()
                 cl.write('Please go to your vendor\\'s Website to configure this device.\\r\\n')
-                #with open('websetup.html') as f:
-                #    for line in f:
-                #        cl.write(line)
 
             # Close client connection at the end
-            logger.info('Closing client connection')
+            #logger.info('Closing client connection')
             cl.close()
         
         except OSError as e:
             if str(e) == "[Errno 110] ETIMEDOUT":
-                if CONF_PAGE_ACCESSED:
-                    #continue
-                    logger.info('Exiting due to no activity')
-                    s.close()
-                    break
-                
-                else:
-                    logger.info('Exiting due to no incoming connections')
-                    s.close()
-                    break
+                #logger.info('Exiting due to no incoming connections')
+                s.close()
+                break
             import sys
             sys.print_exception(e)
-            logger.error(str(e))
+            #logger.error(str(e))
             try: cl.close()
             except: pass
             try: s.close()

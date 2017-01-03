@@ -6,6 +6,8 @@
 import sys
 import time
 import machine
+import network
+import logger
 import globals
 
 # The following can be overwritten or extended in the Hardware Abstraction Layer
@@ -13,7 +15,7 @@ import globals
 class LED(object):
     @staticmethod
     def on():
-        raise NotImplementedError()  
+        raise NotImplementedError()     
     @staticmethod
     def off():
         raise NotImplementedError() 
@@ -21,10 +23,16 @@ class LED(object):
 class WLAN(object):  
     @staticmethod
     def sta_active(mode):
-        raise NotImplementedError() 
+        sta = network.WLAN(network.STA_IF)
+        sta.active(mode)
+        if mode is True:
+            from utils import connect_wifi, get_wifi_data
+            essid,password = get_wifi_data()
+            if essid:
+                connect_wifi(sta, essid, password)
     @staticmethod
     def ap_active(mode):
-        raise NotImplementedError()
+        network.WLAN(network.AP_IF).active(mode)
     
 class Chronos(object):
     def __init__(self, epoch_s_now=0):
@@ -37,29 +45,46 @@ class Chronos(object):
         else:
             return time.ticks_ms()/1000
     
-def is_frozen():
-    return False
-
 def get_tuuid():
-    raise NotImplementedError('I have no way to obtain an UUID for myself. You have to tell me my TID.')
+    wlan = network.WLAN(network.STA_IF)
+    mac_b = wlan.config('mac')
+    mac_s = ':'.join( [ "%02X" % x for x in mac_b ] )
+    return mac_s.replace(':','')
 
 def get_reset_cause():
     return machine.reset_cause()
 
 def reboot():
     machine.reset()
+    time.sleep(3)
+
+def is_frozen():
+    import os
+    try:
+        os.stat(globals.root+'/updates_pythings.py')
+        return False
+    except:
+        return True
 
 
 # The following are just system-dependent, not hardware, and cannot be overwritten or extended.
 
 def init():
-    pass
+    if logger.level > logger.DEBUG:
+        logger.info('Disabling ESP os debug')
+        import esp
+        esp.osdebug(None)
+    else:
+        logger.info('Leaving ESP os debug enabled')
 
-def get_payload_encrypter():
-    try:
-        from crypto_aes import Aes128ecb
-        return Aes128ecb
-    except:
+def get_payload_encrypter():  
+    if is_frozen():
+        try:
+            from crypto_aes import Aes128ecb
+            return Aes128ecb      
+        except:
+            return None
+    else:
         return None
 
 def get_mem_free():
@@ -84,5 +109,4 @@ def socket_write(s,data):
     s.write(data)
 
 def socket_ssl(s):
-    import ussl
-    return ussl.wrap_socket(s)
+    raise NotImplementedError()

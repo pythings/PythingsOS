@@ -1,1 +1,1 @@
-../common/boot.py
+../esp8266/boot.py

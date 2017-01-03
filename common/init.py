@@ -1,6 +1,6 @@
 
 #  Imports
-import time
+from time import sleep
 import gc
 import globals
 import common
@@ -11,19 +11,10 @@ from system import system
 
 # Logger
 import logger
-logger.level = logger.DEBUG
+logger.level = int(load_param('loglevel', logger.INFO))
 
-# Utils
-class EmptyResponse(Exception):
-    pass
-
-#---------------------
-#  Main
-#---------------------
-
+# Start
 def start():
-
-    hal.init()
 
     # Get Pythings version
     globals.pythings_version = common.get_pythings_version()
@@ -31,33 +22,24 @@ def start():
     print('\n|------------------------|')
     print('|  Starting Pythings :)  |')
     print('|------------------------|')
-    print('Version: {} ({})\n'.format(globals.pythings_version, system))
-    import os
+    print(' Version: {}'.format(globals.pythings_version))
+    print(' System: {}\n'.format(system))
 
-    try:
-        os.stat(hal.get_fs_path())
-    except:
-        try:
-            os.mkdir(hal.get_fs_path())
-        except Exception as e:
-            raise e from None
-
-    import sys
-    sys.path.append(hal.get_fs_path())
+    # Init hardware and system
+    hal.init()
+    sal.init()
     
-    if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN:
-        smt = load_param('smt', 60)
-        # Start AP config mode if required
-        if hal.get_reset_cause() == hal.HW_RESETCAUSE_HARD:
-            if smt:
-                gc.collect()
-                if hal.HW_SUPPORTS_LED: hal.LED.on()
-                from websetup import websetup
-                websetup(timeout_s=smt, lock_session=True)
-                if hal.HW_SUPPORTS_LED: hal.LED.off()
-                # Reset (will start without AP config mode since this is a soft reset)
-                logger.info('Resetting...')
-                hal.reboot()
+    # Start setup  mode if required
+    if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN and hal.get_reset_cause() == hal.HW_RESETCAUSE_HARD:
+        setup_timeout = load_param('setup_timeout', 60)
+        if setup_timeout:
+            if hal.HW_SUPPORTS_LED: hal.LED.on()
+            from websetup import websetup
+            gc.collect()
+            websetup(timeout_s=setup_timeout)
+            if hal.HW_SUPPORTS_LED: hal.LED.off()
+            logger.info('Resetting...')
+            hal.reboot()
 
     # Disable AP mode, Enable and configure STA mode 
     if hal.HW_SUPPORTS_WLAN:
@@ -69,7 +51,7 @@ def start():
     globals.settings = load_settings()
     globals.payload_encrypter = None # Initalization
 
-    # Load backend: the local param worker_intervals 
+    # Load backend: the local param wins 
     globals.backend = load_param('backend', None)
 
     # Load aid and tid: only local param or default
@@ -87,7 +69,7 @@ def start():
     else:
         backend_overrided = True
 
-    # Load pool: the local param worker_intervals 
+    # Load pool: the local param wins 
     globals.pool = load_param('pool', None)
     if not globals.pool:
         if 'pool' in globals.settings and globals.settings['pool']:
@@ -106,7 +88,6 @@ def start():
 
     # Get app version:    
     globals.app_version = common.get_app_version()
-    gc.collect()
 
     # Register and perform the first management task call on "safe" backend, if not overrided
     if not backend_overrided:
@@ -118,10 +99,11 @@ def start():
     if use_payload_encryption and hal.HW_SUPPORTS_ENCRYPTION and sal.get_payload_encrypter():
         logger.info('Enabling Payload Encryption and preregistering')
         globals.payload_encrypter = sal.get_payload_encrypter()(comp_mode=True)
-        from register import preregister
+        from preregister import preregister
         token = preregister()
         globals.token = token
         logger.info('Got token: {}'.format(globals.token))
+        del preregister
         gc.collect()
         
     # Register yourself, and start a new session
@@ -130,6 +112,7 @@ def start():
     if not globals.payload_encrypter:
         globals.token = token
         logger.info('Got token: {}'.format(globals.token))
+    del register
     gc.collect()
     
     # Sync time.
@@ -178,12 +161,12 @@ def start():
         if loop_count % management_interval == 0:
             logger.info('Calling management (loop={})'.format(loop_count))
             if hal.HW_SUPPORTS_LED:
-                hal.LED.on(); time.sleep(0.05); hal.LED.off()
+                hal.LED.on(); sleep(0.05); hal.LED.off()
             from management import system_management_task
             system_management_task(chronos)
             del system_management_task
             gc.collect()
-            logger.info('Done')
+            logger.info('Done management')
 
         if loop_count % worker_interval == 0:
             logger.info('Calling worker (loop={})'.format(loop_count))
@@ -191,10 +174,10 @@ def start():
             system_worker_task(chronos)
             del system_worker_task
             gc.collect()
-            logger.info('Done')
+            logger.info('Done worker')
             
         loop_count+=1
-        time.sleep(1)
+        sleep(1)
 
 
 if __name__ == "__main__":

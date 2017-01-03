@@ -5,7 +5,7 @@ import json
 from http import post
 import gc
 
-apiver='v0.3'
+apiver='v0.2'
 
 # Utility
 def check_response(response):
@@ -26,7 +26,6 @@ def apost(api, data={}):
     logger.debug('Got response:',response)
     if response['content'] and response['content'] != '\n':
         response['content'] = json.loads(response['content']) 
-    logger.debug('Loaded json content and returning') 
     check_response(response)
     return response
 
