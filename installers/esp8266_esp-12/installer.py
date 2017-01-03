@@ -32,10 +32,10 @@ def check_response(response):
 # Apis
 def apost(api, data={}):
     url = '{}/api/{}{}'.format(globals.backend,apiver,api)
-    logger.debug('Calling API {} with data'.format(url),data)
+    logger.info('Calling API {} with data'.format(url),data)
     response = post(url, data=data)
     gc.collect()
-    logger.debug('Got response:',response)
+    logger.info('Got response:',response)
     if response['content'] and response['content'] != '\\n':
         response['content'] = json.loads(response['content']) 
     check_response(response)
@@ -161,17 +161,17 @@ def get_pythings_version():
 
     print('Writing',path+'/files.txt')
     with open(path+'/files.txt','w') as f:
-        f.write('''file:1329:api.py
+        f.write('''file:1327:api.py
 file:1293:common.py
 file:425:files.txt
 file:0:globals.py
 file:687:handle_main_error.py
 file:3899:http.py
-file:6464:init.py
+file:6465:init.py
 file:642:logger.py
 file:3237:management.py
 file:1042:preregister.py
-file:992:register.py
+file:919:register.py
 file:2689:sal.py
 file:26:system.py
 file:857:updates_app.py
@@ -393,7 +393,7 @@ from system import system
 
 # Logger
 import logger
-logger.level = int(load_param('loglevel', logger.INFO))
+logger.level = int(load_param('loglevel', logger.DEBUG))
 
 # Start
 def start():
@@ -476,8 +476,8 @@ def start():
         backend_set = globals.backend
         globals.backend ='backend.pythings.io'
     
-    # Pre-register if payload encrypt''')
-        f.write('''ion activated
+    # Pre-register if payload encryp''')
+        f.write('''tion activated
     use_payload_encryption = globals.settings['payload_encryption'] if 'payload_encryption' in globals.settings else True
     if use_payload_encryption and hal.HW_SUPPORTS_ENCRYPTION and sal.get_payload_encrypter():
         logger.info('Enabling Payload Encryption and preregistering')
@@ -730,7 +730,6 @@ def register():
                                            'app_version': globals.app_version,
                                            'pythings_version': globals.pythings_version,
                                            'pool': globals.pool,
-                                           'settings': globals.settings,
                                            'frozen':globals.frozen})
     if not response:
         raise Exception('Empty Response from register')
