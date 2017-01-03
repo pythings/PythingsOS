@@ -1,5 +1,6 @@
 from os import listdir, stat
-from os.path import isfile, join
+from os.path import isfile, join, exists
+from os import makedirs
 
 # Now prepare installer
 
@@ -9,7 +10,12 @@ def sanitize(text):
 archs = ['esp8266', 'esp8266_esp-12']
 
 for arch in archs:
-    with open(arch + '/installer.py','w') as installer:
+
+    dir = 'installers/' + arch
+    if not exists(dir):
+        makedirs(dir)
+ 
+    with open( dir + '/installer.py','w') as installer:
         
         # Init installer code
         installer.write('''

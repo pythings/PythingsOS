@@ -17,7 +17,7 @@ import json
 from http import post
 import gc
 
-apiver='v0.3'
+apiver='v0.2'
 
 # Utility
 def check_response(response):
@@ -63,17 +63,17 @@ import json
 import globals
 gc.collect()
 
+# Set root path
 globals.root = '/'
 
 print('')
 try:
     try:
         with open(globals.root+'/settings.json','r') as f:
-            globals.settings = json.loads(f.read())
+            pythings_version = json.loads(f.read())['pythings_version'] 
     except Exception as e:
-        globals.settings = {}
-    pythings_version = globals.settings['pythings_version'] if 'pythings_version' in globals.settings else 'FACTORY'
-    
+        pythings_version = 'FACTORY'
+
     if not pythings_version.upper() == 'FACTORY':
         path = globals.root+'/'+pythings_version
         print('BOOT: Trying to load Pythings version {} from {}'.format(pythings_version,path))
@@ -97,7 +97,6 @@ try:
 except Exception as e:
     print('BOOT: Error, proceeding with factory defaults: ',e.__class.__.__name__, str(e))
     path=globals.root
-print('')
 
 # Execute Pythings framework (from right path inserted above)
 try:
@@ -163,24 +162,23 @@ def get_pythings_version():
     print('Writing',path+'/files.txt')
     with open(path+'/files.txt','w') as f:
         f.write('''file:1329:api.py
-file:1598:boot.py
 file:1293:common.py
-file:435:files.txt
+file:425:files.txt
 file:0:globals.py
-file:981:hal.py
 file:687:handle_main_error.py
-file:3898:http.py
-file:6688:init.py
+file:3899:http.py
+file:6464:init.py
 file:642:logger.py
 file:3237:management.py
-file:1962:register.py
-file:2547:sal.py
+file:1042:preregister.py
+file:992:register.py
+file:2689:sal.py
 file:26:system.py
 file:857:updates_app.py
 file:739:updates_pythings.py
 file:337:updates_settings.py
 file:1689:utils.py
-file:6924:websetup.py
+file:6927:websetup.py
 file:869:worker.py
 file:19:version.py
 ''')
@@ -199,7 +197,7 @@ file:19:version.py
 #----------------------------
 
 # Hardware settings
-HW_SUPPORTS_DEEPSLEEP  = True
+HW_SUPPORTS_DEEPSLEEP  = False
 HW_SUPPORTS_RESETCAUSE = True
 HW_SUPPORTS_LED        = True
 HW_SUPPORTS_WLAN       = True
@@ -217,11 +215,8 @@ def init():
 from sal import LED
 from sal import WLAN
 from sal import Chronos
-
 from sal import get_tuuid
 from sal import get_reset_cause
-from sal import get_fs_path
-
 from sal import is_frozen
 from sal import reboot
 
@@ -344,15 +339,15 @@ def post(url, data, dest=None):
             if len(data) == 0:
                 break
 
-            logger.info('Received data', data)
+            logger.debug('Received data', data)
             if dest and status == b'200':
                 # load content, check if prev_content[-1] + content[1] == \\n,
                 if globals.payload_encrypter:
                     content = globals.payload_encrypter.decrypt_text(data)
                     #logger.info('Decrypted data', content)
-                else:
-''')
-        f.write('''                    content = data
+                else:''')
+        f.write('''
+                    content = data
                 f.write(content)
             else:
                 if content is None:
@@ -398,12 +393,10 @@ from system import system
 
 # Logger
 import logger
-logger.level = logger.DEBUG
+logger.level = int(load_param('loglevel', logger.INFO))
 
 # Start
 def start():
-
-    hal.init()
 
     # Get Pythings version
     globals.pythings_version = common.get_pythings_version()
@@ -413,32 +406,22 @@ def start():
     print('|------------------------|')
     print(' Version: {}'.format(globals.pythings_version))
     print(' System: {}\\n'.format(system))
-    import os
 
-    try:
-        os.stat(globals.root)
-    except:
-        try:
-            os.mkdir(globals.root)
-        except Exception as e:
-            raise e from None
-
-    import sys
-    sys.path.append(globals.root)
+    # Init hardware and system
+    hal.init()
+    sal.init()
     
-    if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN:
-        smt = load_param('smt', 60)
-        # Start AP config mode if required
-        if hal.get_reset_cause() == hal.HW_RESETCAUSE_HARD:
-            if smt:
-                gc.collect()
-                if hal.HW_SUPPORTS_LED: hal.LED.on()
-                from websetup import websetup
-                websetup(timeout_s=smt)
-                if hal.HW_SUPPORTS_LED: hal.LED.off()
-                # Reset (will start without AP config mode since this is a soft reset)
-                logger.info('Resetting...')
-                hal.reboot()
+    # Start setup  mode if required
+    if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN and hal.get_reset_cause() == hal.HW_RESETCAUSE_HARD:
+        setup_timeout = load_param('setup_timeout', 60)
+        if setup_timeout:
+            if hal.HW_SUPPORTS_LED: hal.LED.on()
+            from websetup import websetup
+            gc.collect()
+            websetup(timeout_s=setup_timeout)
+            if hal.HW_SUPPORTS_LED: hal.LED.off()
+            logger.info('Resetting...')
+            hal.reboot()
 
     # Disable AP mode, Enable and configure STA mode 
     if hal.HW_SUPPORTS_WLAN:
@@ -450,7 +433,7 @@ def start():
     globals.settings = load_settings()
     globals.payload_encrypter = None # Initalization
 
-    # Load backend: the local param worker_intervals 
+    # Load backend: the local param wins 
     globals.backend = load_param('backend', None)
 
     # Load aid and tid: only local param or default
@@ -468,7 +451,7 @@ def start():
     else:
         backend_overrided = True
 
-    # Load pool: the local param worker_intervals 
+    # Load pool: the local param wins 
     globals.pool = load_param('pool', None)
     if not globals.pool:
         if 'pool' in globals.settings and globals.settings['pool']:
@@ -486,24 +469,24 @@ def start():
     logger.info('Running with backend="{}" and aid="{}"'.format(globals.backend, globals.aid))
 
     # Get app version:    
-    globals.app_version = common.g''')
-        f.write('''et_app_version()
-    gc.collect()
+    globals.app_version = common.get_app_version()
 
     # Register and perform the first management task call on "safe" backend, if not overrided
     if not backend_overrided:
         backend_set = globals.backend
         globals.backend ='backend.pythings.io'
     
-    # Pre-register if payload encryption activated
+    # Pre-register if payload encrypt''')
+        f.write('''ion activated
     use_payload_encryption = globals.settings['payload_encryption'] if 'payload_encryption' in globals.settings else True
     if use_payload_encryption and hal.HW_SUPPORTS_ENCRYPTION and sal.get_payload_encrypter():
         logger.info('Enabling Payload Encryption and preregistering')
         globals.payload_encrypter = sal.get_payload_encrypter()(comp_mode=True)
-        from register import preregister
+        from preregister import preregister
         token = preregister()
         globals.token = token
         logger.info('Got token: {}'.format(globals.token))
+        del preregister
         gc.collect()
         
     # Register yourself, and start a new session
@@ -512,6 +495,7 @@ def start():
     if not globals.payload_encrypter:
         globals.token = token
         logger.info('Got token: {}'.format(globals.token))
+    del register
     gc.collect()
     
     # Sync time.
@@ -565,7 +549,7 @@ def start():
             system_management_task(chronos)
             del system_management_task
             gc.collect()
-            logger.info('Done')
+            logger.info('Done management')
 
         if loop_count % worker_interval == 0:
             logger.info('Calling worker (loop={})'.format(loop_count))
@@ -573,7 +557,7 @@ def start():
             system_worker_task(chronos)
             del system_worker_task
             gc.collect()
-            logger.info('Done')
+            logger.info('Done worker')
             
         loop_count+=1
         sleep(1)
@@ -705,10 +689,9 @@ def system_management_task(chronos):
             run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
 ''')
 
-    print('Writing',path+'/register.py')
-    with open(path+'/register.py','w') as f:
-        f.write('''import hal
-import logger
+    print('Writing',path+'/preregister.py')
+    with open(path+'/preregister.py','w') as f:
+        f.write('''import logger
 import globals
 from common import run_controlled
 from api import apost
@@ -727,8 +710,15 @@ def preregister():
         raise Exception('Empty Response from preregister')
     
     return response['content']['token']
+''')
+        f.write('''''')
 
-
+    print('Writing',path+'/register.py')
+    with open(path+'/register.py','w') as f:
+        f.write('''import logger
+import globals
+from common import run_controlled
+from api import apost
 
 def register():
     logger.info('Registering myself with tid={} and aid={}'.format(globals.tid,globals.aid))
@@ -760,6 +750,8 @@ import sys
 import time
 import machine
 import network
+import logger
+import globals
 
 # The following can be overwritten or extended in the Hardware Abstraction Layer
 
@@ -809,14 +801,10 @@ def reboot():
     machine.reset()
     time.sleep(3)
 
-def get_fs_path():
-    # from boot import fs_path
-    return '/'
-
 def is_frozen():
     import os
     try:
-        os.stat(get_fs_path()+'/updates_pythings.py')
+        os.stat(globals.root+'/updates_pythings.py')
         return False
     except:
         return True
@@ -825,7 +813,12 @@ def is_frozen():
 # The following are just system-dependent, not hardware, and cannot be overwritten or extended.
 
 def init():
-    pass
+    if logger.level > logger.DEBUG:
+        logger.info('Disabling ESP os debug')
+        import esp
+        esp.osdebug(None)
+    else:
+        logger.info('Leaving ESP os debug enabled')
 
 def get_payload_encrypter():  
     if is_frozen():
@@ -1047,12 +1040,12 @@ def websetup(timeout_s=60, lock_session=False):
     
     while True:
         try:
-            #logger.info('Waiting for a connection..')
+            logger.info('Done, waiting for a connection..')
             gc.collect
             
             # Handle client connection
             cl, addr = s.accept()
-            #logger.debug('Client connected from ', addr)
+            logger.info('Client connected from', addr[0])
             s.settimeout(None)
 
             # Read request
@@ -1093,7 +1086,7 @@ def websetup(timeout_s=60, lock_session=False):
             
             # This is an API call
             elif 'cmd' in parameters:
-                #logger.debug('Called API with cmd={}'.format(parameters['cmd']))
+                logger.info('Called API with cmd={}'.format(parameters['cmd']))
                 set_api()
                 cmd = parameters['cmd']
                 essid = None
@@ -1101,8 +1094,8 @@ def websetup(timeout_s=60, lock_session=False):
                 password = None
                 if 'password' in parameters: password = parameters['password']                    
 
-                if hal.HW_SUPPORTS_LED''')
-        f.write(''':
+                if hal.HW_SUPPORTS_''')
+        f.write('''LED:
                     hal.LED.off()
                     time.sleep(0.3)
                     hal.LED.on()
