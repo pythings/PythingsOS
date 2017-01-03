@@ -20,10 +20,10 @@ def check_response(response):
 # Apis
 def apost(api, data={}):
     url = '{}/api/{}{}'.format(globals.backend,apiver,api)
-    logger.debug('Calling API {} with data'.format(url),data)
+    logger.info('Calling API {} with data'.format(url),data)
     response = post(url, data=data)
     gc.collect()
-    logger.debug('Got response:',response)
+    logger.info('Got response:',response)
     if response['content'] and response['content'] != '\n':
         response['content'] = json.loads(response['content']) 
     check_response(response)
