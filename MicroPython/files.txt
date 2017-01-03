@@ -20,4 +20,4 @@ file:739:updates_pythings.py
 file:337:updates_settings.py
 file:1689:utils.py
 file:869:worker.py
-file:19:version.py
+file:15:version.py

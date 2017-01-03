@@ -179,7 +179,7 @@ file:337:updates_settings.py
 file:1689:utils.py
 file:6927:websetup.py
 file:869:worker.py
-file:19:version.py
+file:15:version.py
 ''')
         f.write('''''')
 
@@ -1000,7 +1000,7 @@ def parseURL(url):
 
     print('Writing',path+'/version.py')
     with open(path+'/version.py','w') as f:
-        f.write('''version='v0.2-rc6'
+        f.write('''version='v0.2'
 ''')
         f.write('''''')
 
