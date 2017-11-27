@@ -65,3 +65,8 @@ builds/Python/*.py
 builds/Python/*.txt
 builds/MicropPython/*.py
 builds/MicroPython/*.txt
+
+# Firmware
+tools/buildchain/firmware
+tools/buildchain/venv
+tools/buildchain/PythingsOS
