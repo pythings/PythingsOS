@@ -10,7 +10,7 @@ HW_SUPPORTS_LED        = False
 HW_SUPPORTS_WLAN       = False
 HW_SUPPORTS_SSL        = True
 HW_SUPPORTS_ENCRYPTION = True
-HW_RESETCAUSE_HARD     = None
+HW_WEBSETUP_RESETCAUSES = []
 
 # Hardware initialization (i.e. put PWMs to zero)
 def init():

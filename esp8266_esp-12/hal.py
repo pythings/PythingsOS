@@ -2,6 +2,7 @@
 #----------------------------
 # Hardware Abstraction Layer
 #----------------------------
+import machine
 
 # Hardware settings
 HW_SUPPORTS_DEEPSLEEP  = False
@@ -10,7 +11,7 @@ HW_SUPPORTS_LED        = True
 HW_SUPPORTS_WLAN       = True
 HW_SUPPORTS_SSL        = False
 HW_SUPPORTS_ENCRYPTION = True
-HW_RESETCAUSE_HARD     = 6
+HW_WEBSETUP_RESETCAUSES = [machine.PWRON_RESET, machine.HARD_RESET, machine.WDT_RESET]
 
 # Hardware initialization (i.e. put PWMs to zero)
 def init():
