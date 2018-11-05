@@ -24,7 +24,7 @@ def post(url, data, dest=None):
     if ':' in host:
         port=int(host.split(':')[1])
         host=host.split(':')[0]
-    logger.info('Calling POST "{}:{}/{}" with data'.format(host,port,path),data)
+    logger.debug('Calling POST "{}:{}/{}" with data'.format(host,port,path),data)
     addr = socket.getaddrinfo(host, port)[0][-1]
     s = socket.socket()
     try: s.settimeout(60)

@@ -17,7 +17,7 @@ def system_worker_task(chronos):
                 run_controlled(2,apost,api='/apps/worker/', data={'msg': worker_msg })
             report('worker','OK')
         except Exception as e:
-            print(sal.get_traceback(e))
             logger.error('Error in executing app\'s worker taks or sending its data: {} {}'.format(e.__class__.__name__, e))
+            logger.debug(sal.get_traceback(e))
             run_controlled(2,report,what='worker', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
             

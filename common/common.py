@@ -8,8 +8,8 @@ def run_controlled(retr, function, **kwargs):
         try:
             return function(**kwargs)   
         except Exception as e:
-            print(sal.get_traceback(e))
             logger.error('Error in executing controlled step ({}): {} {}'.format(function,e.__class__.__name__,e))
+            logger.debug(sal.get_traceback(e))
             if retr == None or count < retr:
                 count += 1
                 logger.info('Retrying (#{}) in 3 seconds...'.format(count))

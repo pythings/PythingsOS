@@ -41,8 +41,8 @@ def system_management_task(chronos):
                 update_app(globals.settings['app_version'])
 
     except Exception as e:
-        print(sal.get_traceback(e))
         logger.error('Error in management task while updating {} ({}: {}), skipping the rest...'.format(updates, e.__class__.__name__, e))
+        logger.debug(sal.get_traceback(e))
         run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
         return False
 
@@ -70,7 +70,6 @@ def system_management_task(chronos):
                 run_controlled(2,report,what='management', status='OK')
                 
         except Exception as e:
-            import sys
-            sal.get_traceback(e)
             logger.error('Error in executing app\'s management task: {} {}'.format(e.__class__.__name__, e))
+            logger.debug(sal.get_traceback(e))
             run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))

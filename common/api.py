@@ -20,7 +20,7 @@ def check_response(response):
 # Apis
 def apost(api, data={}):
     url = '{}/api/{}{}'.format(globals.backend,apiver,api)
-    logger.info('Calling API {} with data'.format(url),data)
+    logger.debug('Calling API {} with data'.format(url),data)
     response = post(url, data=data)
     gc.collect()
     logger.info('Got response:',response)
@@ -36,6 +36,6 @@ def download(file_name, version, dest, what, system):
 
 # Report
 def report(what, status, message=None):
-    logger.info('Reporting "{}" as "{}" with message "{}"'.format(what,status,message))
+    logger.info('Reporting "{}" as "{}" with message "{}"'.format(what,status,message[0:30]+'...' if message else None))
     response = apost('/things/report/', {'what':what,'status': status,'msg': message})
     logger.debug('Response:',response)

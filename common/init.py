@@ -30,7 +30,7 @@ def start():
     sal.init()
     
     # Start setup  mode if required
-    if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN and hal.get_reset_cause() == hal.HW_RESETCAUSE_HARD:
+    if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN and hal.get_reset_cause() in hal.HW_WEBSETUP_RESETCAUSES:
         setup_timeout = load_param('setup_timeout', 60)
         if setup_timeout:
             if hal.HW_SUPPORTS_LED: hal.LED.on()
@@ -54,12 +54,6 @@ def start():
     # Load backend: the local param wins 
     globals.backend = load_param('backend', None)
 
-    # Load aid and tid: only local param or default
-    globals.aid = load_param('aid', None)
-    if globals.aid is None: raise Exception('AID not provided')
-    globals.tid = load_param('tid', None)
-    if globals.tid is None: globals.tid = hal.get_tuuid()
-
     if not globals.backend:
         backend_overrided = False
         if 'backend' in globals.settings and globals.settings['backend']:
@@ -68,6 +62,14 @@ def start():
             globals.backend = 'backend.pythings.io'
     else:
         backend_overrided = True
+
+    # Load aid and tid: only local param or default
+    globals.aid = load_param('aid', None)
+    if globals.aid is None:
+        logger.critical('AID not provided, stopping here.')
+        return
+    globals.tid = load_param('tid', None)
+    if globals.tid is None: globals.tid = hal.get_tuuid()
 
     # Load pool: the local param wins 
     globals.pool = load_param('pool', None)
@@ -136,18 +138,18 @@ def start():
         from worker_task import worker_task
         globals.app_worker_task = worker_task(chronos)
     except Exception as e:
-        print(sal.get_traceback(e))
-        from api import report
         logger.error('Error in importing/loading app\'s worker tasks: {} {}'.format(e.__class__.__name__, e))
+        logger.debug(sal.get_traceback(e))
+        from api import report
         common.run_controlled(2,report,what='worker', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
 
     try:
         from management_task import management_task
         globals.app_management_task = management_task(chronos)
     except Exception as e:
-        print(sal.get_traceback(e))
-        from api import report
         logger.error('Error in importing/loading  app\'s management tasks: {} {}'.format(e.__class__.__name__, e))
+        logger.debug(sal.get_traceback(e))
+        from api import report
         common.run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
 
     # Setup intervals
