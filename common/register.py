@@ -1,19 +1,19 @@
 import logger
-import globals
+import cache
 from common import run_controlled
 from api import apost
 
 def register():
-    logger.info('Registering myself with tid={} and aid={}'.format(globals.tid,globals.aid))
+    logger.info('Registering myself with tid={} and aid={}'.format(cache.tid,cache.aid))
     response = run_controlled(None,
                                      apost,
                                      api='/things/register/',
-                                     data={'tid': globals.tid,
-                                           'aid': globals.aid,
-                                           'app_version': globals.app_version,
-                                           'pythings_version': globals.pythings_version,
-                                           'pool': globals.pool,
-                                           'frozen':globals.frozen})
+                                     data={'tid': cache.tid,
+                                           'aid': cache.aid,
+                                           'app_version': cache.app_version,
+                                           'pythings_version': cache.pythings_version,
+                                           'pool': cache.pool,
+                                           'frozen':cache.frozen})
     if not response:
         raise Exception('Empty Response from register')
     

@@ -3,18 +3,18 @@ import json
 import logger
 import hal
 import sal
-import globals
+import cache
 import gc
 
 def post(url, data, dest=None):
-    try: token = globals.token
+    try: token = cache.token
     except AttributeError: token=None
-    if  globals.payload_encrypter and token:
+    if  cache.payload_encrypter and token:
         data = json.dumps(data)
         # Encrypt progressively
         encrypted=''
         while data:
-            encrypted +=  globals.payload_encrypter.encrypt_text(data[:12])
+            encrypted +=  cache.payload_encrypter.encrypt_text(data[:12])
             data = data[12:]
         data =  {'encrypted': encrypted}
 
@@ -30,7 +30,7 @@ def post(url, data, dest=None):
     try: s.settimeout(60)
     except: pass
 
-    use_ssl = globals.settings['ssl'] if 'ssl' in globals.settings else True
+    use_ssl = cache.settings['ssl'] if 'ssl' in cache.settings else True
     if hal.HW_SUPPORTS_SSL and use_ssl:
         s = sal.socket_ssl(s)
 
@@ -84,8 +84,8 @@ def post(url, data, dest=None):
             logger.debug('Received data', data)
             if dest and status == b'200':
                 # load content, check if prev_content[-1] + content[1] == \n,
-                if globals.payload_encrypter:
-                    content = globals.payload_encrypter.decrypt_text(data)
+                if cache.payload_encrypter:
+                    content = cache.payload_encrypter.decrypt_text(data)
                     #logger.debug('Decrypted data', content)
                 else:
                     content = data
@@ -94,8 +94,8 @@ def post(url, data, dest=None):
                 if content is None:
                     content=''
 
-                if globals.payload_encrypter:
-                    content += globals.payload_encrypter.decrypt_text(data)
+                if cache.payload_encrypter:
+                    content += cache.payload_encrypter.decrypt_text(data)
                     #logger.debug('Decrypted data', content)
                 else:
                     content +=data

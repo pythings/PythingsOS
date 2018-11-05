@@ -1,5 +1,5 @@
 
-import globals
+import cache
 import logger
 import os
 from system import system
@@ -9,7 +9,7 @@ def update_pythings(version):
     
     files = apost(api='/pythings/get/', data={'version':version, 'list':True, 'system':system})['content']
 
-    path = globals.root+'/'+version
+    path = cache.root+'/'+version
     try:
         os.mkdir(path)
     except OSError as e:

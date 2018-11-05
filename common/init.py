@@ -2,7 +2,7 @@
 #  Imports
 from time import sleep
 import gc
-import globals
+import cache
 import common
 import hal
 import sal
@@ -17,12 +17,12 @@ logger.level = int(load_param('loglevel', logger.DEBUG))
 def start():
 
     # Get Pythings version
-    globals.pythings_version = common.get_pythings_version()
+    cache.pythings_version = common.get_pythings_version()
 
     print('\n|------------------------|')
     print('|  Starting Pythings :)  |')
     print('|------------------------|')
-    print(' Version: {}'.format(globals.pythings_version))
+    print(' Version: {}'.format(cache.pythings_version))
     print(' System: {}\n'.format(system))
 
     # Init hardware and system
@@ -48,72 +48,72 @@ def start():
 
     # Start loading settings and parameters
     from utils import load_settings
-    globals.settings = load_settings()
-    globals.payload_encrypter = None # Initalization
+    cache.settings = load_settings()
+    cache.payload_encrypter = None # Initalization
 
     # Load backend: the local param wins 
-    globals.backend = load_param('backend', None)
+    cache.backend = load_param('backend', None)
 
-    if not globals.backend:
+    if not cache.backend:
         backend_overrided = False
-        if 'backend' in globals.settings and globals.settings['backend']:
-            globals.backend = globals.settings['backend']
+        if 'backend' in cache.settings and cache.settings['backend']:
+            cache.backend = cache.settings['backend']
         else:
-            globals.backend = 'backend.pythings.io'
+            cache.backend = 'backend.pythings.io'
     else:
         backend_overrided = True
 
     # Load aid and tid: only local param or default
-    globals.aid = load_param('aid', None)
-    if globals.aid is None:
+    cache.aid = load_param('aid', None)
+    if cache.aid is None:
         logger.critical('AID not provided, stopping here.')
         return
-    globals.tid = load_param('tid', None)
-    if globals.tid is None: globals.tid = hal.get_tuuid()
+    cache.tid = load_param('tid', None)
+    if cache.tid is None: cache.tid = hal.get_tuuid()
 
     # Load pool: the local param wins 
-    globals.pool = load_param('pool', None)
-    if not globals.pool:
-        if 'pool' in globals.settings and globals.settings['pool']:
-            globals.pool = globals.settings['pool']
+    cache.pool = load_param('pool', None)
+    if not cache.pool:
+        if 'pool' in cache.settings and cache.settings['pool']:
+            cache.pool = cache.settings['pool']
         else:
-            globals.pool = 'production'
+            cache.pool = 'production'
             
-    globals.frozen = hal.is_frozen()
+    cache.frozen = hal.is_frozen()
 
     # Tasks placeholders
-    globals.app_worker_task = None
-    globals.app_management_task = None
+    cache.app_worker_task = None
+    cache.app_management_task = None
       
     # Report
-    logger.info('Running with backend="{}" and aid="{}"'.format(globals.backend, globals.aid))
+    logger.info('Running with backend="{}" and aid="{}"'.format(cache.backend, cache.aid))
 
     # Get app version:    
-    globals.app_version = common.get_app_version()
+    cache.app_version = common.get_app_version()
 
     # Register and perform the first management task call on "safe" backend, if not overrided
     if not backend_overrided:
-        backend_set = globals.backend
-        globals.backend ='backend.pythings.io'
+        backend_set = cache.backend
+        cache.backend ='backend.pythings.io'
     
     # Pre-register if payload encryption activated
-    use_payload_encryption = globals.settings['payload_encryption'] if 'payload_encryption' in globals.settings else True
+    use_payload_encryption = cache.settings['payload_encryption'] if 'payload_encryption' in cache.settings else True
     if use_payload_encryption and hal.HW_SUPPORTS_ENCRYPTION and sal.get_payload_encrypter():
         logger.info('Enabling Payload Encryption and preregistering')
-        globals.payload_encrypter = sal.get_payload_encrypter()(comp_mode=True)
+        cache.payload_encrypter = sal.get_payload_encrypter()(comp_mode=True)
         from preregister import preregister
         token = preregister()
-        globals.token = token
-        logger.info('Got token: {}'.format(globals.token))
+        cache.token = token
+        logger.info('Got token: {}'.format(cache.token))
         del preregister
         gc.collect()
         
     # Register yourself, and start a new session
     from register import register
     token, epoch = register()
-    if not globals.payload_encrypter:
-        globals.token = token
-        logger.info('Got token: {}'.format(globals.token))
+    if not cache.payload_encrypter:
+        cache.token = token
+        logger.info('Got token: {}'.format(cache.token))
     del register
     gc.collect()
     
@@ -129,14 +129,14 @@ def start():
     
     # Set back host to the proper one
     if not backend_overrided:
-        globals.backend=backend_set
+        cache.backend=backend_set
         del backend_set
     gc.collect()
 
     # Init app
     try:
         from worker_task import worker_task
-        globals.app_worker_task = worker_task(chronos)
+        cache.app_worker_task = worker_task(chronos)
     except Exception as e:
         logger.error('Error in importing/loading app\'s worker tasks: {} {}'.format(e.__class__.__name__, e))
         logger.debug(sal.get_traceback(e))
@@ -145,7 +145,7 @@ def start():
 
     try:
         from management_task import management_task
-        globals.app_management_task = management_task(chronos)
+        cache.app_management_task = management_task(chronos)
     except Exception as e:
         logger.error('Error in importing/loading  app\'s management tasks: {} {}'.format(e.__class__.__name__, e))
         logger.debug(sal.get_traceback(e))
@@ -153,8 +153,8 @@ def start():
         common.run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
 
     # Setup intervals
-    worker_interval = int(globals.settings['worker_interval']) if 'worker_interval' in globals.settings else 300
-    management_interval = int(globals.settings['management_interval']) if 'management_interval' in globals.settings else 60
+    worker_interval = int(cache.settings['worker_interval']) if 'worker_interval' in cache.settings else 300
+    management_interval = int(cache.settings['management_interval']) if 'management_interval' in cache.settings else 60
 
     # Start main loop
     loop_count = 0

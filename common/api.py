@@ -1,5 +1,5 @@
 
-import globals
+import cache
 import logger
 import json
 from http import post
@@ -19,7 +19,7 @@ def check_response(response):
 
 # Apis
 def apost(api, data={}):
-    url = '{}/api/{}{}'.format(globals.backend,apiver,api)
+    url = '{}/api/{}{}'.format(cache.backend,apiver,api)
     logger.debug('Calling API {} with data'.format(url),data)
     response = post(url, data=data)
     gc.collect()
@@ -31,7 +31,7 @@ def apost(api, data={}):
 
 def download(file_name, version, dest, what, system):
     logger.info('Downloading {} in'.format(file_name),dest) 
-    response = post(globals.backend+'/api/'+apiver+'/'+what+'/get/', {'file_name':file_name, 'version':version, 'token':globals.token, 'system':system}, dest=dest)
+    response = post(cache.backend+'/api/'+apiver+'/'+what+'/get/', {'file_name':file_name, 'version':version, 'token':cache.token, 'system':system}, dest=dest)
     check_response(response)
 
 # Report

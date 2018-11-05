@@ -1,4 +1,4 @@
-import globals
+import cache
 import logger
 from api import apost, report
 import gc
@@ -8,11 +8,11 @@ from common import run_controlled
 def system_worker_task(chronos):
     
     # Call App's worker    
-    if globals.app_worker_task:
+    if cache.app_worker_task:
         worker_msg = None
         try:
             logger.debug('Mem free:', sal.get_mem_free())
-            worker_msg = globals.app_worker_task.call(chronos)
+            worker_msg = cache.app_worker_task.call(chronos)
             if worker_msg:
                 run_controlled(2,apost,api='/apps/worker/', data={'msg': worker_msg })
             report('worker','OK')

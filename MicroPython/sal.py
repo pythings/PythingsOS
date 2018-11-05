@@ -6,7 +6,7 @@
 import sys
 import time
 import machine
-import globals
+import cache
 
 # The following can be overwritten or extended in the Hardware Abstraction Layer
 
