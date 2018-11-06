@@ -109,4 +109,5 @@ def socket_write(s,data):
     s.write(data)
 
 def socket_ssl(s):
-    raise NotImplementedError()
+    import ussl
+    return ussl.wrap_socket(s)

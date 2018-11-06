@@ -30,27 +30,29 @@ def post(url, data, dest=None):
     try: s.settimeout(60)
     except: pass
 
+    # If socket connect fails do not have an exception when closing file
+    if dest: f = None
+
+    # Connect and handle SSL
+    s.connect(addr)
     use_ssl = cache.settings['ssl'] if 'ssl' in cache.settings else True
     if hal.HW_SUPPORTS_SSL and use_ssl:
         s = sal.socket_ssl(s)
 
-    # If socket connect fails do not have an exception when closing file
-    if dest: f = None 
-    s.connect(addr)
     if dest: f = open(dest, 'w')
     try:
-        s.send(bytes('%s /%s HTTP/1.0\r\nHost: %s\r\n' % ('POST', path, host), 'utf8'))
+        s.write(bytes('%s /%s HTTP/1.0\r\nHost: %s\r\n' % ('POST', path, host), 'utf8'))
 
         content = json.dumps(data)
         content_type = 'application/json'
 
         if content is not None:
-            s.send(bytes('content-length: %s\r\n' % len(content), 'utf8'))
-            s.send(bytes('content-type: %s\r\n' % content_type, 'utf8'))
-            s.send(bytes('\r\n', 'utf8'))
+            s.write(bytes('content-length: %s\r\n' % len(content), 'utf8'))
+            s.write(bytes('content-type: %s\r\n' % content_type, 'utf8'))
+            s.write(bytes('\r\n', 'utf8'))
             sal.socket_write(s, data=bytes(content, 'utf8'))
         else:
-            s.send(bytes('\r\n', 'utf8'))
+            s.write(bytes('\r\n', 'utf8'))
 
         # Status, msg etc.
         version, status, msg = sal.socket_readline(s).split(None, 2)
@@ -66,7 +68,7 @@ def post(url, data, dest=None):
             data=''
 
             while len(data) < 39:
-                last = str(s.recv(1), 'utf8')
+                last = str(s.read(1), 'utf8')
                 if len(last) == 0:
                     stop=True
                     break
