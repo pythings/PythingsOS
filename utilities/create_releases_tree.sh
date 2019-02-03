@@ -47,13 +47,13 @@ git tag -l | while read TAG ; do
 	if [ -d "$DEST/PythingsOS/$TAG/tools/installer" ]; then
 	    if grep -q $TAG "$DEST/PythingsOS/$TAG/tools/installer/installer.py"; then
 	    echo "Zipping the installer for \"$TAG\" in \"$ZIP_LOCATION\"."
-	    ZIP_LOCATION=$DEST/PythingsOS/$TAG/zips/installer
+	    ZIP_LOCATION=$DEST/PythingsOS/$TAG/zips/PythingsOS_${TAG}_installer
 	    mkdir -p $ZIP_LOCATION
 	    cd $ZIP_LOCATION
 	    rsync -r --copy-links $DEST/PythingsOS/$TAG/tools/installer/* ./ 
 	    rm -rf __*
 	    cd .. 
-	    zip -r PythingsOS_${TAG}_installer.zip installer
+	    zip -r PythingsOS_${TAG}_installer.zip PythingsOS_${TAG}_installer
 	    fi
 	fi
 
