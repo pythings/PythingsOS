@@ -73,8 +73,7 @@ RUN cd /home/xtensa/micropython && git checkout 3053748 && git submodule update
 # Copy strucutre for allowing building frozen version
 RUN cp -a /home/xtensa/micropython /home/xtensa/micropython-frozen
 
-# Clone PythingsOS repo & checkout version
-#RUN cd /home/xtensa/ && git clone https://github.com/Pythings/PythingsOS.git
+# Add PythingsOS code
 COPY PythingsOS /home/xtensa/PythingsOS
 USER root
 RUN chown -R xtensa:xtensa /home/xtensa/PythingsOS
@@ -100,9 +99,6 @@ ENV REL="v0.2"
 #-------------------
 # Build Normal
 #-------------------
-
-#RUN cd /home/xtensa/PythingsOS && git pull && git checkout $VER
-RUN cd /home/xtensa/PythingsOS &&  git checkout $VER
 
 # Load edited boot.py to autostart the framework
 COPY main.c /home/xtensa/micropython/esp8266/main.c
