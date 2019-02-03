@@ -5,7 +5,17 @@ import glob
 import serial
 import subprocess
 import time
+import os
+import zipfile
 from collections import namedtuple
+from os import listdir
+from os.path import isfile, join
+
+VERSION          = 'v1.0.0-rc1'
+CHOOSE_OPERATION = False
+INTERACTIVE      = False
+DEBUG            = False
+SILENT           = True
 
 #========================
 #  Utility functions
@@ -112,7 +122,8 @@ def os_shell(command, capture=False, verbose=False, interactive=False, silent=Fa
         raise Exception('You cannot ask at the same time for capture and verbose, sorry')
 
     # Log command
-    print('Executing command: {}'.format(command))
+    if DEBUG:
+        print('Executing command: {}'.format(command))
 
     # Execute command in interactive mode    
     if verbose or interactive:
@@ -191,16 +202,20 @@ def download(url, dest=''):
 
 print('')
 print('-----------------------------------------------')
-print('|       Welcome to PythingsOS installer       |')
+print('  Welcome to PythingsOS {} installer    '.format(VERSION))
 print('-----------------------------------------------')
 
 print('')
 print('Notes:')
-print(' - An Internet connection is required for downloading firmwares and PythingsOS files.')
+print(' - An Internet connection is required for downloading firmware and PythingsOS files.')
 print(' - If you have not downloaded your serial adapter driver, go to https://pythings.io/downloads.')
 print(' - With some chips you need a good quality USB cable, try changing cable if you have problems.')
 print(' - On Linux, you need to run this program as root (i.e. "sudo python installer.py").')
 print('')
+
+# Create tmp dir if not already present
+if not os.path.isdir('tmp'):
+    os.mkdir('tmp')
 
 print('What type of chip do you want to operate on?')
 print(' 1) Esp8266')
@@ -226,20 +241,26 @@ except:
     abort('Error, please type a valid numerical choice')
 
 
-print('')
-print('What operation do you want to perform?')
-print(' 1) Flash and install PythingsOS')
-print(' 2) Only install PythingsOS')
-print(' 3) Open a serial console')
+if CHOOSE_OPERATION:
+    print('')
+    print('What operation do you want to perform?')
+    print(' 1) Flash and install PythingsOS')
+    print(' 2) Only install PythingsOS')
+    print(' 3) Open a serial console')
+    
+    sys.stdout.write('Your choice (number): ')
 
-sys.stdout.write('Your choice (number): ')
+    try:
+        operation  = int(input())
+        if not operation in [1,2,3]:
+            raise
+    except:
+        abort('Error, please type a valid numerical choice')
 
-try:
-    operation  = int(input())
-    if not operation in [1,2,3]:
-        raise
-except:
-    abort('Error, please type a valid numerical choice')
+else:
+    operation=1
+
+
 
 # Set steps
 if operation == 1:
@@ -285,9 +306,19 @@ print('Using "{}'.format(serial_port))
 print('')
 
 
-
 if flash:
-
+    
+    # Step 0: download firmware
+    print('Downloading firmware...')
+    if chip_type== 'esp8266':
+        download('https://pythings.io/static/firmware/esp8266-20180511-v1.9.4.bin', 'tmp/')
+    elif chip_type == 'esp32':
+        download('https://pythings.io/static/firmware/esp32-20181105-v1.9.4-683-gd94aa577a.bin', 'tmp/')
+    else:
+        abort('Consistency Exception')
+    print('Done.')
+    print('')
+    
     # Step 1: Erease flash
     if chip_type== 'esp8266':
         command = 'python deps/esptool.py --port {} erase_flash'.format(serial_port)
@@ -297,52 +328,78 @@ if flash:
         abort('Consistency Exception')
 
     print('Erasing flash... (about 10 secs)')
-    if not(os_shell(command, interactive=True)):
+    if not(os_shell(command, interactive=INTERACTIVE, silent=SILENT)):
         abort('Error (see output above)')
     time.sleep(3)
+    print('Done.')
+    print('')
      
     # Step 2: Flash MicroPython firmware
     if chip_type== 'esp8266':
-        command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 esp8266-20180511-v1.9.4.bin'.format(serial_port)
+        command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/esp8266-20180511-v1.9.4.bin'.format(serial_port)
     elif chip_type == 'esp32':
-        command = 'python deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 esp32-20181105-v1.9.4-683-gd94aa577a.bin'.format(serial_port)  
+        command = 'python deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 tmp/esp32-20181105-v1.9.4-683-gd94aa577a.bin'.format(serial_port)  
     else:
         abort('Consistency Exception')
         
     print('Flashing firmware... (about a minute)')
-    if not(os_shell(command, interactive=True)):
+    if not(os_shell(command, interactive=INTERACTIVE, silent=SILENT)):
         abort('Error (see output above)')
     time.sleep(5)
-     
+    print('Done.')
+    print('')
+         
     # Step 3: Check ampy and successful MicroPython install
     print('Checking...')
-    if not os_shell('python deps/ampy.py -p {} ls'.format(serial_port), interactive=True):
+    if not os_shell('python deps/ampy.py -p {} ls'.format(serial_port), interactive=INTERACTIVE, silent=SILENT):
         abort('Error (see output above)')
     time.sleep(2)
-
+    print('Done.')
+    print('')
 
 if copy:
+    
+    # Step 3: Download and extract PythingsOS
+    print('Downloading PythingsOS...')
+    url = 'https://pythings.io/static/dist/PythingsOS/{}/zips/PythingsOS_{}_{}.zip'.format(VERSION,VERSION,chip_type)
+    #print ('Downloading {}'.format(url))
+    download(url, 'tmp/')
+    print('Done.')
+    print('')    
+    
+    # (now extract)
+    zip_ref = zipfile.ZipFile('tmp/PythingsOS_{}_{}.zip'.format(VERSION,chip_type), 'r')
+    zip_ref.extractall('tmp/extracted')
+    zip_ref.close()
+    
     # Step 4: Copy over all files
-    files_path = '../../{}'.format(chip_type)
-    from os import listdir
-    from os.path import isfile, join
+    files_path = 'tmp/extracted/{}'.format(chip_type)
     files = [f for f in listdir(files_path) if isfile(join(files_path, f))]
 
+    print('Installing PythingsOS... (about two minutes)')
     for file in files:
         if file.endswith('.py'):
             while True:
-                print('Now copying {}/{} ...'.format(files_path,file))
-                if not os_shell('python deps/ampy.py -p {} put {}/{}'.format(serial_port,files_path,file), interactive=True):
+                if DEBUG:
+                    print('Now copying {}/{} ...'.format(files_path,file))
+                if not os_shell('python deps/ampy.py -p {} put {}/{}'.format(serial_port,files_path,file), interactive=INTERACTIVE, silent=SILENT):
                     print('Failed, retrying...')
                     time.sleep(2)
                 else:
                     time.sleep(2)
                     break
 
+    print('Done.')
+    print('')
+
     # Step 5: Reset  
-    if not os_shell('python deps/ampy.py -p {} reset'.format(serial_port,files_path,file), interactive=True):
+    if not os_shell('python deps/ampy.py -p {} reset'.format(serial_port,files_path,file), interactive=INTERACTIVE, silent=SILENT):
         abort('Error (see output above)')
 
+    print('Now resetting the device and opening a serial connection to it.')
+    print('The output you will see below is from PythingsOS running on your device!')
+    print('')
+    
 
 if console:
     # Step 6: Open serial console
