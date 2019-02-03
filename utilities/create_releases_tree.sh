@@ -22,14 +22,14 @@ git tag -l | while read TAG ; do
     # Save current folder  
     ORIGIN=$(pwd)
 
-    # For every platform where it make sense to, consolidate versions and make zips
+    # For every platform, consolidate versions and make zips
     for PLATFORM in Python MicroPython RaspberryPi; do   
-    echo "Consolidating and making zip archive for \"$PLATFORM\"."
-	    ZIP_LOCATION=$DEST/PythingsOS/$TAG/zips/$PLATFORM  
-	    if [ -d "$ZIP_LOCATION" ]; then
+	    if [ -d "$DEST/PythingsOS/$TAG/$PLATFORM" ]; then
+	        echo "Consolidating and making zip archive for \"$PLATFORM\"."
+	        ZIP_LOCATION=$DEST/PythingsOS/$TAG/zips
+	        mkdir -p $ZIP_LOCATION
 	        cd $ZIP_LOCATION
-	        ./consolidate.sh
-	        rm consolidate.sh
+	        rsync -r --copy-links $DEST/PythingsOS/$TAG/$PLATFORM/* ./ 
 	        rm -rf __*
 	        cd .. 
 	        zip -r PythingsOS_${TAG}_${PLATFORM}.zip $PLATFORM
