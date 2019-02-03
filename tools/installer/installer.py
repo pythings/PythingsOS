@@ -207,10 +207,11 @@ print('-----------------------------------------------')
 
 print('')
 print('Notes:')
-print(' - An Internet connection is required for downloading firmware and PythingsOS files.')
-print(' - If you have not downloaded your serial adapter driver, go to https://pythings.io/downloads.')
-print(' - With some chips you need a good quality USB cable, try changing cable if you have problems.')
-print(' - On Linux, you need to run this program as root (i.e. "sudo python installer.py").')
+print(' - An Internet connection is required for downloading the required files.')
+print(' - You need a working serial connection to your board.')
+print(' - Most common USB-to-serial drivers here: https://pythings.io/downloads.')
+print(' - Some chips require high quality USB cables, switch cable in case of problems.')
+print(' - On Linux, run this program as root (i.e. "sudo installer.sh")')
 print('')
 
 # Create tmp dir if not already present
