@@ -25,7 +25,7 @@ git tag -l | while read TAG ; do
     # For every platform where it make sense to, consolidate versions and make zips
     for PLATFORM in Python MicroPython RaspberryPi; do   
     echo "Consolidating and making zip archive for \"$PLATFORM\"."
-	    ZIP_LOCATION=$DEST/PythingsOS/$TAG/builds/$PLATFORM  
+	    ZIP_LOCATION=$DEST/PythingsOS/$TAG/zips/$PLATFORM  
 	    if [ -d "$ZIP_LOCATION" ]; then
 	        cd $ZIP_LOCATION
 	        ./consolidate.sh
