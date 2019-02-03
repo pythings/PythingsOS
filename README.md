@@ -17,6 +17,11 @@ Then:
 	git push
     git tag -a v1.0.1
     git push origin v1.0.1
+    
+ In case of wrong release tags, use:
+ 
+     git tag -d v1.0.1
+     git push origin :refs/tags/v1.0.1
 
 ### Updateability
 
