@@ -66,8 +66,10 @@ def start():
     # Load aid and tid: only local param or default
     cache.aid = load_param('aid', None)
     if cache.aid is None:
-        logger.critical('AID not provided, stopping here.')
-        return
+        logger.critical('AID not provided, stopping here. Please set it up!')
+        import time
+        while True:
+            time.sleep(1)
     cache.tid = load_param('tid', None)
     if cache.tid is None: cache.tid = hal.get_tuuid()
 

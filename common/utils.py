@@ -1,6 +1,7 @@
 import os
 from sal import get_re
 import cache
+import logger
 
 def connect_wifi(wlan, essid, password):
     wlan.connect(essid, password)
@@ -28,9 +29,12 @@ def load_settings():
     settings = {}
     try:
         with open(cache.root+'/settings.json','r') as f:
-            settings = json.loads(f.read())
+            try:
+                settings = json.loads(f.read())
+            except Exception as e:
+                logger.error('Cannot load json content: {}'.format(e))
     except Exception as e:
-        print('Cannot open settings.py and load the json content: {}'.format(e))
+        logger.error('Cannot open settings.py: {}'.format(e))
     return settings
 
 def mv(source,dest):
