@@ -1,11 +1,11 @@
 import re
 import sys
+sys.path.append('deps')
 import glob
 import serial
 import subprocess
 import time
 from collections import namedtuple
-
 
 #========================
 #  Utility functions
@@ -158,51 +158,150 @@ def os_shell(command, capture=False, verbose=False, interactive=False, silent=Fa
             return True
 
 
+def abort(msg):
+    print('')
+    print(msg)
+    print('')
+    sys.exit(1)
 
 #========================
 #  Main
 #========================
 
+print('')
+print('-----------------------------------------------')
+print('|       Welcome to PythingsOS installer       |')
+print('-----------------------------------------------')
+
+print('')
+print('Notes:')
+print(' - An Internet connection is required for downloading firmwares and PythingsOS files.')
+print(' - If you have not downloaded your serial adapter driver, go to https://pythings.io/downloads.')
+print(' - With some chips you need a good quality USB cable, try changing cable if you have problems.')
+print(' - On Linux, you need to run this program as root (i.e. "sudo python installer.py").')
+print('')
+
+print('On what type of chip do you want to operate?')
+print(' 1) Esp8266')
+print(' 2) Esp32')
+print(' 3) Raspberry PI')
+
+sys.stdout.write('Your choice (number): ')
+
+try:
+    chip_type_id  = input()
+except:
+    abort('Error, please type a valid numerical choice')
+
+chips={}
+chips[1] = 'esp8266'
+chips[2] = 'esp32'
+chips[3] = 'raspberrypi'
+
+try:
+    chip_type_id = int(chip_type_id)
+    chip_type    = chips[chip_type_id]
+except:
+    abort('Error, please type a valid numerical choice')
+
+
+print('')
+print('What operation do you want to perform?')
+print(' 1) Flash and install PythingsOS')
+print(' 2) Only install PythingsOS')
+print(' 3) Open a serial console')
+
+sys.stdout.write('Your choice (number): ')
+
+try:
+    operation  = int(input())
+    if not operation in [1,2,3]:
+        raise
+except:
+    abort('Error, please type a valid numerical choice')
+
+# Set steps
+if operation == 1:
+    flash   = True
+    copy    = True
+    console = True
+    
+elif operation == 2:
+    flash   = False
+    copy    = True
+    console = True
+
+elif operation == 3:
+    flash   = False
+    copy    = False
+    console = True
+else:
+    abort('Consistency exception')
+
 # Ask for serial ports
+print('')
 print('Scanning serial ports...')
 serial_ports = serial_ports()
 
-print('Please select serial port:')
+port_ids = [] 
 for i, port in enumerate(serial_ports):
+    port_ids.append(i+1)
     print(' {}) {}'.format(i+1,port))
-port_id = input()
+if not port_ids:
+    abort('No serial ports found. Have you installed the drivers and do you have rights to access serial ports?')
+
+sys.stdout.write('Your choice (number): ')
+try:
+    port_id  = int(input())
+    if not operation in port_ids:
+        raise
+except:
+    abort('Error, please type a valid numerical choice')
 
 serial_port_raw = serial_ports[port_id-1]
 serial_port = sanitize_file_chars(serial_ports[port_id-1])
 print('Using "{}'.format(serial_port))
+print('')
 
-
-# Enable steps
-flash   = True
-copy    = True
-console = True
 
 
 if flash:
     # Step 1: Erease flash
+    if chip_type== 'esp8266':
+        command = 'python deps/esptool.py --port {} erase_flash'.format(serial_port)
+    elif chip_type == 'esp32':
+        command =  'python deps/esptool.py --port {} erase_flash'.format(serial_port)  
+    else:
+        abort('Consistency Exception')
+
     print('Erasing flash... (about 10 secs)')
-    os_shell('python esptool.py --port {} erase_flash'.format(serial_port), interactive=True)
+    if not(os_shell(command, interactive=True)):
+        abort('Error (see output above)')
     time.sleep(3)
      
     # Step 2: Flash MicroPython firmware
+    if chip_type== 'esp8266':
+        command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 esp8266-20180511-v1.9.4.bin'.format(serial_port)
+    elif chip_type == 'esp32':
+        command = 'python deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 esp32-20181105-v1.9.4-683-gd94aa577a.bin'.format(serial_port)  
+    else:
+        abort('Consistency Exception')
+        
     print('Flashing firmware... (about a minute)')
-    os_shell('python esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 ../esp8266-20180511-v1.9.4.bin'.format(serial_port), interactive=True)
+    if not(os_shell(command, interactive=True)):
+        abort('Error (see output above)')
     time.sleep(5)
      
     # Step 3: Check ampy and successful MicroPython install
     print('Checking...')
-    os_shell('python ampy.py -p {} ls'.format(serial_port), interactive=True)
+    if not os_shell('python deps/ampy.py -p {} ls'.format(serial_port), interactive=True):
+        abort('Error (see output above)')
     time.sleep(2)
 
 
 if copy:
     # Step 4: Copy over all files
-    files_path = '../../../esp8266'
+    files_path = '../../{}'.format(chip_type)
     from os import listdir
     from os.path import isfile, join
     files = [f for f in listdir(files_path) if isfile(join(files_path, f))]
@@ -211,15 +310,16 @@ if copy:
         if file.endswith('.py'):
             while True:
                 print('Now copying {}/{} ...'.format(files_path,file))
-                if not os_shell('python ampy.py -p {} put {}/{}'.format(serial_port,files_path,file), interactive=True):
+                if not os_shell('python deps/ampy.py -p {} put {}/{}'.format(serial_port,files_path,file), interactive=True):
                     print('Failed, retrying...')
                     time.sleep(2)
                 else:
                     time.sleep(2)
                     break
 
-    # Step 5: Reset
-    os_shell('python ampy.py -p {} reset'.format(serial_port,files_path,file), interactive=True)
+    # Step 5: Reset  
+    if not os_shell('python deps/ampy.py -p {} reset'.format(serial_port,files_path,file), interactive=True):
+        abort('Error (see output above)')
 
 
 if console:
