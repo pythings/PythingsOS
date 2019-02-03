@@ -1,7 +1,7 @@
 from os import listdir, stat
 from os.path import isfile, join
 
-ignored=['websetup.html', 'jquery.js', 'installer.py', 'boot.py', 'hal.py']
+ignored=['websetup.html', 'jquery.js', 'installer.py', 'boot.py', 'hal.py', 'run.sh']
 
 for file in listdir('./'):
     if file!='version.py' and file[0] != '.' and file not in ignored: 
