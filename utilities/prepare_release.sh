@@ -20,5 +20,5 @@ do
     cd ..
 done
 
-# Create installers
-python utilities/create_installer.py
+# Create installers -> Not anymore, and anyway here it was probably not the right place.
+#python utilities/create_installers.py
