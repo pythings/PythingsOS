@@ -164,6 +164,27 @@ def abort(msg):
     print('')
     sys.exit(1)
 
+
+def download(url, dest=''):
+    
+    file_name = url.split('/')[-1]
+    try:
+        import urllib2
+        # Python 2
+        response = urllib2.urlopen(url)
+        f = open(dest+file_name, 'wb')
+        f.write(response.read())
+        f.close()
+       
+    except ImportError:
+        import urllib.request
+        # Python3
+        response = urllib.request.urlopen(url)
+        data = response.read()
+        with open(dest+file_name, 'wb') as f:
+            f.write(data)
+
+
 #========================
 #  Main
 #========================
@@ -181,7 +202,7 @@ print(' - With some chips you need a good quality USB cable, try changing cable 
 print(' - On Linux, you need to run this program as root (i.e. "sudo python installer.py").')
 print('')
 
-print('On what type of chip do you want to operate?')
+print('What type of chip do you want to operate on?')
 print(' 1) Esp8266')
 print(' 2) Esp32')
 print(' 3) Raspberry PI')
@@ -266,6 +287,7 @@ print('')
 
 
 if flash:
+
     # Step 1: Erease flash
     if chip_type== 'esp8266':
         command = 'python deps/esptool.py --port {} erase_flash'.format(serial_port)
