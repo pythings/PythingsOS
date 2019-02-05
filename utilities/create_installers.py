@@ -10,7 +10,7 @@ def sanitize(text):
 archs = ['esp8266', 'esp8266_esp-12']
 
 for arch in archs:
-
+    print('Generating installer for arch "{}"...'.format(arch))
     dir = 'installers/' + arch
     if not exists(dir):
         makedirs(dir)
@@ -43,8 +43,8 @@ def install(path='/'):
             with open(arch+'/'+source_file,'r') as source:
 
                 content = source.read()
-                print('Processing ', source_file)
-                print(len(content))
+                #print('Processing ', source_file)
+                #print(len(content))
                 if len(content) > 3000:
                     content1=content[0:3000]
                     content2=content[3000:]
@@ -54,7 +54,7 @@ def install(path='/'):
 
                 # Add this file contents to the installer
                 installer.write('''
-    print('Writing',path+'/{0}')
+    print('[INFO] Initializing',path+'/{0}')
     with open(path+'/{0}','w') as f:
         f.write(\'\'\'{1}\'\'\')
         f.write(\'\'\'{2}\'\'\')

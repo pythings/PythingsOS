@@ -73,3 +73,9 @@ tools/buildchain/PythingsOS
 
 # Installers
 installers
+
+# Builds
+builds
+
+# Installer temp dir
+tools/installer/tmp/

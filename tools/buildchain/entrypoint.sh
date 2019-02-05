@@ -3,6 +3,6 @@
 if [ "$1" == "bash" ]; then
     bash
 else
-    cp -a /home/xtensa/builds/* /firmware
+    cp -a /home/xtensa/builds/* /builds
 fi
 

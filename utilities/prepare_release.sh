@@ -6,6 +6,8 @@ fi
 
 echo "version='$1'" > common/version.py
 
+echo "VER='$1'" > tools/buildchain/ver.sh
+
 if [ ! -d "esp8266" ]; then
     echo "Please run this script from project's root."
     exit 1
@@ -25,5 +27,6 @@ do
     cd ..
 done
 
-# Create installers
-python utilities/create_installers.py
+echo ""
+echo "OK, now change the VER env var in the tools/buildchain/Dockerfile as well."
+echo ""

@@ -80,21 +80,10 @@ RUN chown -R xtensa:xtensa /home/xtensa/PythingsOS
 USER xtensa
 
 #-------------------
-# Set versions
+# Set version
 #-------------------
 
-ENV VER="4af8108"
-ENV REL="v0.2"
-
-# 4af8108 - v0.2
-# 42d31ea - v0.2-rc6
-# -- back comp issues in build (changed installers path and boot.py in main-frozen.c)--
-# fd149dd - v0.2-rc5
-# e703b59 - v0.2-rc4
-# -- back comp issues--
-# 1f3dc40 - v0.2-rc3
-# fdf2e35 - v0.2-rc2
-
+ENV VER="v1.0.0-rc1"
 
 #-------------------
 # Build Normal
@@ -114,14 +103,14 @@ RUN cp -L /home/xtensa/PythingsOS/installers/esp8266/installer.py /home/xtensa/m
 RUN cd /home/xtensa/micropython/esp8266 && make clean
 RUN cd /home/xtensa/micropython/esp8266 && make axtls
 RUN cd /home/xtensa/micropython/esp8266 && make all
-RUN mv /home/xtensa/micropython/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${REL}_${VER}__uPy_v1.8.6-94-gf8b71aa.esp8266.bin
+RUN mv /home/xtensa/micropython/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${VER}_esp8266.bin
 
 # Build for esp8266_esp-12
 RUN cp -L /home/xtensa/PythingsOS/installers/esp8266_esp-12/installer.py /home/xtensa/micropython/esp8266/modules/
 RUN cd /home/xtensa/micropython/esp8266 && make clean
 RUN cd /home/xtensa/micropython/esp8266 && make axtls
 RUN cd /home/xtensa/micropython/esp8266 && make all
-RUN mv /home/xtensa/micropython/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${REL}_${VER}__uPy_v1.8.6-94-gf8b71aa.esp8266_esp-12.bin
+RUN mv /home/xtensa/micropython/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${VER}_esp8266_esp-12.bin
 
 
 
@@ -142,7 +131,7 @@ RUN cp -a /home/xtensa/PythingsOS/common/crypto* /home/xtensa/micropython-frozen
 RUN cd /home/xtensa/micropython-frozen/esp8266 && make clean
 RUN cd /home/xtensa/micropython-frozen/esp8266 && make axtls
 RUN cd /home/xtensa/micropython-frozen/esp8266 && make all
-RUN mv /home/xtensa/micropython-frozen/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${REL}_${VER}__uPy_v1.8.6-94-gf8b71aa.esp8266.frozen.bin
+RUN mv /home/xtensa/micropython-frozen/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${VER}_esp8266.frozen.bin
 
 # Build for esp8266-esp-12 (fozen)
 RUN cp -L /home/xtensa/PythingsOS/esp8266_esp-12/* /home/xtensa/micropython-frozen/esp8266/modules/
@@ -150,7 +139,7 @@ RUN cp -a /home/xtensa/PythingsOS/common/crypto* /home/xtensa/micropython-frozen
 RUN cd /home/xtensa/micropython-frozen/esp8266 && make clean
 RUN cd /home/xtensa/micropython-frozen/esp8266 && make axtls
 RUN cd /home/xtensa/micropython-frozen/esp8266 && make all
-RUN mv /home/xtensa/micropython-frozen/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${REL}_${VER}__uPy_v1.8.6-94-gf8b71aa.esp8266_esp-12.frozen.bin
+RUN mv /home/xtensa/micropython-frozen/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${VER}_esp8266_esp-12.frozen.bin
 
 COPY build_bytecode.sh /home/xtensa/build_bytecode.sh
 RUN cd /home/xtensa/PythingsOS/esp8266_esp-12 && bash /home/xtensa/build_bytecode.sh
@@ -162,7 +151,7 @@ RUN mkdir /home/xtensa/builds/bytecode && cp -a /home/xtensa/PythingsOS/esp8266_
 #-------------------
 
 USER root
-RUN mkdir /firmware
+RUN mkdir /builds
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod 755 /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]

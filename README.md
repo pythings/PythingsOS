@@ -20,8 +20,12 @@ Then:
     
  In case of wrong release tags, use:
  
-     git tag -d v1.0.1
-     git push origin :refs/tags/v1.0.1
+    git tag -d v1.0.1
+    git push origin :refs/tags/v1.0.1
+
+### How to generate the (firmware) builds
+
+To generate the MicroPython + PythingsOS firmware builds (only esp8266 and esp8266_esp-12 supported), enter in the tools/buildchain directory and run ""./build.sh"
 
 ### Updateability
 

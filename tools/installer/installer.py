@@ -221,7 +221,7 @@ if not os.path.isdir('tmp'):
 print('What type of chip do you want to operate on?')
 print(' 1) Esp8266')
 print(' 2) Esp32')
-print(' 3) Raspberry PI')
+#print(' 3) Raspberry PI')
 
 sys.stdout.write('Your choice (number): ')
 
@@ -233,7 +233,7 @@ except:
 chips={}
 chips[1] = 'esp8266'
 chips[2] = 'esp32'
-chips[3] = 'raspberrypi'
+#chips[3] = 'raspberrypi'
 
 try:
     chip_type_id = int(chip_type_id)
@@ -262,7 +262,6 @@ else:
     operation=1
 
 
-
 # Set steps
 if operation == 1:
     flash   = True
@@ -280,6 +279,36 @@ elif operation == 3:
     console = True
 else:
     abort('Consistency exception')
+
+
+# Ask also if frozen or non frozen for esp8266
+forzen = False
+if flash and chip_type=='esp8266':
+    print('')
+    print('Do you want a frozen or standard install?')
+    print('Frozen = PythingsOS not updatable remotely,')
+    print('         but more free memory for your App.')
+    print(' 1) Frozen')
+    print(' 2) Standard')
+    #print(' 3) Raspberry PI')
+    
+    sys.stdout.write('Your choice (number): ')
+    
+    try:
+        forzen_choice  = input()
+    except:
+        abort('Error, please type a valid numerical choice')
+
+    if forzen_choice == 1:
+        frozen = True
+    elif forzen_choice == 2:
+        frozen = False
+    else:
+        abort('Error, please type a valid choice')
+
+
+
+
 
 # Ask for serial ports
 print('')
@@ -312,7 +341,11 @@ if flash:
     # Step 0: download firmware
     print('Downloading firmware...')
     if chip_type== 'esp8266':
-        download('https://pythings.io/static/firmware/esp8266-20180511-v1.9.4.bin', 'tmp/')
+        if frozen:
+            download('https://pythings.io/static/builds/PythingsOS_v1.0.0-rc1_esp8266.bin', 'tmp/')
+        else:
+            download('https://pythings.io/static/builds/PythingsOS_v1.0.0-rc1_esp8266.frozen.bin', 'tmp/')
+            
     elif chip_type == 'esp32':
         download('https://pythings.io/static/firmware/esp32-20181105-v1.9.4-683-gd94aa577a.bin', 'tmp/')
     else:
@@ -337,7 +370,11 @@ if flash:
      
     # Step 2: Flash MicroPython firmware
     if chip_type== 'esp8266':
-        command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/esp8266-20180511-v1.9.4.bin'.format(serial_port)
+        if frozen:
+            command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_v1.0.0-rc1_esp8266.bin'.format(serial_port)
+        else:
+            command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_v1.0.0-rc1_esp8266.frozen.bin'.format(serial_port)
+
     elif chip_type == 'esp32':
         command = 'python deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 tmp/esp32-20181105-v1.9.4-683-gd94aa577a.bin'.format(serial_port)  
     else:
@@ -351,14 +388,15 @@ if flash:
     print('')
          
     # Step 3: Check ampy and successful MicroPython install
-    print('Checking...')
-    if not os_shell('python deps/ampy.py -p {} ls'.format(serial_port), interactive=INTERACTIVE, silent=SILENT):
-        abort('Error (see output above)')
-    time.sleep(2)
-    print('Done.')
-    print('')
+    if chip_type != 'esp8266':
+        print('Checking...')
+        if not os_shell('python deps/ampy.py -p {} ls'.format(serial_port), interactive=INTERACTIVE, silent=SILENT):
+            abort('Error (see output above)')
+        time.sleep(2)
+        print('Done.')
+        print('')
 
-if copy:
+if (copy and chip_type!='esp8266') or operation == 2:
     
     # Step 3: Download and extract PythingsOS
     print('Downloading PythingsOS...')
@@ -392,17 +430,24 @@ if copy:
 
     print('Done.')
     print('')
-
+    print('Now resetting the device...')
+ 
     # Step 5: Reset  
     if not os_shell('python deps/ampy.py -p {} reset'.format(serial_port,files_path,file), interactive=INTERACTIVE, silent=SILENT):
         abort('Error (see output above)')
-
-    print('Now resetting the device and opening a serial connection to it.')
-    print('The output you will see below is from PythingsOS running on your device!')
+    print('Done.')
     print('')
+   
+
     
 
 if console:
+
+    print('Now opening a serial connection:')
+    print(' the output you will see below is from')
+    print(' PythingsOS running on your device!')
+    print(' (hit ctrl-C to exit)')
+    print('')
     # Step 6: Open serial console
     try:
         with serial.Serial(serial_port_raw, 115200, timeout=1) as ser:
@@ -416,5 +461,7 @@ if console:
         raise
         # print('Cannot open serial port')
 
-
+print('')
+print('Press any key to exit')
+input()
 
