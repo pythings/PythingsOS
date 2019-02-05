@@ -6,6 +6,11 @@ fi
 
 echo "version='$1'" > common/version.py
 
+if [ ! -d "esp8266" ]; then
+    echo "Please run this script from project's root."
+    exit 1
+fi
+
 architectures=( 'MicroPython' 'esp8266' 'esp8266_esp-12' 'Python')
 for dir in "${architectures[@]}"
 do
@@ -20,5 +25,5 @@ do
     cd ..
 done
 
-# Create installers -> Not anymore, and anyway here it was probably not the right place.
-#python utilities/create_installers.py
+# Create installers
+python utilities/create_installers.py

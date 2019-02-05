@@ -70,3 +70,6 @@ builds/MicroPython/*.txt
 tools/buildchain/firmware
 tools/buildchain/venv
 tools/buildchain/PythingsOS
+
+# Installers
+installers
