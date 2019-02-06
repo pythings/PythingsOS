@@ -16,6 +16,8 @@ CHOOSE_OPERATION = False
 INTERACTIVE      = False
 DEBUG            = False
 SILENT           = True
+HOST = 'https://pythings.io'
+HOST = 'http://localhost:8080'
 
 #========================
 #  Utility functions
@@ -209,7 +211,7 @@ print('')
 print('Notes:')
 print(' - An Internet connection is required for downloading the required files.')
 print(' - You need a working serial connection to your board.')
-print(' - Most common USB-to-serial drivers here: https://pythings.io/downloads.')
+print(' - Most common USB-to-serial drivers here: /downloads.'.format(HOST))
 print(' - Some chips require high quality USB cables, switch cable in case of problems.')
 print(' - On Linux, run this program as root (i.e. "sudo installer.sh")')
 print('')
@@ -219,9 +221,11 @@ if not os.path.isdir('tmp'):
     os.mkdir('tmp')
 
 print('What type of chip do you want to operate on?')
+print('')
 print(' 1) Esp8266')
 print(' 2) Esp32')
 #print(' 3) Raspberry PI')
+print('')
 
 sys.stdout.write('Your choice (number): ')
 
@@ -245,10 +249,11 @@ except:
 if CHOOSE_OPERATION:
     print('')
     print('What operation do you want to perform?')
+    print('')
     print(' 1) Flash and install PythingsOS')
     print(' 2) Only install PythingsOS')
     print(' 3) Open a serial console')
-    
+    print('')
     sys.stdout.write('Your choice (number): ')
 
     try:
@@ -288,14 +293,16 @@ if flash and chip_type=='esp8266':
     print('Do you want a frozen or standard install?')
     print('Frozen = PythingsOS not updatable remotely,')
     print('         but more free memory for your App.')
+    print('')
     print(' 1) Frozen')
     print(' 2) Standard')
+    print('')
     #print(' 3) Raspberry PI')
     
     sys.stdout.write('Your choice (number): ')
     
     try:
-        forzen_choice  = input()
+        forzen_choice  = int(input())
     except:
         abort('Error, please type a valid numerical choice')
 
@@ -314,14 +321,17 @@ if flash and chip_type=='esp8266':
 print('')
 print('Scanning serial ports...')
 serial_ports = serial_ports()
-
+print('Done.')
+print('')
+print('On which serial port is the device connected?')
+print('')
 port_ids = [] 
 for i, port in enumerate(serial_ports):
     port_ids.append(i+1)
     print(' {}) {}'.format(i+1,port))
 if not port_ids:
     abort('No serial ports found. Have you installed the drivers and do you have rights to access serial ports?')
-
+print('')
 sys.stdout.write('Your choice (number): ')
 try:
     port_id  = int(input())
@@ -342,12 +352,12 @@ if flash:
     print('Downloading firmware...')
     if chip_type== 'esp8266':
         if frozen:
-            download('https://pythings.io/static/builds/PythingsOS_v1.0.0-rc1_esp8266.bin', 'tmp/')
+            download('{}/static/builds/PythingsOS_v1.0.0-rc1_esp8266.frozen.bin'.format(HOST), 'tmp/')
         else:
-            download('https://pythings.io/static/builds/PythingsOS_v1.0.0-rc1_esp8266.frozen.bin', 'tmp/')
+            download('{}/static/builds/PythingsOS_v1.0.0-rc1_esp8266.bin'.format(HOST), 'tmp/')
             
     elif chip_type == 'esp32':
-        download('https://pythings.io/static/firmware/esp32-20181105-v1.9.4-683-gd94aa577a.bin', 'tmp/')
+        download('{}/static/firmware/esp32-20181105-v1.9.4-683-gd94aa577a.bin'.format(HOST), 'tmp/')
     else:
         abort('Consistency Exception')
     print('Done.')
@@ -371,9 +381,9 @@ if flash:
     # Step 2: Flash MicroPython firmware
     if chip_type== 'esp8266':
         if frozen:
-            command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_v1.0.0-rc1_esp8266.bin'.format(serial_port)
-        else:
             command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_v1.0.0-rc1_esp8266.frozen.bin'.format(serial_port)
+        else:
+            command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_v1.0.0-rc1_esp8266.bin'.format(serial_port)
 
     elif chip_type == 'esp32':
         command = 'python deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 tmp/esp32-20181105-v1.9.4-683-gd94aa577a.bin'.format(serial_port)  
@@ -400,7 +410,7 @@ if (copy and chip_type!='esp8266') or operation == 2:
     
     # Step 3: Download and extract PythingsOS
     print('Downloading PythingsOS...')
-    url = 'https://pythings.io/static/dist/PythingsOS/{}/zips/PythingsOS_{}_{}.zip'.format(VERSION,VERSION,chip_type)
+    url = '{}/static/dist/PythingsOS/{}/zips/PythingsOS_{}_{}.zip'.format(HOST,VERSION,VERSION,chip_type)
     #print ('Downloading {}'.format(url))
     download(url, 'tmp/')
     print('Done.')
