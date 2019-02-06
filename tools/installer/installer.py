@@ -17,7 +17,6 @@ INTERACTIVE      = False
 DEBUG            = False
 SILENT           = True
 HOST = 'https://pythings.io'
-HOST = 'http://localhost:8080'
 
 #========================
 #  Utility functions
@@ -442,9 +441,11 @@ if (copy and chip_type!='esp8266') or operation == 2:
     print('')
     print('Now resetting the device...')
  
-    # Step 5: Reset  
+    # Step 5: Reset
+    time.sleep(2)
     if not os_shell('python deps/ampy.py -p {} reset'.format(serial_port,files_path,file), interactive=INTERACTIVE, silent=SILENT):
         abort('Error (see output above)')
+    time.sleep(2)
     print('Done.')
     print('')
    
@@ -453,10 +454,10 @@ if (copy and chip_type!='esp8266') or operation == 2:
 
 if console:
 
-    print('Now opening a serial connection:')
-    print(' the output you will see below is from')
-    print(' PythingsOS running on your device!')
-    print(' (hit ctrl-C to exit)')
+    print('Now opening a serial connection...')
+    print('The output you will see below is from PythingsOS running on your device!')
+    print('  - Hit ctrl-C to exit.')
+    print('  - Try press the reset button on your device if you don\'t see anything.')
     print('')
     # Step 6: Open serial console
     try:
