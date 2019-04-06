@@ -11,12 +11,57 @@ from collections import namedtuple
 from os import listdir
 from os.path import isfile, join
 
+# Defaults
 VERSION          = 'v1.0.0-rc1'
 CHOOSE_OPERATION = False
 INTERACTIVE      = False
 DEBUG            = False
 SILENT           = True
 HOST = 'https://pythings.io'
+
+# Booleanize utility
+def booleanize(var):
+    if isinstance(var, bool):
+        return var
+    elif isinstance(var, str):
+        if var.lower=='false':
+            return False
+        else:
+            return True
+    elif isinstance(var, int) or isinstance(var, float):
+        if var == 0 :
+            return False
+        else:
+            return True
+    else:
+        print('')
+        print('Value "{}" is not valid'.format(var))
+        print('')
+        sys.exit(1)
+
+# Overrides
+VERSION          = os.environ.get('VERSION', VERSION)
+CHOOSE_OPERATION = os.environ.get('CHOOSE_OPERATION', booleanize(CHOOSE_OPERATION))
+INTERACTIVE      = os.environ.get('INTERACTIVE', booleanize(INTERACTIVE))
+DEBUG            = os.environ.get('DEBUG', booleanize(DEBUG))
+SILENT           = os.environ.get('SILENT', booleanize(SILENT))
+HOST             = os.environ.get('HOST', HOST)
+
+
+only_console = False
+serial_port = None
+
+# Do we have command line arguments?
+for arg in sys.argv:
+    if arg.endswith('.py'):
+        continue
+    
+    if arg == '--console':
+        only_console = True
+    else:
+        if serial_port:
+            raise ValueError('Two serial port arguments given or unrecognized option "{}"'.format(arg))
+        serial_port = arg  
 
 #========================
 #  Utility functions
@@ -201,51 +246,54 @@ def download(url, dest=''):
 #  Main
 #========================
 
-print('')
-print('-----------------------------------------------')
-print('  Welcome to PythingsOS {} installer    '.format(VERSION))
-print('-----------------------------------------------')
+if not only_console:
+    print('')
+    print('-----------------------------------------------')
+    print('  Welcome to PythingsOS {} installer    '.format(VERSION))
+    print('-----------------------------------------------')
+    
+    print('')
+    print('Notes:')
+    print(' - An Internet connection is required for downloading the required files.')
+    print(' - You need a working serial connection to your board.')
+    print(' - Most common USB-to-serial drivers here: /downloads.'.format(HOST))
+    print(' - Some chips require high quality USB cables, switch cable in case of problems.')
+    print(' - On Linux, run this program as root (i.e. "sudo installer.sh")')
+    print('')
+    
+    # Create tmp dir if not already present
+    if not os.path.isdir('tmp'):
+        os.mkdir('tmp')
+    
+    print('What type of chip do you want to operate on?')
+    print('')
+    print(' 1) Esp8266')
+    print(' 2) Esp32')
+    #print(' 3) Raspberry PI')
+    print('')
+    
+    sys.stdout.write('Your choice (number): ')
 
-print('')
-print('Notes:')
-print(' - An Internet connection is required for downloading the required files.')
-print(' - You need a working serial connection to your board.')
-print(' - Most common USB-to-serial drivers here: /downloads.'.format(HOST))
-print(' - Some chips require high quality USB cables, switch cable in case of problems.')
-print(' - On Linux, run this program as root (i.e. "sudo installer.sh")')
-print('')
+    try:
+        chip_type_id  = input()
+    except:
+        abort('Error, please type a valid numerical choice')
+    
+    chips={}
+    chips[1] = 'esp8266'
+    chips[2] = 'esp32'
+    #chips[3] = 'raspberrypi'
+    
+    try:
+        chip_type_id = int(chip_type_id)
+        chip_type    = chips[chip_type_id]
+    except:
+        abort('Error, please type a valid numerical choice')
+else:
+    chip_type_id = None
+    chip_type    = None
 
-# Create tmp dir if not already present
-if not os.path.isdir('tmp'):
-    os.mkdir('tmp')
-
-print('What type of chip do you want to operate on?')
-print('')
-print(' 1) Esp8266')
-print(' 2) Esp32')
-#print(' 3) Raspberry PI')
-print('')
-
-sys.stdout.write('Your choice (number): ')
-
-try:
-    chip_type_id  = input()
-except:
-    abort('Error, please type a valid numerical choice')
-
-chips={}
-chips[1] = 'esp8266'
-chips[2] = 'esp32'
-#chips[3] = 'raspberrypi'
-
-try:
-    chip_type_id = int(chip_type_id)
-    chip_type    = chips[chip_type_id]
-except:
-    abort('Error, please type a valid numerical choice')
-
-
-if CHOOSE_OPERATION:
+if (not only_console) and CHOOSE_OPERATION:
     print('')
     print('What operation do you want to perform?')
     print('')
@@ -263,7 +311,10 @@ if CHOOSE_OPERATION:
         abort('Error, please type a valid numerical choice')
 
 else:
-    operation=1
+    if only_console:
+        operation=3
+    else:
+        operation=1
 
 
 # Set steps
@@ -289,12 +340,12 @@ else:
 forzen = False
 if flash and chip_type=='esp8266':
     print('')
-    print('Do you want a frozen or standard install?')
-    print('Frozen = PythingsOS not updatable remotely,')
-    print('         but more free memory for your App.')
+    print('Do you want a standard or frozen PythingsOS?')
+    print('Frozen = no remote OS updates, but more')
+    print('         free memory for your App.')
     print('')
-    print(' 1) Frozen')
-    print(' 2) Standard')
+    print(' 1) Standard')
+    print(' 2) Frozen')
     print('')
     #print(' 3) Raspberry PI')
     
@@ -306,9 +357,9 @@ if flash and chip_type=='esp8266':
         abort('Error, please type a valid numerical choice')
 
     if forzen_choice == 1:
-        frozen = True
-    elif forzen_choice == 2:
         frozen = False
+    elif forzen_choice == 2:
+        frozen = True
     else:
         abort('Error, please type a valid choice')
 
@@ -316,31 +367,35 @@ if flash and chip_type=='esp8266':
 
 
 
-# Ask for serial ports
-print('')
-print('Scanning serial ports...')
-serial_ports = serial_ports()
-print('Done.')
-print('')
-print('On which serial port is the device connected?')
-print('')
-port_ids = [] 
-for i, port in enumerate(serial_ports):
-    port_ids.append(i+1)
-    print(' {}) {}'.format(i+1,port))
-if not port_ids:
-    abort('No serial ports found. Have you installed the drivers and do you have rights to access serial ports?')
-print('')
-sys.stdout.write('Your choice (number): ')
-try:
-    port_id  = int(input())
-    if not operation in port_ids:
-        raise
-except:
-    abort('Error, please type a valid numerical choice')
+# Ask for serial port if not already set
+if not serial_port:
+    print('')
+    print('Scanning serial ports...')
+    serial_ports = serial_ports()
+    print('Done.')
+    print('')
+    print('On which serial port is the device connected?')
+    print('')
+    port_ids = [] 
+    for i, port in enumerate(serial_ports):
+        port_ids.append(i+1)
+        print(' {}) {}'.format(i+1,port))
+    if not port_ids:
+        abort('No serial ports found. Have you installed the drivers and do you have rights to access serial ports?')
+    print('')
+    sys.stdout.write('Your choice (number): ')
+    try:
+        port_id  = int(input())
+        if not operation in port_ids:
+            raise
+    except:
+        abort('Error, please type a valid numerical choice')
+    
+    serial_port_raw = serial_ports[port_id-1]
+    serial_port = sanitize_file_chars(serial_ports[port_id-1])
+else:
+    serial_port_raw = serial_port
 
-serial_port_raw = serial_ports[port_id-1]
-serial_port = sanitize_file_chars(serial_ports[port_id-1])
 print('Using "{}'.format(serial_port))
 print('')
 
