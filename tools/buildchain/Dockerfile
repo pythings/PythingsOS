@@ -99,14 +99,14 @@ RUN cd /home/xtensa/micropython && make -C mpy-cross
 RUN mkdir /home/xtensa/builds 
 
 # Build for esp8266 (normal)
-RUN cp -L /home/xtensa/PythingsOS/installers/esp8266/installer.py /home/xtensa/micropython/esp8266/modules/
+RUN cp -L /home/xtensa/PythingsOS/artifacts/selfarchives/esp8266/selfarchive.py /home/xtensa/micropython/esp8266/modules/
 RUN cd /home/xtensa/micropython/esp8266 && make clean
 RUN cd /home/xtensa/micropython/esp8266 && make axtls
 RUN cd /home/xtensa/micropython/esp8266 && make all
 RUN mv /home/xtensa/micropython/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${VER}_esp8266.bin
 
 # Build for esp8266_esp-12
-RUN cp -L /home/xtensa/PythingsOS/installers/esp8266_esp-12/installer.py /home/xtensa/micropython/esp8266/modules/
+RUN cp -L /home/xtensa/PythingsOS/artifacts/selfarchives/esp8266_esp-12/selfarchive.py /home/xtensa/micropython/esp8266/modules/
 RUN cd /home/xtensa/micropython/esp8266 && make clean
 RUN cd /home/xtensa/micropython/esp8266 && make axtls
 RUN cd /home/xtensa/micropython/esp8266 && make all

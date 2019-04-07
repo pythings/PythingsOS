@@ -63,7 +63,7 @@ STATIC void mp_reset(void) {
     dupterm_task_init();
 #if MICROPY_MODULE_FROZEN
     pyexec_frozen_module("_boot.py");
-    pyexec_frozen_module("installer.py"); /* Pythings frozen installer */
+    pyexec_frozen_module("selfarchive.py"); /* Pythings frozen installer */
     pyexec_file("boot.py");
     pyexec_file("main.py");
 #endif

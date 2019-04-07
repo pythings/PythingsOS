@@ -7,15 +7,15 @@ from os import makedirs
 def sanitize(text):
     return text.replace('\\','\\\\')
             
-archs = ['esp8266', 'esp8266_esp-12']
+platforms = ['esp8266', 'esp8266_esp-12']
 
-for arch in archs:
-    print('Generating installer for arch "{}"...'.format(arch))
-    dir = 'installers/' + arch
+for platform in platforms:
+    print(' Generating self extracting archive for platform "{}"...'.format(platform))
+    dir = 'artifacts/selfarchives/' + platform
     if not exists(dir):
         makedirs(dir)
  
-    with open( dir + '/installer.py','w') as installer:
+    with open( dir + '/selfarchive.py','w') as installer:
         
         # Init installer code
         installer.write('''
@@ -29,8 +29,8 @@ def install(path='/'):
         pass
 ''')
           
-        for source_file in listdir(arch):
-            if source_file == 'installer.py':
+        for source_file in listdir(platform):
+            if source_file == 'selfarchive.py':
                 continue
             try:
                 if source_file.split('.')[1] == 'pyc':
@@ -40,7 +40,7 @@ def install(path='/'):
             
             
             
-            with open(arch+'/'+source_file,'r') as source:
+            with open(platform+'/'+source_file,'r') as source:
 
                 content = source.read()
                 #print('Processing ', source_file)

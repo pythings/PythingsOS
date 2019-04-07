@@ -52,27 +52,17 @@ venv
 # OSX
 .DS_Store
 
-# Migrations
-pythings_app/migrations/*.py
-pythings_app/migrations/*.pyc
-!pythings_app/migrations/__init__.py
+# Local run vars
 aid
 aid.lock
 backend_addr
 
-# Builds
-builds/Python/*.py
-builds/Python/*.txt
-builds/MicropPython/*.py
-builds/MicroPython/*.txt
-
-# Firmware
-tools/buildchain/firmware
+# Buildchain
 tools/buildchain/venv
 tools/buildchain/PythingsOS
 
-# Installers
-installers
+# Artifacts
+artifacts
 
 # Builds
 builds
