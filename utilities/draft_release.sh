@@ -45,7 +45,7 @@ echo "OK"
 echo ""
 
 
-# 3) Creatre the installer 
+# 3) Create the installer 
 echo "Creating the installer..."
 
 utilities/create_installer.sh artifacts > /dev/null
@@ -54,8 +54,16 @@ echo "OK"
 echo ""
 
 
+# 4) Create the zips 
+echo "Creating the installer..."
 
-# 4) Create the self-extracting archives for the firmwares
+utilities/create_zips.sh > /dev/null
+
+echo "OK"
+echo ""
+
+
+# 5) Create the self-extracting archives for the firmwares
 echo "Creating the self-extracting archives..."
 python utilities/create_selfarchives.py
 
@@ -63,7 +71,7 @@ echo "OK"
 echo ""
 
 
-# 4) Build the firmwares (standard using the selfarchvies and frozen using the coeebase)
+# 6) Build the firmwares (standard using the selfarchvies and frozen using the coeebase)
 echo "Building the firmwares..."
 
 cd tools/buildchain
@@ -74,7 +82,7 @@ echo "OK"
 echo ""
 
 
-# 4) Build the firmwares (standard using the selfarchvies and frozen using the coeebase)
+# 7) Cleanup
 echo "Cleanup..."
 
 rm -rf artifacts/selfarchives

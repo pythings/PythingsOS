@@ -6,7 +6,7 @@ if [ ! -d "esp8266" ]; then
 fi
 
 # Set dest
-DEST='artifacts'
+DEST='artifacts/installer'
 
 # Set version ref:version='v1.0.0-rc1'
 VERSION=$(cat common/version.py | cut -d"'" -f2)
