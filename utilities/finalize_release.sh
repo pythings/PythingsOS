@@ -36,13 +36,13 @@ then
     git push
 
     # 2) Copy artifacts: zips, installer, firmware
-    copy -a artifacts/installer/* $PYTHINGSDATA_DIR/builds/installer/
-    copy -a artifacts/zips/* $PYTHINGSDATA_DIR/builds/zips/
-    copy -a artifacts/firmware/* $PYTHINGSDATA_DIR/builds/firmware/
+    copy -a artifacts/installer/* $PYTHINGSDATA_DIR/PythingsOS/installer/
+    copy -a artifacts/zips/* $PYTHINGSDATA_DIR/PythingsOS/zips/
+    copy -a artifacts/firmware/* $PYTHINGSDATA_DIR/PythingsOS/firmware/
 
     # 3) Create a commit for PythingsData repo
     cd $PYTHINGSDATA_DIR
-    git add builds/
+    git add PythingsOS/
     git commit -m "Added PythingsOS files for $VERSION"
     git push
     HASH=$(git rev-parse HEAD)
