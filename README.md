@@ -23,6 +23,9 @@ Then, run the utilities/finalize_release.sh script, that will:
 - Create a new commit in this repo
 - Create a new version tag for the new commit 
 - Push the new commit and tag
+- Copy artifacts into the build folder of PythingsData
+- Commit and push
+- Return the two new hashes for PythingsOS and PythingsData
 
 ### Manual processes
 
