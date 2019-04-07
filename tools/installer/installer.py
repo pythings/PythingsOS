@@ -125,7 +125,7 @@ def valid(line):
         if 'INFO' in line or 'DEBUG' in line or 'ERROR' in line or 'WARNING' in line or 'CRITICAL' in line:
             #print('Condition1')
             validity = True
-        elif 'Version:' in line or 'System' in line or '|-------' in line or 'Starting' in line:
+        elif 'Version:' in line or 'Platform' in line or 'Thing ID' in line or '|-------' in line or 'Starting' in line:
             #print('Condition2')
             validity = True
         elif 'Error' in line or 'Exception' in line or 'File' in line:
