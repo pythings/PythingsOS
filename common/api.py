@@ -29,9 +29,9 @@ def apost(api, data={}):
     check_response(response)
     return response
 
-def download(file_name, version, dest, what, system):
+def download(file_name, version, dest, what, platform):
     logger.info('Downloading {} in'.format(file_name),dest) 
-    response = post(cache.backend+'/api/'+apiver+'/'+what+'/get/', {'file_name':file_name, 'version':version, 'token':cache.token, 'system':system}, dest=dest)
+    response = post(cache.backend+'/api/'+apiver+'/'+what+'/get/', {'file_name':file_name, 'version':version, 'token':cache.token, 'platform':platform}, dest=dest)
     check_response(response)
 
 # Report

@@ -28,8 +28,8 @@ echo ""
 
 # 2) Create file lists
 echo "Creating file lists..."
-architectures=( 'MicroPython' 'esp8266' 'esp8266_esp-12' 'Python')
-for dir in "${architectures[@]}"
+platforms=( 'MicroPython' 'esp8266' 'esp8266_esp-12' 'Python' 'esp32' 'RaspberryPi')
+for dir in "${platforms[@]}"
 do
     echo " $dir"
     cd $dir
@@ -55,7 +55,7 @@ echo ""
 
 
 # 4) Create the zips 
-echo "Creating the installer..."
+echo "Creating zips..."
 
 utilities/create_zips.sh > /dev/null
 

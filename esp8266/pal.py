@@ -15,10 +15,10 @@ import cache
 class LED(object):
     @staticmethod
     def on():
-        machine.Pin(2, machine.Pin.OUT).low()     
+        raise NotImplementedError()     
     @staticmethod
     def off():
-        machine.Pin(2, machine.Pin.OUT).high()  
+        raise NotImplementedError() 
 
 class WLAN(object):  
     @staticmethod
@@ -67,7 +67,7 @@ def is_frozen():
         return True
 
 
-# The following are just system-dependent, not hardware, and cannot be overwritten or extended.
+# The following are just platform-dependent, not hardware, and cannot be overwritten or extended.
 
 def init():
     if logger.level > logger.DEBUG:

@@ -67,7 +67,7 @@ def is_frozen():
         return True
 
 
-# The following are just system-dependent, not hardware, and cannot be overwritten or extended.
+# The following are just platform-dependent, not hardware, and cannot be overwritten or extended.
 
 def init():
     if logger.level > logger.DEBUG:

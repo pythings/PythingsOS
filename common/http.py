@@ -2,7 +2,7 @@ import socket
 import json
 import logger
 import hal
-import sal
+import pal
 import cache
 import gc
 
@@ -37,7 +37,7 @@ def post(url, data, dest=None):
     s.connect(addr)
     use_ssl = cache.settings['ssl'] if 'ssl' in cache.settings else True
     if hal.HW_SUPPORTS_SSL and use_ssl:
-        s = sal.socket_ssl(s)
+        s = pal.socket_ssl(s)
 
     if dest: f = open(dest, 'w')
     try:
@@ -50,15 +50,15 @@ def post(url, data, dest=None):
             s.write(bytes('content-length: %s\r\n' % len(content), 'utf8'))
             s.write(bytes('content-type: %s\r\n' % content_type, 'utf8'))
             s.write(bytes('\r\n', 'utf8'))
-            sal.socket_write(s, data=bytes(content, 'utf8'))
+            pal.socket_write(s, data=bytes(content, 'utf8'))
         else:
             s.write(bytes('\r\n', 'utf8'))
 
         # Status, msg etc.
-        version, status, msg = sal.socket_readline(s).split(None, 2)
+        version, status, msg = pal.socket_readline(s).split(None, 2)
     
         # Skip headers
-        while sal.socket_readline(s) != b'\r\n':
+        while pal.socket_readline(s) != b'\r\n':
             pass
     
         # Read data

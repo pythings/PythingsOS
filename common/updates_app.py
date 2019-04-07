@@ -2,7 +2,7 @@ import cache
 import logger
 from utils import mv
 from api import apost,download
-from system import system
+from platform import platform
 
 def update_app(version):
     files = apost(api='/apps/get/', data={'version':version, 'list':True})['content']
@@ -12,7 +12,7 @@ def update_app(version):
     except: pass
     for file_name in files:
         if file_name in ['worker_task.py','management_task.py']:
-            download(file_name=file_name, version=version, dest='{}/{}'.format(cache.root, file_name),what='apps',system=system) 
+            download(file_name=file_name, version=version, dest='{}/{}'.format(cache.root, file_name),what='apps',platform=platform) 
         else:
             logger.info('NOT downloading "{}" as in forbidden list'.format(file_name))
     with open(cache.root+'/app.py','w') as f:

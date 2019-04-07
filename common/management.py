@@ -4,7 +4,7 @@ from api import apost, report
 import gc
 from common import run_controlled
 import hal
-import sal
+import pal
 
 def system_management_task(chronos):
     
@@ -42,8 +42,8 @@ def system_management_task(chronos):
 
     except Exception as e:
         logger.error('Error in management task while updating {} ({}: {}), skipping the rest...'.format(updates, e.__class__.__name__, e))
-        logger.debug(sal.get_traceback(e))
-        run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
+        logger.debug(pal.get_traceback(e))
+        run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, pal.get_traceback(e)))
         return False
 
     gc.collect()
@@ -62,7 +62,7 @@ def system_management_task(chronos):
     # Call App's management
     if cache.app_management_task:
         try:
-            logger.debug('Mem free:', sal.get_mem_free())
+            logger.debug('Mem free:', pal.get_mem_free())
             rep=cache.app_management_task.call(chronos, msg)
             if mid:
                 run_controlled(2,report,what='management', status='OK', message={'mid':mid,'rep':rep})
@@ -71,5 +71,5 @@ def system_management_task(chronos):
                 
         except Exception as e:
             logger.error('Error in executing app\'s management task: {} {}'.format(e.__class__.__name__, e))
-            logger.debug(sal.get_traceback(e))
-            run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
+            logger.debug(pal.get_traceback(e))
+            run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, pal.get_traceback(e)))

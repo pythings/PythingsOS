@@ -1,5 +1,5 @@
 import os
-from sal import get_re
+from pal import get_re
 import cache
 import logger
 

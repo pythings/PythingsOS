@@ -16,21 +16,21 @@ HW_WEBSETUP_RESETCAUSES = []
 def init():
     pass
 
-# Hardware-dependent system objects and routines which can
+# Hardware-dependent platform objects and routines which can
 # (or might have to) be overwritten here. Note that if you
 # overwrite them here, they won't be OTA-updatable anymore.
-from sal import LED
-from sal import WLAN
-from sal import Chronos
-from sal import get_tuuid
-from sal import get_reset_cause
-from sal import is_frozen
-from sal import reboot
+from pal import LED
+from pal import WLAN
+from pal import Chronos
+from pal import get_tuuid
+from pal import get_reset_cause
+from pal import is_frozen
+from pal import reboot
 
 # Back compatibility
 def is_os_frozen():
     return is_frozen()
-from sal import get_traceback
+from pal import get_traceback
 import ure as re
 fspath='/'
 def reset_cause():

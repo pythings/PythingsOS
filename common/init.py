@@ -5,9 +5,9 @@ import gc
 import cache
 import common
 import hal
-import sal
+import pal
 from utils import load_param
-from system import system
+from platform import platform
 
 # Logger
 import logger
@@ -23,11 +23,12 @@ def start():
     print('|  Starting Pythings :)  |')
     print('|------------------------|')
     print(' Version: {}'.format(cache.pythings_version))
-    print(' System: {}\n'.format(system))
+    print(' Platform: {}'.format(platform))
+    print(' Thing ID: {}\n'.format(hal.get_tuuid()))
 
-    # Init hardware and system
+    # Init hardware and platform
     hal.init()
-    sal.init()
+    pal.init()
     
     # Start setup  mode if required
     if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN and hal.get_reset_cause() in hal.HW_WEBSETUP_RESETCAUSES:
@@ -100,9 +101,9 @@ def start():
     
     # Pre-register if payload encryption activated
     use_payload_encryption = cache.settings['payload_encryption'] if 'payload_encryption' in cache.settings else True
-    if use_payload_encryption and hal.HW_SUPPORTS_ENCRYPTION and sal.get_payload_encrypter():
+    if use_payload_encryption and hal.HW_SUPPORTS_ENCRYPTION and pal.get_payload_encrypter():
         logger.info('Enabling Payload Encryption and preregistering')
-        cache.payload_encrypter = sal.get_payload_encrypter()(comp_mode=True)
+        cache.payload_encrypter = pal.get_payload_encrypter()(comp_mode=True)
         from preregister import preregister
         token = preregister()
         cache.token = token
@@ -141,18 +142,18 @@ def start():
         cache.app_worker_task = worker_task(chronos)
     except Exception as e:
         logger.error('Error in importing/loading app\'s worker tasks: {} {}'.format(e.__class__.__name__, e))
-        logger.debug(sal.get_traceback(e))
+        logger.debug(pal.get_traceback(e))
         from api import report
-        common.run_controlled(2,report,what='worker', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
+        common.run_controlled(2,report,what='worker', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, pal.get_traceback(e)))
 
     try:
         from management_task import management_task
         cache.app_management_task = management_task(chronos)
     except Exception as e:
         logger.error('Error in importing/loading  app\'s management tasks: {} {}'.format(e.__class__.__name__, e))
-        logger.debug(sal.get_traceback(e))
+        logger.debug(pal.get_traceback(e))
         from api import report
-        common.run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, sal.get_traceback(e)))
+        common.run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, pal.get_traceback(e)))
 
     # Setup intervals
     worker_interval = int(cache.settings['worker_interval']) if 'worker_interval' in cache.settings else 300

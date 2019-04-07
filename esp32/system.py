@@ -1,1 +1,0 @@
-system = 'esp32'
