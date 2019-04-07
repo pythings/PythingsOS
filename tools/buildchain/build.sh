@@ -17,5 +17,5 @@ docker build  -t pythingsos/buildchain .
 
 echo "Now exporting firmware to artifacts builds folder..."
 CWD=$(pwd)
-docker run -v $PWD/../../artifacts/builds:/builds -i -t pythingsos/buildchain
-rm -rf $PWD/../../artifacts/builds/bytecode
+docker run -v $PWD/../../artifacts/firmware:/builds -i -t pythingsos/buildchain
+rm -rf $PWD/../../artifacts/firmware/bytecode
