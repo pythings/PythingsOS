@@ -5,7 +5,7 @@ import json
 from http import post
 import gc
 
-apiver='v0.2'
+apiver='v1'
 
 # Utility
 def check_response(response):
