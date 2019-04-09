@@ -39,6 +39,8 @@ then
     cp -a artifacts/installer/* $PYTHINGSDATA_DIR/PythingsOS/installer/
     cp -a artifacts/zips/* $PYTHINGSDATA_DIR/PythingsOS/zips/
     cp -a artifacts/firmware/* $PYTHINGSDATA_DIR/PythingsOS/firmware/
+    HASH=$(git rev-parse HEAD)
+    echo "PythingsOS commit to include in PythingsCloud: $HASH"
 
     # 3) Create a commit for PythingsData repo
     cd $PYTHINGSDATA_DIR
