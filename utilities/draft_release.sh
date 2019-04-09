@@ -17,10 +17,16 @@ echo ""
 echo "Updating versions..."
 echo "version='$VERSION'" > common/version.py
 
+# In the buildchain..
 OLD_VER_LINE=$(cat tools/buildchain/Dockerfile | grep "ENV VER")
 NEW_VER_LINE="ENV VER=\"$VERSION\""
 sed -i'' -e "s/$OLD_VER_LINE/$NEW_VER_LINE/g" tools/buildchain/Dockerfile
 rm -f tools/buildchain/Dockerfile-e
+
+# In the installer..
+OLD_VER_LINE=$(cat tools/installer/installer.py | grep "VERSION" | head -n1)
+NEW_VER_LINE="VERSION          = '$VERSION'"
+sed -i'' -e "s/$OLD_VER_LINE/$NEW_VER_LINE/g" tools/installer/installer.py
 
 echo "OK"
 echo ""
