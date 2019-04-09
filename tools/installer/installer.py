@@ -406,12 +406,12 @@ if flash:
     print('Downloading firmware...')
     if chip_type== 'esp8266':
         if frozen:
-            download('{}/static/builds/PythingsOS_v1.0.0-rc1_esp8266.frozen.bin'.format(HOST), 'tmp/')
+            download('{}/static/PythingsOS/firmware/PythingsOS_{}_esp8266.frozen.bin'.format(HOST,VERSION), 'tmp/')
         else:
-            download('{}/static/builds/PythingsOS_v1.0.0-rc1_esp8266.bin'.format(HOST), 'tmp/')
+            download('{}/static/PythingsOS/firmware/PythingsOS_{}_esp8266.bin'.format(HOST,VERSION), 'tmp/')
             
     elif chip_type == 'esp32':
-        download('{}/static/firmware/esp32-20181105-v1.9.4-683-gd94aa577a.bin'.format(HOST), 'tmp/')
+        download('{}/static/MicroPython/esp32-20181105-v1.9.4-683-gd94aa577a.bin'.format(HOST), 'tmp/')
     else:
         abort('Consistency Exception')
     print('Done.')
@@ -464,7 +464,7 @@ if (copy and chip_type!='esp8266') or operation == 2:
     
     # Step 3: Download and extract PythingsOS
     print('Downloading PythingsOS...')
-    url = '{}/static/dist/PythingsOS/{}/zips/PythingsOS_{}_{}.zip'.format(HOST,VERSION,VERSION,chip_type)
+    url = '{}/static/PythingsOS/zips/PythingsOS_{}_{}.zip'.format(HOST,VERSION,VERSION,chip_type)
     #print ('Downloading {}'.format(url))
     download(url, 'tmp/')
     print('Done.')
