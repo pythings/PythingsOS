@@ -31,14 +31,14 @@ then
     # 1) Create a commit and tag for PythingsOS repo
     git add *
     git commit -m "Release $VERSION"
-    git tag -a v1.0.1
-    git push origin v1.0.1
+    git tag -a $VERSION -m "$VERSION"
+    git push origin $VERSION
     git push
 
     # 2) Copy artifacts: zips, installer, firmware
-    copy -a artifacts/installer/* $PYTHINGSDATA_DIR/PythingsOS/installer/
-    copy -a artifacts/zips/* $PYTHINGSDATA_DIR/PythingsOS/zips/
-    copy -a artifacts/firmware/* $PYTHINGSDATA_DIR/PythingsOS/firmware/
+    cp -a artifacts/installer/* $PYTHINGSDATA_DIR/PythingsOS/installer/
+    cp -a artifacts/zips/* $PYTHINGSDATA_DIR/PythingsOS/zips/
+    cp -a artifacts/firmware/* $PYTHINGSDATA_DIR/PythingsOS/firmware/
 
     # 3) Create a commit for PythingsData repo
     cd $PYTHINGSDATA_DIR
