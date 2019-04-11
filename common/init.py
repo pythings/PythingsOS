@@ -24,7 +24,8 @@ def start():
     print('|------------------------|')
     print(' Version: {}'.format(cache.pythings_version))
     print(' Platform: {}'.format(platform))
-    print(' Thing ID: {}\n'.format(hal.get_tuuid()))
+    try: print(' Thing ID: {}\n'.format(hal.get_tuuid()))
+    except: pass
 
     # Init hardware and platform
     hal.init()
