@@ -2,6 +2,7 @@ import logger
 import cache
 from common import run_controlled
 from api import apost
+from platform import platform
 
 def register():
     logger.info('Registering myself with tid={} and aid={}'.format(cache.tid,cache.aid))
@@ -13,7 +14,8 @@ def register():
                                            'app_version': cache.app_version,
                                            'pythings_version': cache.pythings_version,
                                            'pool': cache.pool,
-                                           'frozen':cache.frozen})
+                                           'frozen':cache.frozen,
+                                           'platform':platform})
     if not response:
         raise Exception('Empty Response from register')
     
