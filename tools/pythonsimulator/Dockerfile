@@ -3,6 +3,10 @@ MAINTAINER Stefano Alberto Russo <stefano.russo@gmail.com>
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+#----------------------------------
+# Dependencies
+#----------------------------------
+
 # Always start with an apt-get update 
 RUN apt-get update
 
@@ -56,8 +60,7 @@ ENTRYPOINT ["/entrypoint.sh"]
 
 # Default user once the container starts
 USER pythings
-WORKDIR /opt/PythingsOS
-
+WORKDIR /opt/PythingsOS/Python
 
 
 

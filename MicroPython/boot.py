@@ -6,7 +6,8 @@ import cache
 gc.collect()
 
 # Set root path
-cache.root = './'
+from os.path import expanduser
+cache.root = expanduser('~')+'/.pythings'
 
 print('')
 try:

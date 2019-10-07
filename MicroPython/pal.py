@@ -2,7 +2,7 @@
 #----------------------------
 # System Abstraction Layer
 #----------------------------
-
+import os
 import sys
 import time
 import machine
@@ -53,7 +53,18 @@ def reboot():
 # The following are just platform-dependent, not hardware, and cannot be overwritten or extended.
 
 def init():
-    pass
+        
+    # Create root path if not existent
+    try:
+        os.stat(cache.root)
+    except:
+        try:
+            os.mkdir(cache.root)
+        except Exception as e:
+            raise e from None
+        
+    # Append root to the sys path
+    sys.path.append(cache.root)
 
 def get_payload_encrypter():
     try:
