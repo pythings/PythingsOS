@@ -24,9 +24,9 @@ def apost(api, data={}):
     response = post(url, data=data)
     gc.collect()
     logger.info('Got response:',response)
+    check_response(response)
     if response['content'] and response['content'] != '\n':
         response['content'] = json.loads(response['content']) 
-    check_response(response)
     return response
 
 def download(file_name, version, dest, what, platform):
@@ -36,6 +36,8 @@ def download(file_name, version, dest, what, platform):
 
 # Report
 def report(what, status, message=None):
-    logger.info('Reporting "{}" as "{}" with message "{}"'.format(what,status,message[0:30]+'...' if message else None))
+    message_for_logger = message['msg'] if isinstance(message,dict) and 'msg' in message else message
+    message_for_logger = message_for_logger[0:30]+'...' if message_for_logger and len(message_for_logger) >30 else message_for_logger
+    logger.info('Reporting "{}" as "{}" with message "{}"'.format(what,status,message_for_logger))
     response = apost('/things/report/', {'what':what,'status': status,'msg': message})
     logger.debug('Response:',response)
