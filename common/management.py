@@ -1,4 +1,4 @@
-import cache
+import env
 import logger
 from api import apost, report
 import gc
@@ -22,23 +22,23 @@ def system_management_task(chronos):
 
     # Update settings, Pythings and App.
     try:
-        if 'settings' in content and content['settings'] != cache.settings:
+        if 'settings' in content and content['settings'] != env.settings:
             updates='Settings'
             from updates_settings import update_settings
             update_settings(content)
 
-        elif not cache.frozen and cache.settings['pythings_version'].upper() != 'FACTORY' and cache.settings['pythings_version'] != cache.pythings_version:
+        elif not env.frozen and env.settings['pythings_version'].upper() != 'FACTORY' and env.settings['pythings_version'] != env.pythings_version:
             updates='Pythings' 
-            logger.debug('Downloading new Pythings (running version = "{}"; required version = "{}")'.format(cache.pythings_version, cache.settings['pythings_version']))
+            logger.debug('Downloading new Pythings (running version = "{}"; required version = "{}")'.format(env.pythings_version, env.settings['pythings_version']))
             from updates_pythings import update_pythings
-            update_pythings(cache.settings['pythings_version'])
+            update_pythings(env.settings['pythings_version'])
 
         else:
-            if cache.settings['app_version'] != cache.app_version:
+            if env.settings['app_version'] != env.app_version:
                 updates='App' 
-                logger.debug('Downloading new App (running version = "{}"; required version = "{}")'.format(cache.app_version, cache.settings['app_version']))
+                logger.debug('Downloading new App (running version = "{}"; required version = "{}")'.format(env.app_version, env.settings['app_version']))
                 from updates_app import update_app
-                update_app(cache.settings['app_version'])
+                update_app(env.settings['app_version'])
 
     except Exception as e:
         logger.error('Error in management task while updating {} ({}: {}), skipping the rest...'.format(updates, e.__class__.__name__, e))
@@ -60,10 +60,10 @@ def system_management_task(chronos):
     rep = None
 
     # Call App's management
-    if cache.app_management_task:
+    if env.app_management_task:
         try:
             logger.debug('Mem free:', pal.get_mem_free())
-            rep=cache.app_management_task.call(chronos, msg)
+            rep=env.app_management_task.call(chronos, msg)
             if mid:
                 run_controlled(2,report,what='management', status='OK', message={'mid':mid,'rep':rep})
             else:

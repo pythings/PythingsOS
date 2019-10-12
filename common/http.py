@@ -3,18 +3,18 @@ import json
 import logger
 import hal
 import pal
-import cache
+import env
 import gc
 
 def post(url, data, dest=None):
-    try: token = cache.token
+    try: token = env.token
     except AttributeError: token=None
-    if  cache.payload_encrypter and token:
+    if  env.payload_encrypter and token:
         data = json.dumps(data)
         # Encrypt progressively
         encrypted=''
         while data:
-            encrypted +=  cache.payload_encrypter.encrypt_text(data[:12])
+            encrypted +=  env.payload_encrypter.encrypt_text(data[:12])
             data = data[12:]
         data =  {'encrypted': encrypted}
 
@@ -35,7 +35,7 @@ def post(url, data, dest=None):
 
     # Connect and handle SSL
     s.connect(addr)
-    use_ssl = cache.settings['ssl'] if 'ssl' in cache.settings else True
+    use_ssl = env.settings['ssl'] if 'ssl' in env.settings else True
     if hal.HW_SUPPORTS_SSL and use_ssl:
         s = pal.socket_ssl(s)
 
@@ -86,8 +86,8 @@ def post(url, data, dest=None):
             logger.debug('Received data', data)
             if dest and status == b'200':
                 # load content, check if prev_content[-1] + content[1] == \n,
-                if cache.payload_encrypter:
-                    content = cache.payload_encrypter.decrypt_text(data)
+                if env.payload_encrypter:
+                    content = env.payload_encrypter.decrypt_text(data)
                     #logger.debug('Decrypted data', content)
                 else:
                     content = data
@@ -96,8 +96,8 @@ def post(url, data, dest=None):
                 if content is None:
                     content=''
 
-                if cache.payload_encrypter:
-                    content += cache.payload_encrypter.decrypt_text(data)
+                if env.payload_encrypter:
+                    content += env.payload_encrypter.decrypt_text(data)
                     #logger.debug('Decrypted data', content)
                 else:
                     content +=data

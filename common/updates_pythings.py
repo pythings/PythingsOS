@@ -1,5 +1,5 @@
 
-import cache
+import env
 import logger
 import os
 from platform import platform
@@ -9,7 +9,7 @@ def update_pythings(version):
     
     files = apost(api='/pythings/get/', data={'version':version, 'list':True, 'platform':platform})['content']
 
-    path = cache.root+'/'+version
+    path = env.root+'/'+version
     try:
         os.mkdir(path)
     except OSError as e:

@@ -2,7 +2,7 @@
 #  Imports
 from time import sleep
 import gc
-import cache
+import env
 import common
 import hal
 import pal
@@ -17,12 +17,12 @@ logger.level = int(load_param('loglevel', logger.DEBUG))
 def start():
 
     # Get Pythings version
-    cache.pythings_version = common.get_pythings_version()
+    env.pythings_version = common.get_pythings_version()
 
     print('\n|------------------------|')
     print('|  Starting Pythings :)  |')
     print('|------------------------|')
-    print(' Version: {}'.format(cache.pythings_version))
+    print(' Version: {}'.format(env.pythings_version))
     print(' Platform: {}'.format(platform))
     try: print(' Thing ID: {}\n'.format(hal.get_tuuid()))
     except: pass
@@ -50,74 +50,74 @@ def start():
 
     # Start loading settings and parameters
     from utils import load_settings
-    cache.settings = load_settings()
-    cache.payload_encrypter = None # Initalization
+    env.settings = load_settings()
+    env.payload_encrypter = None # Initalization
 
     # Load backend: the local param wins 
-    cache.backend = load_param('backend', None)
+    env.backend = load_param('backend', None)
 
-    if not cache.backend:
+    if not env.backend:
         backend_overrided = False
-        if 'backend' in cache.settings and cache.settings['backend']:
-            cache.backend = cache.settings['backend']
+        if 'backend' in env.settings and env.settings['backend']:
+            env.backend = env.settings['backend']
         else:
-            cache.backend = 'backend.pythings.io'
+            env.backend = 'backend.pythings.io'
     else:
         backend_overrided = True
 
     # Load aid and tid: only local param or default
-    cache.aid = load_param('aid', None)
-    if cache.aid is None:
+    env.aid = load_param('aid', None)
+    if env.aid is None:
         logger.critical('AID not provided, stopping here. Please set it up!')
         import time
         while True:
             time.sleep(1)
-    cache.tid = load_param('tid', None)
-    if cache.tid is None: cache.tid = hal.get_tuuid()
+    env.tid = load_param('tid', None)
+    if env.tid is None: env.tid = hal.get_tuuid()
 
     # Load pool: the local param wins 
-    cache.pool = load_param('pool', None)
-    if not cache.pool:
-        if 'pool' in cache.settings and cache.settings['pool']:
-            cache.pool = cache.settings['pool']
+    env.pool = load_param('pool', None)
+    if not env.pool:
+        if 'pool' in env.settings and env.settings['pool']:
+            env.pool = env.settings['pool']
         else:
-            cache.pool = 'production'
+            env.pool = 'production'
             
-    cache.frozen = hal.is_frozen()
+    env.frozen = hal.is_frozen()
 
     # Tasks placeholders
-    cache.app_worker_task = None
-    cache.app_management_task = None
+    env.app_worker_task = None
+    env.app_management_task = None
       
     # Report
-    logger.info('Running with backend="{}" and aid="{}"'.format(cache.backend, cache.aid))
+    logger.info('Running with backend="{}" and aid="{}"'.format(env.backend, env.aid))
 
-    # Get app version:    
-    cache.app_version = common.get_app_version()
+    # Get app version:
+    env.app_version = common.get_app_version()
 
     # Register and perform the first management task call on "safe" backend, if not overrided
     if not backend_overrided:
-        backend_set = cache.backend
-        cache.backend ='backend.pythings.io'
+        backend_set = env.backend
+        env.backend ='backend.pythings.io'
     
     # Pre-register if payload encryption activated
-    use_payload_encryption = cache.settings['payload_encryption'] if 'payload_encryption' in cache.settings else True
+    use_payload_encryption = env.settings['payload_encryption'] if 'payload_encryption' in env.settings else True
     if use_payload_encryption and hal.HW_SUPPORTS_ENCRYPTION and pal.get_payload_encrypter():
         logger.info('Enabling Payload Encryption and preregistering')
-        cache.payload_encrypter = pal.get_payload_encrypter()(comp_mode=True)
+        env.payload_encrypter = pal.get_payload_encrypter()(comp_mode=True)
         from preregister import preregister
         token = preregister()
-        cache.token = token
-        logger.info('Got token: {}'.format(cache.token))
+        env.token = token
+        logger.info('Got token: {}'.format(env.token))
         del preregister
         gc.collect()
         
     # Register yourself, and start a new session
     from register import register
     token, epoch = register()
-    if not cache.payload_encrypter:
-        cache.token = token
-        logger.info('Got token: {}'.format(cache.token))
+    if not env.payload_encrypter:
+        env.token = token
+        logger.info('Got token: {}'.format(env.token))
     del register
     gc.collect()
     
@@ -133,14 +133,14 @@ def start():
     
     # Set back host to the proper one
     if not backend_overrided:
-        cache.backend=backend_set
+        env.backend=backend_set
         del backend_set
     gc.collect()
 
     # Init app
     try:
         from worker_task import worker_task
-        cache.app_worker_task = worker_task(chronos)
+        env.app_worker_task = worker_task(chronos)
     except Exception as e:
         logger.error('Error in importing/loading app\'s worker tasks: {} {}'.format(e.__class__.__name__, e))
         logger.debug(pal.get_traceback(e))
@@ -149,7 +149,7 @@ def start():
 
     try:
         from management_task import management_task
-        cache.app_management_task = management_task(chronos)
+        env.app_management_task = management_task(chronos)
     except Exception as e:
         logger.error('Error in importing/loading  app\'s management tasks: {} {}'.format(e.__class__.__name__, e))
         logger.debug(pal.get_traceback(e))
@@ -157,8 +157,8 @@ def start():
         common.run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, pal.get_traceback(e)))
 
     # Setup intervals
-    worker_interval = int(cache.settings['worker_interval']) if 'worker_interval' in cache.settings else 300
-    management_interval = int(cache.settings['management_interval']) if 'management_interval' in cache.settings else 60
+    worker_interval = int(env.settings['worker_interval']) if 'worker_interval' in env.settings else 300
+    management_interval = int(env.settings['management_interval']) if 'management_interval' in env.settings else 60
 
     # Start main loop
     loop_count = 0

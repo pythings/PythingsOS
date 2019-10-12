@@ -8,7 +8,7 @@ import time
 import machine
 import network
 import logger
-import cache
+import env
 
 # The following can be overwritten or extended in the Hardware Abstraction Layer
 
@@ -61,7 +61,7 @@ def reboot():
 def is_frozen():
     import os
     try:
-        os.stat(cache.root+'/updates_pythings.py')
+        os.stat(env.root+'/updates_pythings.py')
         return False
     except:
         return True

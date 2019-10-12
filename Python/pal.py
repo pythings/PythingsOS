@@ -9,7 +9,7 @@ import calendar
 import ssl
 import traceback
 import os
-import cache
+import env
 
 # The following can be overwritten or extended in the Hardware Abstraction Layer
 
@@ -54,15 +54,15 @@ def init():
         
     # Create root path if not existent
     try:
-        os.stat(cache.root)
+        os.stat(env.root)
     except:
         try:
-            os.mkdir(cache.root)
+            os.mkdir(env.root)
         except Exception as e:
             raise e from None
         
     # Append root to the sys path
-    sys.path.append(cache.root)
+    sys.path.append(env.root)
 
 
 def get_payload_encrypter():

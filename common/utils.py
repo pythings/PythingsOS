@@ -1,6 +1,6 @@
 import os
 from pal import get_re
-import cache
+import env
 import logger
 
 def connect_wifi(wlan, essid, password):
@@ -18,7 +18,7 @@ def unquote(s):
 
 def load_param(param, default=None):
     try:
-        with open(cache.root+'/{}'.format(param),'r') as f:
+        with open(env.root+'/{}'.format(param),'r') as f:
             param = f.readline().strip()
         return param
     except Exception as e:
@@ -28,7 +28,7 @@ def load_settings():
     import json
     settings = {}
     try:
-        with open(cache.root+'/settings.json','r') as f:
+        with open(env.root+'/settings.json','r') as f:
             try:
                 settings = json.loads(f.read())
             except Exception as e:
@@ -40,16 +40,16 @@ def load_settings():
 def mv(source,dest):
     try:
         try:
-            os.remove(cache.root+'/'+dest)
+            os.remove(env.root+'/'+dest)
         except:
             pass
-        os.rename(cache.root+'/'+source, cache.root+'/'+dest)
+        os.rename(env.root+'/'+source, env.root+'/'+dest)
     except:
         pass
 
 def get_wifi_data():
     try:
-        with open(cache.root+'/wifi','r') as f:
+        with open(env.root+'/wifi','r') as f:
             essid = f.readline()[0:-1]
             password = f.readline()
     except:

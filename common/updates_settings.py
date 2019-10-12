@@ -1,10 +1,10 @@
 
-import cache
+import env
 import logger
 
 def update_settings(content):
-    logger.debug('Storing received settings ({} <--> {})'.format(content['settings'], cache.settings))
-    f = open(cache.root+'/settings.json', 'w')
+    logger.debug('Storing received settings ({} <--> {})'.format(content['settings'], env.settings))
+    f = open(env.root+'/settings.json', 'w')
     import json
     f.write(json.dumps(content['settings']))
     f.close()
