@@ -23,7 +23,7 @@ def websetup(timeout_s=60, lock_session=False):
     sta.active(False)
     ap = network.WLAN(network.AP_IF)
     ap.active(True)
-    ap.config(essid="Device_{}".format(hal.get_tuuid()), authmode=network.AUTH_WPA_WPA2_PSK, password="NewDevice")
+    ap.config(essid="Thing_{}".format(hal.get_tuuid()), authmode=network.AUTH_WPA_WPA2_PSK, password="NewThing")
     
     while True:
         try:

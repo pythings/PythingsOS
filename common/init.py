@@ -19,9 +19,9 @@ def start():
     # Get Pythings version
     env.pythings_version = common.get_pythings_version()
 
-    print('\n|------------------------|')
-    print('|  Starting Pythings :)  |')
-    print('|------------------------|')
+    print('\n|--------------------------|')
+    print('|  Starting PythingsOS :)  |')
+    print('|--------------------------|')
     print(' Version: {}'.format(env.pythings_version))
     print(' Platform: {}'.format(platform))
     try: print(' Thing ID: {}\n'.format(hal.get_tuuid()))
