@@ -435,9 +435,9 @@ if flash:
     # Step 2: Flash MicroPython firmware
     if chip_type== 'esp8266':
         if frozen:
-            command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_v1.0.0-rc1_esp8266.frozen.bin'.format(serial_port)
+            command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.frozen.bin'.format(serial_port, VERSION)
         else:
-            command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_v1.0.0-rc1_esp8266.bin'.format(serial_port)
+            command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.bin'.format(serial_port, VERSION)
 
     elif chip_type == 'esp32':
         command = 'python deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 tmp/esp32-20181105-v1.9.4-683-gd94aa577a.bin'.format(serial_port)  
