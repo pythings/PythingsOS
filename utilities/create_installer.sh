@@ -8,7 +8,7 @@ fi
 # Set dest
 DEST='artifacts/installer'
 
-# Set version ref:version='v1.0.0-rc1'
+# Set version from version.py, expected content: "version='...'"
 VERSION=$(cat common/version.py | cut -d"'" -f2)
 
 echo "Creating the installer as version $VERSION in $DEST.."
