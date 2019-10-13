@@ -3,6 +3,8 @@
 # System Abstraction Layer
 #----------------------------
 import os
+import uos
+import uio
 import sys
 import time
 import machine
@@ -97,3 +99,23 @@ def socket_write(s,data):
 def socket_ssl(s):
     import ussl
     return ussl.wrap_socket(s)
+
+def execute(cmd):
+    mystdout = uio.StringIO()
+    err = ''
+    uos.dupterm(mystdout, 1)
+    try:
+        exec(cmd)
+    except Exception as e:
+        err = get_traceback(e)
+    uos.dupterm(None)
+    return (mystdout.getvalue() + err)
+
+
+
+
+
+
+
+
+

@@ -57,19 +57,41 @@ def system_management_task(chronos):
     # Management Command (cmd), Command ID (cid) and Management Reply
     msg = content['msg'] if 'msg' in content else None
     mid = content['mid'] if 'mid' in content else None
+    mty = content['type'] if 'type' in content else 'APP'
     rep = None
+
+    # Execute system management message if we have one
+    if mid and mty == 'CMD':
+        cmd = msg
+        try:
+            logger.debug('Executing "{}"'.format(cmd))
+            try:
+                rep = pal.execute(cmd)
+            except AttributeError:
+                rep = 'Remote commands are not supported on this platform.'
+
+        except Exception as e:
+            logger.error('Error in executing app\'s management task: {} {}'.format(e.__class__.__name__, e))
+            logger.debug(pal.get_traceback(e))
+            run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, pal.get_traceback(e)))
 
     # Call App's management
     if env.app_management_task:
         try:
             logger.debug('Mem free:', pal.get_mem_free())
-            rep=env.app_management_task.call(chronos, msg)
-            if mid:
-                run_controlled(2,report,what='management', status='OK', message={'mid':mid,'rep':rep})
+            if mid and mty == 'APP':
+                rep=env.app_management_task.call(chronos, msg)
             else:
-                run_controlled(2,report,what='management', status='OK')
+                env.app_management_task.call(chronos, None)
                 
         except Exception as e:
             logger.error('Error in executing app\'s management task: {} {}'.format(e.__class__.__name__, e))
             logger.debug(pal.get_traceback(e))
             run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, pal.get_traceback(e)))
+
+    # Report if everything OK..
+    if mid:
+        run_controlled(2,report,what='management', status='OK', message={'mid':mid,'rep':rep})
+    else:
+        run_controlled(2,report,what='management', status='OK')
+

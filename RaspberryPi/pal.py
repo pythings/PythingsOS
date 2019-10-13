@@ -10,6 +10,7 @@ import ssl
 import traceback
 import os
 import env
+from io import StringIO
 
 # The following can be overwritten or extended in the Hardware Abstraction Layer
 
@@ -101,3 +102,19 @@ def socket_write(s,data):
 
 def socket_ssl(s):
     return ssl.wrap_socket(s)#, ssl_version=ssl.PROTOCOL_TLSv1)
+
+def execute(cmd):
+
+    old_stdout = sys.stdout
+    old_stderr = sys.stderr
+    sys.stdout = sys.stderr = mystdout = StringIO()
+    err = ''
+    try:
+        exec(cmd)
+    except Exception as e:
+        err = get_traceback(e)
+    finally:
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
+        rep = mystdout.getvalue() + err
+    return rep
