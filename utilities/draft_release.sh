@@ -27,7 +27,7 @@ rm -f tools/buildchain/Dockerfile-e
 OLD_VER_LINE=$(cat tools/installer/installer.py | grep "VERSION" | head -n1)
 NEW_VER_LINE="VERSION          = '$VERSION'"
 sed -i'' -e "s/$OLD_VER_LINE/$NEW_VER_LINE/g" tools/installer/installer.py
-
+rm -f tools/installer/installer.py-e
 echo "OK"
 echo ""
 
