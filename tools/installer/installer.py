@@ -12,7 +12,7 @@ from os import listdir
 from os.path import isfile, join
 
 # Defaults
-VERSION          = 'v1.0.0-rc1'
+VERSION          = 'v1.0.0-rc2'
 CHOOSE_OPERATION = False
 INTERACTIVE      = False
 DEBUG            = False

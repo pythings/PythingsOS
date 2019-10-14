@@ -83,7 +83,7 @@ USER xtensa
 # Set version
 #-------------------
 
-ENV VER="v1.0.0-rc1"
+ENV VER="v1.0.0-rc2"
 
 #-------------------
 # Build Normal

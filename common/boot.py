@@ -39,7 +39,7 @@ except Exception as e:
     print('BOOT: Error, proceeding with factory defaults: ',e.__class.__.__name__, str(e))
     path=env.root
 
-# Execute Pythings framework (from right path inserted above)
+# Execute PythingsOS (from the right path inserted above)
 try:
     import init
     gc.collect()
