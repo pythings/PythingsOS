@@ -254,11 +254,11 @@ if not only_console:
     
     print('')
     print('Notes:')
-    print(' - An Internet connection is required for downloading the required files.')
-    print(' - You need a working serial connection to your board.')
-    print(' - Most common USB-to-serial drivers here: /downloads.'.format(HOST))
-    print(' - Some chips require high quality USB cables, switch cable in case of problems.')
-    print(' - On Linux, run this program as root (i.e. "sudo installer.sh")')
+    print(' * You will need an active Internet connection to download the required files.')
+    print(' * You will need a working serial connection to your board.')
+    print('    - Most common USB-to-serial drivers here: {}/downloads.'.format(HOST))
+    print('    - Some chips require quality USB cables, switch cable in case of problems.')
+    print(' * On Linux, run this program as root (i.e. "sudo installer.sh")')
     print('')
     
     # Create tmp dir if not already present
@@ -340,9 +340,10 @@ else:
 forzen = False
 if flash and chip_type=='esp8266':
     print('')
-    print('Do you want a standard or frozen PythingsOS?')
-    print('Frozen = no remote OS updates, but more')
-    print('         free memory for your App.')
+    print('Do you want a standard or a frozen PythingsOS version?')
+    print('With a frozen version you will not be able to update')
+    print('the OS as it will be burn into the firmware, but you')
+    print('will have more free memory for your App.')
     print('')
     print(' 1) Standard')
     print(' 2) Frozen')
