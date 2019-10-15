@@ -45,7 +45,7 @@ then
     # 3) Create a commit for PythingsData repo
     cd $PYTHINGSDATA_DIR
     git add PythingsOS/
-    git commit -m "Added PythingsOS files for $VERSION"
+    git commit -m "Added PythingsOS files for release $VERSION."
     git push
     HASH=$(git rev-parse HEAD)
     echo "PythingsData commit to include in PythingsCloud: $HASH"

@@ -2,13 +2,14 @@
 #----------------------------
 # System Abstraction Layer
 #----------------------------
-
+import os
 import sys
 import time
 import machine
 import network
 import logger
 import env
+import stringstream
 
 # The following can be overwritten or extended in the Hardware Abstraction Layer
 
@@ -102,6 +103,9 @@ def get_re():
     import ure
     return ure
 
+def socket_read(s, n):
+    return s.recv(n)
+
 def socket_readline(s):
     return s.readline()
 
@@ -111,3 +115,14 @@ def socket_write(s,data):
 def socket_ssl(s):
     import ssl
     return ssl.wrap_socket(s)
+
+def execute(cmd):
+    err = ''
+    os.dupterm(stringstream)
+    stringstream.clear()
+    try:
+        exec(cmd)
+    except Exception as e:
+        err = get_traceback(e)
+    os.dupterm(None)
+    return (stringstream.data + err)
