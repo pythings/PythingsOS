@@ -8,8 +8,8 @@ HW_SUPPORTS_DEEPSLEEP  = False
 HW_SUPPORTS_RESETCAUSE = False
 HW_SUPPORTS_LED        = False
 HW_SUPPORTS_WLAN       = False
-HW_SUPPORTS_SSL        = False
-HW_SUPPORTS_ENCRYPTION = False
+HW_SUPPORTS_SSL        = True
+HW_SUPPORTS_ENCRYPTION = True
 HW_WEBSETUP_RESETCAUSES = []
 
 # Hardware initialization (i.e. put PWMs to zero)

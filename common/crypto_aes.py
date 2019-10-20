@@ -119,9 +119,6 @@ class Aes128ecb():
                     if debug: print('AES decrypt: sub_chunk_as_bytes', sub_chunk_as_bytes)
                     
                     sub_chunk_decrypted = sub_chunk_as_bytes.decode('utf-8').replace('&','')
-                    try: import ustruct # detecs uPy
-                    except: pass
-                    else: sub_chunk_decrypted = ''.join(reversed(sub_chunk_decrypted))
                     if debug: print('AES decrypt: sub_chunk_decrypted = ', sub_chunk_decrypted)
                     
                     chunk_decrypted = sub_chunk_decrypted + chunk_decrypted

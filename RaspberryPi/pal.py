@@ -3,6 +3,7 @@
 # System Abstraction Layer
 #----------------------------
 
+import io
 import sys
 import time
 import calendar
@@ -10,7 +11,7 @@ import ssl
 import traceback
 import os
 import env
-from io import StringIO
+import socket
 
 # The following can be overwritten or extended in the Hardware Abstraction Layer
 
@@ -107,7 +108,7 @@ def execute(cmd):
 
     old_stdout = sys.stdout
     old_stderr = sys.stderr
-    sys.stdout = sys.stderr = mystdout = StringIO()
+    sys.stdout = sys.stderr = mystdout = io.StringIO()
     err = ''
     try:
         exec(cmd)

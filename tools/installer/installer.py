@@ -12,12 +12,13 @@ from os import listdir
 from os.path import isfile, join
 
 # Defaults
-VERSION          = 'v1.0.0-rc2'
+VERSION          = 'v1.0.0-rc3'
 CHOOSE_OPERATION = False
 INTERACTIVE      = False
 DEBUG            = False
 SILENT           = True
-HOST = 'https://pythings.io'
+PYTHON           = os.environ.get('PYTHON', 'python')
+HOST             = 'https://pythings.io'
 
 # Booleanize utility
 def booleanize(var):
@@ -150,9 +151,9 @@ def format_shell_error(stdout, stderr, exit_code):
     string += '\n# Shell exited with exit code {}'.format(exit_code)
     string += '\n#---------------------------------\n'
     string += '\nStandard output: "'
-    string += sanitize_encoding(stdout)
+    string += str(sanitize_encoding(stdout))
     string += '"\n\nStandard error: "'
-    string += sanitize_encoding(stderr) +'"\n\n'
+    string += str(sanitize_encoding(stderr)) +'"\n\n'
     string += '#---------------------------------\n'
     string += '# End Shell output\n'
     string += '#---------------------------------\n'
@@ -421,7 +422,7 @@ if flash:
                 download('{}/static/PythingsOS/firmware/PythingsOS_{}_esp8266.bin'.format(HOST,VERSION), 'tmp/')
             
     elif chip_type == 'esp32':
-        download('{}/static/MicroPython/esp32-20181105-v1.9.4-683-gd94aa577a.bin'.format(HOST), 'tmp/')
+        download('{}/static/MicroPython/esp32-20190529-v1.11.bin'.format(HOST), 'tmp/')
     else:
         abort('Consistency Exception')
     print('Done.')
@@ -429,9 +430,9 @@ if flash:
     
     # Step 1: Erease flash
     if chip_type== 'esp8266':
-        command = 'python deps/esptool.py --port {} erase_flash'.format(serial_port)
+        command = '{} deps/esptool.py --port {} erase_flash'.format(PYTHON, serial_port)
     elif chip_type == 'esp32':
-        command =  'python deps/esptool.py --port {} erase_flash'.format(serial_port)  
+        command =  '{} deps/esptool.py --port {} erase_flash'.format(PYTHON, serial_port)  
     else:
         abort('Consistency Exception')
 
@@ -446,17 +447,17 @@ if flash:
     if chip_type== 'esp8266':
         if frozen:
             if use_local:
-                command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 ../../artifacts/firmware/PythingsOS_{}_esp8266.frozen.bin'.format(serial_port, VERSION)
+                command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 ../../artifacts/firmware/PythingsOS_{}_esp8266.frozen.bin'.format(PYTHON, serial_port, VERSION)
             else:
-                command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.frozen.bin'.format(serial_port, VERSION)
+                command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.frozen.bin'.format(PYTHON, serial_port, VERSION)
         else:
             if use_local:
-                command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 ../../artifacts/firmware/PythingsOS_{}_esp8266.bin'.format(serial_port, VERSION)
+                command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 ../../artifacts/firmware/PythingsOS_{}_esp8266.bin'.format(PYTHON, serial_port, VERSION)
             else:
-                command = 'python deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.bin'.format(serial_port, VERSION)
+                command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.bin'.format(PYTHON, serial_port, VERSION)
 
     elif chip_type == 'esp32':
-        command = 'python deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 tmp/esp32-20181105-v1.9.4-683-gd94aa577a.bin'.format(serial_port)  
+        command = '{} deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 tmp/esp32-20181105-v1.9.4-683-gd94aa577a.bin'.format(PYTHON, serial_port)  
     else:
         abort('Consistency Exception')
         
@@ -470,7 +471,7 @@ if flash:
     # Step 3: Check ampy and successful MicroPython install
     if chip_type != 'esp8266':
         print('Checking...')
-        if not os_shell('python deps/ampy.py -p {} ls'.format(serial_port), interactive=INTERACTIVE, silent=SILENT):
+        if not os_shell('{} deps/ampy.py -p {} ls'.format(PYTHON, serial_port), interactive=INTERACTIVE, silent=SILENT):
             abort('Error (see output above)')
         time.sleep(2)
         print('Done.')
@@ -501,7 +502,7 @@ if (copy and chip_type!='esp8266') or operation == 2:
             while True:
                 if DEBUG:
                     print('Now copying {}/{} ...'.format(files_path,file))
-                if not os_shell('python deps/ampy.py -p {} put {}/{}'.format(serial_port,files_path,file), interactive=INTERACTIVE, silent=SILENT):
+                if not os_shell('{} deps/ampy.py -p {} put {}/{}'.format(PYTHON, serial_port,files_path,file), interactive=INTERACTIVE, silent=SILENT):
                     print('Failed, retrying...')
                     time.sleep(2)
                 else:
@@ -514,7 +515,7 @@ if (copy and chip_type!='esp8266') or operation == 2:
  
     # Step 5: Reset
     time.sleep(2)
-    if not os_shell('python deps/ampy.py -p {} reset'.format(serial_port,files_path,file), interactive=INTERACTIVE, silent=SILENT):
+    if not os_shell('{} deps/ampy.py -p {} reset'.format(PYTHON, serial_port,files_path,file), interactive=INTERACTIVE, silent=SILENT):
         abort('Error (see output above)')
     time.sleep(2)
     print('Done.')
@@ -535,10 +536,21 @@ if console:
         with serial.Serial(serial_port_raw, 115200, timeout=1) as ser:
             while True:
                 # Read a '\n' terminated line
-                line = ser.readline()
-                # Check if it is valid
-                if valid(line):
-                    print(line[:-1])
+                line_raw = ser.readline()
+                if isinstance(line_raw, bytes):
+                    try:
+                        line = line_raw.decode('ascii')
+                    except:
+                        line=''
+                else:
+                    line = line_raw
+                # Clean line
+                line_clean = line.rstrip()
+
+                # Print line if not empty
+                if line_clean:
+                    print(line_clean)
+
     except serial.serialutil.SerialException:
         raise
         # print('Cannot open serial port')

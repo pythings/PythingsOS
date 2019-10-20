@@ -17,12 +17,12 @@ RUN apt-get install python3 -y
 # Download MicroPython and dependencies
 RUN cd / && git clone https://github.com/micropython/micropython.git
 # Use v1.8.6 (5a1d63f) or v1.9.4 (421b84a) or v1.10 (3e25d61) or v1.11 (6f75c4f)
-RUN cd /micropython && git pull && git checkout 5a1d63f && git submodule update
+RUN cd /micropython && git pull && git checkout 6f75c4f && git submodule update
 
 # Use the following for MicroPython <= v1.8.6
-ENV PORTS_DIR="" 
+#ENV PORTS_DIR="" 
 # Use the following for MicroPython > v1.8.6
-#ENV PORTS_DIR="ports"
+ENV PORTS_DIR="ports"
 
 # Build dependencies
 RUN cd /micropython/$PORTS_DIR/unix && make axtls

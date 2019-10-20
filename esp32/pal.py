@@ -2,14 +2,13 @@
 #----------------------------
 # System Abstraction Layer
 #----------------------------
-import os
-import sys
+import uio
 import time
 import machine
 import network
 import logger
 import env
-import stringstream
+import socket
 
 # The following can be overwritten or extended in the Hardware Abstraction Layer
 
@@ -72,11 +71,11 @@ def is_frozen():
 
 def init():
     if logger.level > logger.DEBUG:
-        logger.info('Disabling ESP os debug')
+        logger.info('Disabling ESP debug')
         import esp
         esp.osdebug(None)
     else:
-        logger.info('Leaving ESP os debug enabled')
+        logger.info('Leaving ESP debug enabled')
 
 def get_payload_encrypter():  
     if is_frozen():
@@ -93,7 +92,6 @@ def get_mem_free():
     return gc.mem_free()
 
 def get_traceback(e):
-    import uio
     import sys
     s = uio.StringIO()
     sys.print_exception(e, s)
@@ -117,12 +115,13 @@ def socket_ssl(s):
     return ssl.wrap_socket(s)
 
 def execute(cmd):
+    import uos
+    mystdout = uio.StringIO()
     err = ''
-    os.dupterm(stringstream)
-    stringstream.clear()
+    uos.dupterm(mystdout)
     try:
         exec(cmd)
     except Exception as e:
         err = get_traceback(e)
-    os.dupterm(None)
-    return (stringstream.data + err)
+    uos.dupterm(None)
+    return (mystdout.getvalue() + err)

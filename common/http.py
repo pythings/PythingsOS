@@ -1,4 +1,4 @@
-import socket
+from pal import socket
 import json
 import logger
 import hal
@@ -7,6 +7,7 @@ import env
 import gc
 
 def post(url, data, dest=None):
+    use_ssl = env.settings['ssl'] if 'ssl' in env.settings else True
     try: token = env.token
     except AttributeError: token=None
     if  env.payload_encrypter and token:
@@ -19,7 +20,7 @@ def post(url, data, dest=None):
         data =  {'encrypted': encrypted}
 
     if token: data['token'] = token
-    port = 443 if hal.HW_SUPPORTS_SSL else 80
+    port = 443 if (hal.HW_SUPPORTS_SSL and use_ssl) else 80
     host, path = url.split('/', 1)
     if ':' in host:
         port=int(host.split(':')[1])
@@ -35,24 +36,23 @@ def post(url, data, dest=None):
 
     # Connect and handle SSL
     s.connect(addr)
-    use_ssl = env.settings['ssl'] if 'ssl' in env.settings else True
     if hal.HW_SUPPORTS_SSL and use_ssl:
         s = pal.socket_ssl(s)
 
     if dest: f = open(dest, 'w')
     try:
-        s.write(bytes('%s /%s HTTP/1.0\r\nHost: %s\r\n' % ('POST', path, host), 'utf8'))
+        pal.socket_write(s, bytes('%s /%s HTTP/1.0\r\nHost: %s\r\n' % ('POST', path, host), 'utf8'))
 
         content = json.dumps(data)
         content_type = 'application/json'
 
         if content is not None:
-            s.write(bytes('content-length: %s\r\n' % len(content), 'utf8'))
-            s.write(bytes('content-type: %s\r\n' % content_type, 'utf8'))
-            s.write(bytes('\r\n', 'utf8'))
-            pal.socket_write(s, data=bytes(content, 'utf8'))
+            pal.socket_write(s, bytes('content-length: %s\r\n' % len(content), 'utf8'))
+            pal.socket_write(s, bytes('content-type: %s\r\n' % content_type, 'utf8'))
+            pal.socket_write(s, bytes('\r\n', 'utf8'))
+            pal.socket_write(s, bytes(content, 'utf8'))
         else:
-            s.write(bytes('\r\n', 'utf8'))
+            pal.socket_write(s, bytes('\r\n', 'utf8'))
 
         # Status, msg etc.
         version, status, msg = pal.socket_readline(s).split(None, 2)
@@ -68,7 +68,7 @@ def post(url, data, dest=None):
             data=''
 
             while len(data) < 39:
-                last = str(s.read(1), 'utf8')
+                last = str(pal.socket_read(s, 1), 'utf8')
                 if len(last) == 0:
                     stop=True
                     break

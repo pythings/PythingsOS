@@ -9,6 +9,7 @@ import sys
 import time
 import machine
 import env
+import usocket as socket
 
 # The following can be overwritten or extended in the Hardware Abstraction Layer
 
@@ -80,7 +81,6 @@ def get_mem_free():
     return gc.mem_free()
 
 def get_traceback(e):
-    import uio
     import sys
     s = uio.StringIO()
     sys.print_exception(e, s)
@@ -89,6 +89,10 @@ def get_traceback(e):
 def get_re():
     import ure
     return ure
+
+def socket_read(s, n):
+    try: return s.read(n)
+    except AttributeError: return s.recv(n)
 
 def socket_readline(s):
     return s.readline()

@@ -41,8 +41,10 @@ def int_to_bytes(n):
 def bytes_to_int(b):
     try:
         import ustruct
+        while len(b) < 4:
+            b += ustruct.pack('b', 0)
         return ustruct.unpack(">i", b)[0] # uPy
-    except:
+    except ImportError:
         try:
             return int.from_bytes(b, byteorder='big', signed=False) # Py 3
         except:

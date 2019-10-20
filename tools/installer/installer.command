@@ -5,5 +5,9 @@ here="`dirname \"$0\"`"
 cd $here
 clear
 
-python installer.py
+if [ -z "$PYTHON" ]; then
+    PYTHON='python'
+fi
+
+$PYTHON installer.py
 

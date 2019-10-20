@@ -50,8 +50,8 @@ def mv(source,dest):
 def get_wifi_data():
     try:
         with open(env.root+'/wifi','r') as f:
-            essid = f.readline()[0:-1]
-            password = f.readline()
+            essid = f.readline().strip()
+            password = f.readline().strip()
     except:
         essid=None
         password=None
