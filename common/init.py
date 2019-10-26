@@ -24,7 +24,7 @@ def start():
     print('|--------------------------|')
     print(' Version: {}'.format(env.pythings_version))
     print(' Platform: {}'.format(platform))
-    try: print(' Thing ID: {}\n'.format(hal.get_tuuid()))
+    try: print(' Thing ID: {}\n'.format(hal.get_tid()))
     except: pass
 
     # Init hardware and platform
@@ -32,7 +32,7 @@ def start():
     pal.init()
     
     # Start setup  mode if required
-    if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN and hal.get_reset_cause() in hal.HW_WEBSETUP_RESETCAUSES:
+    if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN and hal.get_reset_cause() in hal.WEBSETUP_RESETCAUSES:
         setup_timeout = load_param('setup_timeout', 60)
         if setup_timeout:
             if hal.HW_SUPPORTS_LED: hal.LED.on()
@@ -73,7 +73,7 @@ def start():
         while True:
             time.sleep(1)
     env.tid = load_param('tid', None)
-    if env.tid is None: env.tid = hal.get_tuuid()
+    if env.tid is None: env.tid = hal.get_tid()
 
     # Load pool: the local param wins 
     env.pool = load_param('pool', None)
@@ -101,7 +101,7 @@ def start():
         env.backend ='backend.pythings.io'
     
     # Pre-register if payload encryption activated
-    use_payload_encryption = env.settings['payload_encryption'] if 'payload_encryption' in env.settings else True
+    use_payload_encryption = env.settings['payload_encryption'] if 'payload_encryption' in env.settings else hal.USE_ENCRYPTION_DEFAULT
     if use_payload_encryption and hal.HW_SUPPORTS_ENCRYPTION and pal.get_payload_encrypter():
         logger.info('Enabling Payload Encryption and preregistering')
         env.payload_encrypter = pal.get_payload_encrypter()(comp_mode=True)

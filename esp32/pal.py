@@ -1,7 +1,3 @@
-
-#----------------------------
-# System Abstraction Layer
-#----------------------------
 import uio
 import time
 import machine
@@ -45,7 +41,7 @@ class Chronos(object):
         else:
             return time.ticks_ms()/1000
     
-def get_tuuid():
+def get_tid():
     wlan = network.WLAN(network.STA_IF)
     mac_b = wlan.config('mac')
     mac_s = ':'.join( [ "%02X" % x for x in mac_b ] )
@@ -78,13 +74,10 @@ def init():
         logger.info('Leaving ESP debug enabled')
 
 def get_payload_encrypter():  
-    if is_frozen():
-        try:
-            from crypto_aes import Aes128ecb
-            return Aes128ecb      
-        except:
-            return None
-    else:
+    try:
+        from crypto_aes import Aes128ecb
+        return Aes128ecb      
+    except:
         return None
 
 def get_mem_free():
@@ -102,7 +95,7 @@ def get_re():
     return ure
 
 def socket_read(s, n):
-    return s.recv(n)
+    return s.read(n)
 
 def socket_readline(s):
     return s.readline()

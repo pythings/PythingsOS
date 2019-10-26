@@ -1,8 +1,3 @@
-
-#----------------------------
-# System Abstraction Layer
-#----------------------------
-
 import io
 import sys
 import time
@@ -40,7 +35,7 @@ class Chronos(object):
 def is_frozen():
     return False
 
-def get_tuuid():
+def get_tid():
     return os.popen('ifconfig | grep -o -E \'([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}\' | head -n1').readline().replace('\n', '').replace(':','')
 
 def get_reset_cause():

@@ -1,7 +1,3 @@
-
-#----------------------------
-# System Abstraction Layer
-#----------------------------
 import os
 import uos
 import uio
@@ -43,7 +39,7 @@ class Chronos(object):
 def is_frozen():
     return False
 
-def get_tuuid():
+def get_tid():
     raise NotImplementedError('I have no way to obtain an UUID for myself. You have to tell me my TID.')
 
 def get_reset_cause():
