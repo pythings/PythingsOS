@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 if [ -z "$1" ]; then
     echo "Tell me which version!! (i.e. utilities/draft_release.sh v1.0.0)"
     exit 1

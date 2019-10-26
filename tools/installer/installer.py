@@ -571,7 +571,7 @@ if (copy and platform!='esp8266') or operation == 2:
  
     # Step 5: Reset
     time.sleep(2)
-    if not os_shell('{} deps/ampy.py -p {} reset'.format(PYTHON, serial_port,files_path,file), interactive=INTERACTIVE, silent=SILENT):
+    if not os_shell('{} deps/ampy.py -p {} run deps/reset.py'.format(PYTHON, serial_port,files_path,file), interactive=INTERACTIVE, silent=SILENT):
         abort('Error (see output above)')
     time.sleep(2)
     print('Done.')
