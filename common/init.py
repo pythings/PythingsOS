@@ -11,7 +11,7 @@ from platform import platform
 
 # Logger
 import logger
-logger.level = int(load_param('loglevel', logger.DEBUG))
+logger.level = int(load_param('loglevel', logger.INFO ))
 
 # Start
 def start():
