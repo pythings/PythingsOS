@@ -567,17 +567,21 @@ if (copy and platform!='esp8266') or operation == 2:
 
     print('Done.')
     print('')
-    print('Now resetting the device...')
- 
-    # Step 5: Reset
-    time.sleep(2)
-    if not os_shell('{} deps/ampy.py -p {} run deps/reset.py'.format(PYTHON, serial_port,files_path,file), interactive=INTERACTIVE, silent=SILENT):
-        abort('Error (see output above)')
-    time.sleep(2)
-    print('Done.')
-    print('')
-   
 
+    
+    # Step 5: Reset
+    if not OPERATION:
+        print('Now resetting the device...')
+        time.sleep(2)
+        while True:
+            if not os_shell('{} deps/ampy.py -p {} run deps/reset.py'.format(PYTHON, serial_port), interactive=INTERACTIVE, silent=SILENT):
+                print('Failed, retrying...')
+                time.sleep(2)
+            else:
+                break
+       
+        print('Done.')
+        print('')
     
 
 if console:
