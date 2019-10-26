@@ -457,7 +457,7 @@ if flash:
                 command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.bin'.format(PYTHON, serial_port, VERSION)
 
     elif chip_type == 'esp32':
-        command = '{} deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 tmp/esp32-20181105-v1.9.4-683-gd94aa577a.bin'.format(PYTHON, serial_port)  
+        command = '{} deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 tmp/esp32-20190529-v1.11.bin'.format(PYTHON, serial_port)  
     else:
         abort('Consistency Exception')
         
@@ -481,17 +481,26 @@ if (copy and chip_type!='esp8266') or operation == 2:
     
     # Step 3: Download and extract PythingsOS
     print('Downloading PythingsOS...')
-    url = '{}/static/PythingsOS/zips/PythingsOS_{}_{}.zip'.format(HOST,VERSION,VERSION,chip_type)
-    #print ('Downloading {}'.format(url))
-    download(url, 'tmp/')
-    print('Done.')
-    print('')    
-    
+
+    if os.path.isfile('../../artifacts/zips/PythingsOS_{}_{}.zip'.format(VERSION,chip_type)):
+        print('WARNING: found and using local zip file in "artifacts/zips/PythingsOS_{}_{}.zip"'.format(VERSION,chip_type))
+        use_local_zip=True
+    else:
+        url = '{}/static/PythingsOS/zips/PythingsOS_{}_{}.zip'.format(HOST,VERSION,chip_type)
+        #print ('Downloading {}'.format(url))
+        download(url, 'tmp/')
+        print('Done.')
+        use_local_zip=False
+    print('')
+
     # (now extract)
-    zip_ref = zipfile.ZipFile('tmp/PythingsOS_{}_{}.zip'.format(VERSION,chip_type), 'r')
+    if not use_local_zip:
+        zip_ref = zipfile.ZipFile('tmp/PythingsOS_{}_{}.zip'.format(VERSION,chip_type), 'r')
+    else:
+        zip_ref = zipfile.ZipFile('../../artifacts/zips/PythingsOS_{}_{}.zip'.format(VERSION,chip_type), 'r')
     zip_ref.extractall('tmp/extracted')
     zip_ref.close()
-    
+
     # Step 4: Copy over all files
     files_path = 'tmp/extracted/{}'.format(chip_type)
     files = [f for f in listdir(files_path) if isfile(join(files_path, f))]
