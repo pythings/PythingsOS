@@ -20,6 +20,8 @@ SILENT           = True
 PYTHON           = os.environ.get('PYTHON', 'python')
 HOST             = 'https://pythings.io'
 
+
+
 # Booleanize utility
 def booleanize(var):
     if isinstance(var, bool):
@@ -48,7 +50,18 @@ DEBUG            = os.environ.get('DEBUG', booleanize(DEBUG))
 SILENT           = os.environ.get('SILENT', booleanize(SILENT))
 HOST             = os.environ.get('HOST', HOST)
 
+# Python command
+PYTHON = os.environ.get('PYTHON', 'python')
 
+# Extra external settings
+PORT      = os.environ.get('PORT', None)
+PLATFORM  = os.environ.get('PLATFORM', None)
+OPERATION = os.environ.get('OPERATION', None)
+FROZEN    = os.environ.get('FROZEN', None)
+if FROZEN is not None:
+    FROZEN = booleanize(FROZEN)
+
+# Support vars
 only_console = False
 serial_port = None
 
@@ -62,7 +75,13 @@ for arg in sys.argv:
     else:
         if serial_port:
             raise ValueError('Two serial port arguments given or unrecognized option "{}"'.format(arg))
+        if serial_port and PORT:
+            raise ValueError('Cannot set port both via env var and command line arguments')            
         serial_port = arg  
+
+# Set serial port if given via env var
+if PORT:
+    serial_port = PORT
 
 #========================
 #  Utility functions
@@ -248,51 +267,59 @@ def download(url, dest=''):
 #========================
 
 if not only_console:
-    print('')
-    print('-----------------------------------------------')
-    print('  Welcome to PythingsOS {} installer    '.format(VERSION))
-    print('-----------------------------------------------')
     
-    print('')
-    print('Notes:')
-    print(' * You will need an active Internet connection to download the required files.')
-    print(' * You will need a working serial connection to your board.')
-    print('    - Most common USB-to-serial drivers here: {}/downloads.'.format(HOST))
-    print('    - Some chips require quality USB cables, switch cable in case of problems.')
-    print(' * On Linux, run this program as root (i.e. "sudo installer.sh")')
-    print('')
-    
+    if not OPERATION:
+        print('')
+        print('-----------------------------------------------')
+        print('  Welcome to PythingsOS {} installer    '.format(VERSION))
+        print('-----------------------------------------------')
+        
+        print('')
+        print('Notes:')
+        print(' * You will need an active Internet connection to download the required files.')
+        print(' * You will need a working serial connection to your board.')
+        print('    - Most common USB-to-serial drivers here: {}/downloads.'.format(HOST))
+        print('    - Some platforms require quality USB cables, switch cable in case of problems.')
+        print(' * On Linux, run this program as root (i.e. "sudo installer.sh")')
+        print('')
+        
     # Create tmp dir if not already present
     if not os.path.isdir('tmp'):
         os.mkdir('tmp')
     
-    print('What type of chip do you want to operate on?')
-    print('')
-    print(' 1) Esp8266')
-    print(' 2) Esp32')
-    #print(' 3) Raspberry PI')
-    print('')
+    if not PLATFORM:
     
-    sys.stdout.write('Your choice (number): ')
-
-    try:
-        chip_type_id  = input()
-    except:
-        abort('Error, please type a valid numerical choice')
+        print('On what platform do you want to install?')
+        print('')
+        print(' 1) Esp8266')
+        print(' 2) Esp32')
+        #print(' 3) Raspberry PI')
+        print('')
+        
+        sys.stdout.write('Your choice (number): ')
     
-    chips={}
-    chips[1] = 'esp8266'
-    chips[2] = 'esp32'
-    #chips[3] = 'raspberrypi'
-    
-    try:
-        chip_type_id = int(chip_type_id)
-        chip_type    = chips[chip_type_id]
-    except:
-        abort('Error, please type a valid numerical choice')
+        try:
+            platform_id  = input()
+        except:
+            abort('Error, please type a valid numerical choice')
+        
+        platforms={}
+        platforms[1] = 'esp8266'
+        platforms[2] = 'esp32'
+        #platforms[3] = 'raspberrypi'
+        
+        try:
+            platform_id = int(platform_id)
+            platform    = platforms[platform_id]
+        except:
+            abort('Error, please type a valid numerical choice')
+    else:
+        if not PLATFORM in ['esp8266', 'esp32']:
+            abort('Error, got unsupported platform "{}"'.format(PLATFORM))            
+        platform = PLATFORM
 else:
-    chip_type_id = None
-    chip_type    = None
+    platform_id = None
+    platform   = None
 
 if (not only_console) and CHOOSE_OPERATION:
     print('')
@@ -318,55 +345,75 @@ else:
         operation=1
 
 
-# Set steps
-if operation == 1:
-    flash   = True
-    copy    = True
-    console = True
-    
-elif operation == 2:
-    flash   = False
-    copy    = True
-    console = True
+#==========================
+#  Set operations
+#==========================
+if OPERATION:
+    if OPERATION == 'flash':
+        flash   = True
+        copy    = False
+        console = False
+    elif  OPERATION == 'copy':
+        flash   = False
+        copy    = True
+        console = False
+    elif OPERATION == 'console':
+        flash   = False
+        copy    = False
+        console = True
+    else:
+        abort('Error, got invalid OPERATION: "{}"'.format(OPERATION))
 
-elif operation == 3:
-    flash   = False
-    copy    = False
-    console = True
 else:
-    abort('Consistency exception')
+    # Set steps
+    if operation == 1:
+        flash   = True
+        copy    = True
+        console = True
+        
+    elif operation == 2:
+        flash   = False
+        copy    = True
+        console = True
+    
+    elif operation == 3:
+        flash   = False
+        copy    = False
+        console = True
+    else:
+        abort('Consistency exception')
 
 
 # Ask also if frozen or non frozen for esp8266
 forzen = False
-if flash and chip_type=='esp8266':
-    print('')
-    print('Do you want a standard or a frozen PythingsOS version?')
-    print('With a frozen version you will not be able to update')
-    print('the OS as it will be burn into the firmware, but you')
-    print('will have more free memory for your App.')
-    print('')
-    print(' 1) Standard')
-    print(' 2) Frozen')
-    print('')
-    #print(' 3) Raspberry PI')
+if flash and platform=='esp8266':
+    if FROZEN is None:
+        print('')
+        print('Do you want a standard or a frozen PythingsOS version?')
+        print('With a frozen version you will not be able to update')
+        print('the OS as it will be burn into the firmware, but you')
+        print('will have more free memory for your App.')
+        print('')
+        print(' 1) Standard')
+        print(' 2) Frozen')
+        print('')
+        #print(' 3) Raspberry PI')
+        
+        sys.stdout.write('Your choice (number): ')
+        
+        try:
+            forzen_choice  = int(input())
+        except:
+            abort('Error, please type a valid numerical choice')
     
-    sys.stdout.write('Your choice (number): ')
-    
-    try:
-        forzen_choice  = int(input())
-    except:
-        abort('Error, please type a valid numerical choice')
-
-    if forzen_choice == 1:
-        frozen = False
-    elif forzen_choice == 2:
-        frozen = True
+        if forzen_choice == 1:
+            frozen = False
+        elif forzen_choice == 2:
+            frozen = True
+        else:
+            abort('Error, please type a valid choice')
     else:
-        abort('Error, please type a valid choice')
-
-
-
+        frozen = FROZEN
 
 
 # Ask for serial port if not already set
@@ -407,7 +454,7 @@ if flash:
     # Step 0: download firmware
     use_local = False
     print('Downloading firmware...')
-    if chip_type== 'esp8266':
+    if platform== 'esp8266':
         if frozen:
             if os.path.isfile('../../artifacts/firmware/PythingsOS_{}_esp8266.frozen.bin'.format(VERSION)):
                 print('WARNING: found and using local firmware file  in "artifacts/firmware/PythingsOS_{}_esp8266.frozen.bin"'.format(VERSION))
@@ -421,7 +468,7 @@ if flash:
             else:
                 download('{}/static/PythingsOS/firmware/PythingsOS_{}_esp8266.bin'.format(HOST,VERSION), 'tmp/')
             
-    elif chip_type == 'esp32':
+    elif platform == 'esp32':
         download('{}/static/MicroPython/esp32-20190529-v1.11.bin'.format(HOST), 'tmp/')
     else:
         abort('Consistency Exception')
@@ -429,9 +476,9 @@ if flash:
     print('')
     
     # Step 1: Erease flash
-    if chip_type== 'esp8266':
+    if platform== 'esp8266':
         command = '{} deps/esptool.py --port {} erase_flash'.format(PYTHON, serial_port)
-    elif chip_type == 'esp32':
+    elif platform == 'esp32':
         command =  '{} deps/esptool.py --port {} erase_flash'.format(PYTHON, serial_port)  
     else:
         abort('Consistency Exception')
@@ -444,7 +491,7 @@ if flash:
     print('')
      
     # Step 2: Flash MicroPython firmware
-    if chip_type== 'esp8266':
+    if platform== 'esp8266':
         if frozen:
             if use_local:
                 command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 ../../artifacts/firmware/PythingsOS_{}_esp8266.frozen.bin'.format(PYTHON, serial_port, VERSION)
@@ -456,7 +503,7 @@ if flash:
             else:
                 command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.bin'.format(PYTHON, serial_port, VERSION)
 
-    elif chip_type == 'esp32':
+    elif platform == 'esp32':
         command = '{} deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 tmp/esp32-20190529-v1.11.bin'.format(PYTHON, serial_port)  
     else:
         abort('Consistency Exception')
@@ -469,7 +516,7 @@ if flash:
     print('')
          
     # Step 3: Check ampy and successful MicroPython install
-    if chip_type != 'esp8266':
+    if platform != 'esp8266':
         print('Checking...')
         if not os_shell('{} deps/ampy.py -p {} ls'.format(PYTHON, serial_port), interactive=INTERACTIVE, silent=SILENT):
             abort('Error (see output above)')
@@ -477,16 +524,16 @@ if flash:
         print('Done.')
         print('')
 
-if (copy and chip_type!='esp8266') or operation == 2:
+if (copy and platform!='esp8266') or operation == 2:
     
     # Step 3: Download and extract PythingsOS
     print('Downloading PythingsOS...')
 
-    if os.path.isfile('../../artifacts/zips/PythingsOS_{}_{}.zip'.format(VERSION,chip_type)):
-        print('WARNING: found and using local zip file in "artifacts/zips/PythingsOS_{}_{}.zip"'.format(VERSION,chip_type))
+    if os.path.isfile('../../artifacts/zips/PythingsOS_{}_{}.zip'.format(VERSION,platform)):
+        print('WARNING: found and using local zip file in "artifacts/zips/PythingsOS_{}_{}.zip"'.format(VERSION,platform))
         use_local_zip=True
     else:
-        url = '{}/static/PythingsOS/zips/PythingsOS_{}_{}.zip'.format(HOST,VERSION,chip_type)
+        url = '{}/static/PythingsOS/zips/PythingsOS_{}_{}.zip'.format(HOST,VERSION,platform)
         #print ('Downloading {}'.format(url))
         download(url, 'tmp/')
         print('Done.')
@@ -495,14 +542,14 @@ if (copy and chip_type!='esp8266') or operation == 2:
 
     # (now extract)
     if not use_local_zip:
-        zip_ref = zipfile.ZipFile('tmp/PythingsOS_{}_{}.zip'.format(VERSION,chip_type), 'r')
+        zip_ref = zipfile.ZipFile('tmp/PythingsOS_{}_{}.zip'.format(VERSION,platform), 'r')
     else:
-        zip_ref = zipfile.ZipFile('../../artifacts/zips/PythingsOS_{}_{}.zip'.format(VERSION,chip_type), 'r')
+        zip_ref = zipfile.ZipFile('../../artifacts/zips/PythingsOS_{}_{}.zip'.format(VERSION,platform), 'r')
     zip_ref.extractall('tmp/extracted')
     zip_ref.close()
 
     # Step 4: Copy over all files
-    files_path = 'tmp/extracted/{}'.format(chip_type)
+    files_path = 'tmp/extracted/{}'.format(platform)
     files = [f for f in listdir(files_path) if isfile(join(files_path, f))]
 
     print('Installing PythingsOS... (about two minutes)')
@@ -564,7 +611,8 @@ if console:
         raise
         # print('Cannot open serial port')
 
-print('')
-print('Press any key to exit')
-input()
+if not OPERATION:
+    print('')
+    print('Press any key to exit')
+    input()
 
