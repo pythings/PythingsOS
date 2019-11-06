@@ -14,9 +14,9 @@ mkdir -p PythingsOS/artifacts
 cp -a ../../artifacts/selfarchives PythingsOS/artifacts
 
 echo "Building the Dokerfile and the firmware..."
-docker build  -t pythingsos/buildchain .
+docker build  -t pythings/buildchain .
 
 echo "Now exporting firmware to artifacts builds folder..."
 CWD=$(pwd)
-docker run -v $PWD/../../artifacts/firmware:/builds -i -t pythingsos/buildchain
+docker run -v $PWD/../../artifacts/firmware:/builds -i -t pythings/buildchain
 rm -rf $PWD/../../artifacts/firmware/bytecode
