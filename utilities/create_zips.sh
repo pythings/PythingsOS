@@ -61,3 +61,5 @@ else
 
 fi
 
+# Remove temp dir
+rm -rf $TMP_DIR

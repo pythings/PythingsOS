@@ -15,6 +15,15 @@ VERSION=$1
 
 echo ""
 
+# 0) Clean previous artifacts
+rm -rf artifacts
+
+# 0.1) Download a clean esp32 firmware
+mkdir -p artifacts/firmware
+OR_DIR=$PWD
+cd artifacts/firmware && wget http://pythings.io/static/MicroPython/esp32-20190529-v1.11.bin
+cd $OR_DIR
+
 # 1) Update versions
 echo "Updating versions..."
 echo "version='$VERSION'" > common/version.py
@@ -26,8 +35,8 @@ sed -i'' -e "s/$OLD_VER_LINE/$NEW_VER_LINE/g" tools/buildchain/Dockerfile
 rm -f tools/buildchain/Dockerfile-e
 
 # In the installer..
-OLD_VER_LINE=$(cat tools/installer/installer.py | grep "VERSION" | head -n1)
-NEW_VER_LINE="VERSION          = '$VERSION'"
+OLD_VER_LINE=$(cat tools/installer/installer.py | grep "DEFAULT_VERSION" | head -n1)
+NEW_VER_LINE="DEFAULT_VERSION          = '$VERSION'"
 sed -i'' -e "s/$OLD_VER_LINE/$NEW_VER_LINE/g" tools/installer/installer.py
 rm -f tools/installer/installer.py-e
 echo "OK"
@@ -53,16 +62,7 @@ echo "OK"
 echo ""
 
 
-# 3) Create the installer 
-echo "Creating the installer..."
-
-utilities/create_installer.sh artifacts > /dev/null
-
-echo "OK"
-echo ""
-
-
-# 4) Create the zips 
+# 3) Create the zips 
 echo "Creating zips..."
 
 utilities/create_zips.sh > /dev/null
@@ -71,7 +71,7 @@ echo "OK"
 echo ""
 
 
-# 5) Create the self-extracting archives for the firmwares
+# 4) Create the self-extracting archives for the firmwares
 echo "Creating the self-extracting archives..."
 python utilities/create_selfarchives.py
 
@@ -79,13 +79,22 @@ echo "OK"
 echo ""
 
 
-# 6) Build the firmwares (standard using the selfarchvies and frozen using the coeebase)
+# 5) Build the firmwares (standard using the selfarchvies and frozen using the coeebase)
 echo "Building the firmwares..."
 
 cd tools/buildchain
 ./build.sh #> /dev/null
 cd ..
 cd ..
+echo "OK"
+echo ""
+
+
+# 6) Create the installer 
+echo "Creating the installer..."
+
+utilities/create_installer.sh artifacts > /dev/null
+
 echo "OK"
 echo ""
 

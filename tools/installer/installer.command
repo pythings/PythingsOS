@@ -1,8 +1,8 @@
 #!/bin/bash
 
-here="`dirname \"$0\"`"
-#echo "Moving to $here"
-cd $here
+INSTALLER_DIR="`dirname \"$0\"`"
+#echo "Moving to $INSTALLER_DIR"
+cd $INSTALLER_DIR
 clear
 
 if [ -z "$PYTHON" ]; then
@@ -10,4 +10,7 @@ if [ -z "$PYTHON" ]; then
 fi
 
 $PYTHON installer.py
+
+echo ""
+read -n 1 -s -r -p "Press any key to exit"
 
