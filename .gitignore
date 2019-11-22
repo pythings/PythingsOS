@@ -69,3 +69,6 @@ builds
 
 # Installer temp dir
 tools/installer/tmp/
+
+#Misc
+utilities/finalize_release.sh
