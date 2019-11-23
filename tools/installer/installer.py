@@ -264,6 +264,14 @@ def abort(msg):
     print('')
     print(msg)
     print('')
+    if (not OPERATION) or INTERACTIVE: 
+        print('')
+        print('Press any key to exit')
+        try:
+            raw_input()
+        except:
+            input()
+        print('')
     sys.exit(1)
 
 
@@ -292,266 +300,333 @@ def download(url, dest=''):
 #  Main
 #========================
 
-if not only_console:
-    
-    if not OPERATION:
-        print('')
-        print('-----------------------------------------------')
-        print('  Welcome to PythingsOS {} installer    '.format(VERSION))
-        print('-----------------------------------------------')
+try:
+    if not only_console:
         
-        print('')
-        print('Notes:')
-        #print(' * An active Internet connection is required.')
-        print(' * An active serial connection to your board is required.')
-        print('    - Most common USB-to-serial drivers here: {}/downloads.'.format(HOST))
-        print('    - Some boards require quality USB cables, switch cable in case of problems.')
-        print(' * On Linux, run this program as root (i.e. "sudo installer.sh")')
-        print('')
-        
-    # Create tmp dir if not already present
-    if not os.path.isdir('tmp'):
-        os.mkdir('tmp')
-    
-    if not PLATFORM:
-    
-        print('On what platform do you want to install?')
-        print('')
-        print(' 1) Esp8266')
-        print(' 2) Esp32')
-        #print(' 3) Raspberry PI')
-        print('')
-        
-        sys.stdout.write('Your choice (number): ')
-    
-        try:
-            platform_id  = input()
-        except:
-            abort('Error, please type a valid numerical choice')
-        
-        platforms={}
-        platforms[1] = 'esp8266'
-        platforms[2] = 'esp32'
-        #platforms[3] = 'raspberrypi'
-        
-        try:
-            platform_id = int(platform_id)
-            platform    = platforms[platform_id]
-        except:
-            abort('Error, please type a valid numerical choice')
-    else:
-        if not PLATFORM in ['esp8266', 'esp32']:
-            abort('Error, got unsupported platform "{}"'.format(PLATFORM))            
-        platform = PLATFORM
-else:
-    platform_id = None
-    platform   = None
-
-if (not only_console) and CHOOSE_OPERATION:
-    print('')
-    print('What operation do you want to perform?')
-    print('')
-    print(' 1) Flash and install PythingsOS')
-    print(' 2) Only install PythingsOS')
-    print(' 3) Open a serial console')
-    print('')
-    sys.stdout.write('Your choice (number): ')
-
-    try:
-        operation  = int(input())
-        if not operation in [1,2,3]:
-            raise
-    except:
-        abort('Error, please type a valid numerical choice')
-
-else:
-    if only_console:
-        operation=3
-    else:
-        operation=1
-
-
-#==========================
-#  Set operations
-#==========================
-if OPERATION:
-    if OPERATION == 'flash':
-        flash   = True
-        copy    = False
-        console = False
-    elif  OPERATION == 'copy':
-        flash   = False
-        copy    = True
-        console = False
-    elif OPERATION == 'console':
-        flash   = False
-        copy    = False
-        console = True
-    else:
-        abort('Error, got invalid OPERATION: "{}"'.format(OPERATION))
-
-else:
-    # Set steps
-    if operation == 1:
-        flash   = True
-        copy    = True
-        console = True
-        
-    elif operation == 2:
-        flash   = False
-        copy    = True
-        console = True
-    
-    elif operation == 3:
-        flash   = False
-        copy    = False
-        console = True
-    else:
-        abort('Consistency exception')
-
-
-# Ask also if frozen or non frozen for esp8266
-forzen = False
-if flash and platform=='esp8266':
-    if FROZEN is None:
-        print('')
-        print('')
-        print('Do you want a standard or a frozen PythingsOS version?')
-        print('')
-        print('With a frozen version you will not be able to update PythingsOS')
-        print('remotely as it will be frozen into the firmware, but you will')
-        print('have more memory for your Apps and SSL support.')
-        print('')
-        print(' 1) Standard')
-        print(' 2) Frozen')
-        print('')
-        #print(' 3) Raspberry PI')
-        
-        sys.stdout.write('Your choice (number): ')
-        
-        try:
-            forzen_choice  = int(input())
-        except:
-            abort('Error, please type a valid numerical choice')
-    
-        if forzen_choice == 1:
-            frozen = False
-        elif forzen_choice == 2:
-            frozen = True
-        else:
-            abort('Error, please type a valid choice')
-    else:
-        frozen = FROZEN
-
-
-# Ask for serial port if not already set
-if not serial_port:
-    print('')
-    print('')
-    print('Scanning serial ports...')
-    serial_ports = serial_ports()
-    print('Done.')
-    print('')
-    print('On which serial port is the board connected?')
-    print('')
-    port_ids = [] 
-    for i, port in enumerate(serial_ports):
-        port_ids.append(i+1)
-        print(' {}) {}'.format(i+1,port))
-    if not port_ids:
-        abort('No serial ports found. Have you installed the drivers and do you have rights to access serial ports?')
-    print('')
-    sys.stdout.write('Your choice (number): ')
-    try:
-        port_id  = int(input())
-        if not operation in port_ids:
-            raise
-    except:
-        abort('Error, please type a valid numerical choice')
-    
-    serial_port_raw = serial_ports[port_id-1]
-    serial_port = sanitize_file_chars(serial_ports[port_id-1])
-else:
-    serial_port_raw = serial_port
-
-print('Using "{}"'.format(serial_port))
-print('')
-
-
-if flash:
-    
-    # Step 0: download firmware
-    use_local = False
-
-    
-    if platform== 'esp8266':
-        if frozen:
-            if os.path.isfile('{}/firmware/PythingsOS_{}_esp8266.frozen.bin'.format(ARTIFACTS_PATH, VERSION)):
-                if ARTIFACTS_PATH != DEFAULT_ARTIFACTS_PATH:
-                    print('WARNING: found and using local firmware file  in "artifacts/firmware/PythingsOS_{}_esp8266.frozen.bin"'.format(ARTIFACTS_PATH, VERSION))
-                use_local=True
-            else:
-                print('')
-                print('Downloading firmware...')
-                download('{}/static/PythingsOS/firmware/PythingsOS_{}_esp8266.frozen.bin'.format(HOST,VERSION), 'tmp/')
-                print('Done.')
-                print('')
-        else:
-            if os.path.isfile('{}/firmware/PythingsOS_{}_esp8266.bin'.format(ARTIFACTS_PATH, VERSION)):
-                if ARTIFACTS_PATH != DEFAULT_ARTIFACTS_PATH:
-                    print('WARNING: found and using local firmware file  in "artifacts/firmware/PythingsOS_{}_esp8266.bin"'.format(ARTIFACTS_PATH, VERSION))
-                use_local=True
-            else:
-                print('')
-                print('Downloading firmware...')
-                download('{}/static/PythingsOS/firmware/PythingsOS_{}_esp8266.bin'.format(HOST,VERSION), 'tmp/')
-                print('Done.')
-                print('')
+        if not OPERATION:
+            print('')
+            print('-----------------------------------------------')
+            print('  Welcome to PythingsOS {} installer    '.format(VERSION))
+            print('-----------------------------------------------')
             
-    elif platform == 'esp32':
-        if os.path.isfile('{}/firmware/esp32-20190529-v1.11.bin'.format(ARTIFACTS_PATH)):
-            if ARTIFACTS_PATH != DEFAULT_ARTIFACTS_PATH:
-                print('WARNING: found and using local firmware file  in "{}/firmware/esp32-20190529-v1.11.bin"'.format(ARTIFACTS_PATH))
-            use_local=True
+            print('')
+            print('Notes:')
+            #print(' * An active Internet connection is required.')
+            print(' * An active serial connection to your board is required.')
+            print('    - Most common USB-to-serial drivers here: {}/downloads.'.format(HOST))
+            print('    - Some boards require quality USB cables, switch cable in case of problems.')
+            print(' * On Linux, run this program as root (i.e. "sudo installer.sh")')
+            print('')
+            
+        # Create tmp dir if not already present
+        if not os.path.isdir('tmp'):
+            os.mkdir('tmp')
+        
+        if not PLATFORM:
+        
+            print('On what platform do you want to install?')
+            print('')
+            print(' 1) Esp8266')
+            print(' 2) Esp32')
+            #print(' 3) Raspberry PI')
+            print('')
+            
+            sys.stdout.write('Your choice (number): ')
+        
+            try:
+                platform_id  = input()
+            except:
+                abort('Error, please type a valid numerical choice')
+            
+            platforms={}
+            platforms[1] = 'esp8266'
+            platforms[2] = 'esp32'
+            #platforms[3] = 'raspberrypi'
+            
+            try:
+                platform_id = int(platform_id)
+                platform    = platforms[platform_id]
+            except:
+                abort('Error, please type a valid numerical choice')
         else:
-            print('Downloading firmware...')
-            download('{}/static/MicroPython/esp32-20190529-v1.11.bin'.format(HOST), 'tmp/')
+            if not PLATFORM in ['esp8266', 'esp32']:
+                abort('Error, got unsupported platform "{}"'.format(PLATFORM))            
+            platform = PLATFORM
+    else:
+        platform_id = None
+        platform   = None
+    
+    if (not only_console) and CHOOSE_OPERATION:
+        print('')
+        print('What operation do you want to perform?')
+        print('')
+        print(' 1) Flash and install PythingsOS')
+        print(' 2) Only install PythingsOS')
+        print(' 3) Open a serial console')
+        print('')
+        sys.stdout.write('Your choice (number): ')
+    
+        try:
+            operation  = int(input())
+            if not operation in [1,2,3]:
+                raise
+        except:
+            abort('Error, please type a valid numerical choice')
+    
+    else:
+        if only_console:
+            operation=3
+        else:
+            operation=1
+    
+    
+    #==========================
+    #  Set operations
+    #==========================
+    if OPERATION:
+        if OPERATION == 'flash':
+            flash   = True
+            copy    = False
+            console = False
+        elif  OPERATION == 'copy':
+            flash   = False
+            copy    = True
+            console = False
+        elif OPERATION == 'console':
+            flash   = False
+            copy    = False
+            console = True
+        else:
+            abort('Error, got invalid OPERATION: "{}"'.format(OPERATION))
+    
+    else:
+        # Set steps
+        if operation == 1:
+            flash   = True
+            copy    = True
+            console = True
+            
+        elif operation == 2:
+            flash   = False
+            copy    = True
+            console = True
+        
+        elif operation == 3:
+            flash   = False
+            copy    = False
+            console = True
+        else:
+            abort('Consistency exception')
+    
+    
+    # Ask also if frozen or non frozen for esp8266
+    forzen = False
+    if flash and platform=='esp8266':
+        if FROZEN is None:
+            print('')
+            print('')
+            print('Do you want a standard or a frozen PythingsOS version?')
+            print('')
+            print('With a frozen version you will not be able to update PythingsOS')
+            print('remotely as it will be frozen into the firmware, but you will')
+            print('have more memory for your Apps and SSL support.')
+            print('')
+            print(' 1) Standard')
+            print(' 2) Frozen')
+            print('')
+            #print(' 3) Raspberry PI')
+            
+            sys.stdout.write('Your choice (number): ')
+            
+            try:
+                forzen_choice  = int(input())
+            except:
+                abort('Error, please type a valid numerical choice')
+        
+            if forzen_choice == 1:
+                frozen = False
+            elif forzen_choice == 2:
+                frozen = True
+            else:
+                abort('Error, please type a valid choice')
+        else:
+            frozen = FROZEN
+    
+    
+    # Ask for serial port if not already set
+    if not serial_port:
+        print('')
+        print('Scanning serial ports...')
+        serial_ports = serial_ports()
+        print('Done.')
+        print('')
+        print('On which serial port is the board connected?')
+        print('')
+        port_ids = [] 
+        for i, port in enumerate(serial_ports):
+            port_ids.append(i+1)
+            print(' {}) {}'.format(i+1,port))
+        if not port_ids:
+            abort('No serial ports found. Have you installed the drivers and do you have rights to access serial ports?')
+        print('')
+        sys.stdout.write('Your choice (number): ')
+        try:
+            port_id  = int(input())
+            if not operation in port_ids:
+                raise
+        except:
+            abort('Error, please type a valid numerical choice')
+        
+        serial_port_raw = serial_ports[port_id-1]
+        serial_port = sanitize_file_chars(serial_ports[port_id-1])
+    else:
+        serial_port_raw = serial_port
+    
+    print('Using "{}"'.format(serial_port))
+    print('')
+    
+    
+    if flash:
+        
+        # Step 0: download firmware
+        use_local = False
+    
+        
+        if platform== 'esp8266':
+            if frozen:
+                if os.path.isfile('{}/firmware/PythingsOS_{}_esp8266.frozen.bin'.format(ARTIFACTS_PATH, VERSION)):
+                    if ARTIFACTS_PATH != DEFAULT_ARTIFACTS_PATH:
+                        print('WARNING: found and using local firmware file  in "artifacts/firmware/PythingsOS_{}_esp8266.frozen.bin"'.format(ARTIFACTS_PATH, VERSION))
+                    use_local=True
+                else:
+                    print('')
+                    print('Downloading firmware...')
+                    download('{}/static/PythingsOS/firmware/PythingsOS_{}_esp8266.frozen.bin'.format(HOST,VERSION), 'tmp/')
+                    print('Done.')
+                    print('')
+            else:
+                if os.path.isfile('{}/firmware/PythingsOS_{}_esp8266.bin'.format(ARTIFACTS_PATH, VERSION)):
+                    if ARTIFACTS_PATH != DEFAULT_ARTIFACTS_PATH:
+                        print('WARNING: found and using local firmware file  in "artifacts/firmware/PythingsOS_{}_esp8266.bin"'.format(ARTIFACTS_PATH, VERSION))
+                    use_local=True
+                else:
+                    print('')
+                    print('Downloading firmware...')
+                    download('{}/static/PythingsOS/firmware/PythingsOS_{}_esp8266.bin'.format(HOST,VERSION), 'tmp/')
+                    print('Done.')
+                    print('')
+                
+        elif platform == 'esp32':
+            if os.path.isfile('{}/firmware/esp32-20190529-v1.11.bin'.format(ARTIFACTS_PATH)):
+                if ARTIFACTS_PATH != DEFAULT_ARTIFACTS_PATH:
+                    print('WARNING: found and using local firmware file  in "{}/firmware/esp32-20190529-v1.11.bin"'.format(ARTIFACTS_PATH))
+                use_local=True
+            else:
+                print('Downloading firmware...')
+                download('{}/static/MicroPython/esp32-20190529-v1.11.bin'.format(HOST), 'tmp/')
+                print('Done.')
+                print('')
+        else:
+            abort('Consistency Exception')
+    
+    
+        if not OPERATION:
+            print('')
+            print('Please put your board in programming mode. Most of the boards')
+            print('switch automatically, but some don\'t and you will have to do it')        
+            print('manually. After switching manually, detach and re-attach the board.')
+            print('')
+            print('Press any key to continue')
+            try:
+                raw_input()
+            except:
+                input()
+        
+        # Step 1: Erease flash
+        if platform== 'esp8266':
+            command = '{} deps/esptool.py --port {} erase_flash'.format(PYTHON, serial_port)
+        elif platform == 'esp32':
+            command =  '{} deps/esptool.py --port {} erase_flash'.format(PYTHON, serial_port)  
+        else:
+            abort('Consistency Exception')
+    
+        print('Erasing flash... (about 10 secs)')
+        if not(os_shell(command, interactive=INTERACTIVE, silent=SILENT)):
+            abort('Error (see output above)')
+        time.sleep(3)
+        print('Done.')
+        print('')
+    
+        if not OPERATION:
+            print('')
+            print('Please put again your board in programming mode. If you')
+            print('are switching manually, detach and re-attach the board.')
+            print('')
+            print('Press any key to continue')
+            try:
+                raw_input()
+            except:
+                input()
+    
+        # Step 2: Flash MicroPython firmware
+        if platform== 'esp8266':
+            if frozen:
+                if use_local:
+                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 {}/firmware/PythingsOS_{}_esp8266.frozen.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH, VERSION)
+                else:
+                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.frozen.bin'.format(PYTHON, serial_port, VERSION)
+            else:
+                if use_local:
+                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 {}/firmware/PythingsOS_{}_esp8266.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH, VERSION)
+                else:
+                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.bin'.format(PYTHON, serial_port, VERSION)
+    
+        elif platform == 'esp32':
+                if use_local:
+                    command = '{} deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 {}/firmware/esp32-20190529-v1.11.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH)
+                else:
+                    command = '{} deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 tmp/esp32-20190529-v1.11.bin'.format(PYTHON, serial_port)
+        else:
+            abort('Consistency Exception')
+            
+        print('Flashing firmware... (about a minute)')
+        if not(os_shell(command, interactive=INTERACTIVE, silent=SILENT)):
+            abort('Error (see output above)')
+        time.sleep(5)
+        print('Done.')
+        print('')
+    
+        if INTERACTIVE:
+            print('')
+            print('Press any key to continue')
+            try:
+                raw_input()
+            except:
+                input()
+    
+        # Step 3: Check ampy and successful MicroPython install
+        if platform != 'esp8266':
+            print('Checking...')
+            attempt_count=0
+            while True:
+                attempt_count+=1
+                output = os_shell('{} deps/ampy.py -p {} ls'.format(PYTHON, serial_port), interactive=INTERACTIVE, silent=SILENT, capture=True)
+                if output.exit_code != 0:
+                    if attempt_count > 3:
+                        print(format_shell_error(output.stdout, output.stderr, output.exit_code))
+                        abort('Error, could not communicate with the board (see output above)')
+                    else:
+                        time.sleep(2)
+                else:
+                    time.sleep(2)
+                    break
+    
             print('Done.')
             print('')
-    else:
-        abort('Consistency Exception')
-
-
-    if not OPERATION:
-        print('')
-        print('Please put your board in programming mode. Most of the boards')
-        print('switch automatically, but some don\'t and you will have to do it')        
-        print('manually. After switching manually, detach and re-attach the board.')
-        print('')
-        print('Press any key to continue')
-        try:
-            raw_input()
-        except:
-            input()
     
-    # Step 1: Erease flash
-    if platform== 'esp8266':
-        command = '{} deps/esptool.py --port {} erase_flash'.format(PYTHON, serial_port)
-    elif platform == 'esp32':
-        command =  '{} deps/esptool.py --port {} erase_flash'.format(PYTHON, serial_port)  
-    else:
-        abort('Consistency Exception')
-
-    print('Erasing flash... (about 10 secs)')
-    if not(os_shell(command, interactive=INTERACTIVE, silent=SILENT)):
-        abort('Error (see output above)')
-    time.sleep(3)
-    print('Done.')
-    print('')
-
     if not OPERATION:
         print('')
-        print('Please put again your board in programming mode. If you')
+        print('Please put the board back in normal operation mode. If you')
         print('are switching manually, detach and re-attach the board.')
         print('')
         print('Press any key to continue')
@@ -559,170 +634,118 @@ if flash:
             raw_input()
         except:
             input()
-
-    # Step 2: Flash MicroPython firmware
-    if platform== 'esp8266':
-        if frozen:
-            if use_local:
-                command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 {}/firmware/PythingsOS_{}_esp8266.frozen.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH, VERSION)
-            else:
-                command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.frozen.bin'.format(PYTHON, serial_port, VERSION)
-        else:
-            if use_local:
-                command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 {}/firmware/PythingsOS_{}_esp8266.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH, VERSION)
-            else:
-                command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.bin'.format(PYTHON, serial_port, VERSION)
-
-    elif platform == 'esp32':
-            if use_local:
-                command = '{} deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 {}/firmware/esp32-20190529-v1.11.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH)
-            else:
-                command = '{} deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 tmp/esp32-20190529-v1.11.bin'.format(PYTHON, serial_port)
-    else:
-        abort('Consistency Exception')
+    
+    if (copy and platform!='esp8266') or operation == 2:
         
-    print('Flashing firmware... (about a minute)')
-    if not(os_shell(command, interactive=INTERACTIVE, silent=SILENT)):
-        abort('Error (see output above)')
-    time.sleep(5)
-    print('Done.')
-    print('')
-
-    if INTERACTIVE:
-        print('')
-        print('Press any key to continue')
-        try:
-            raw_input()
-        except:
-            input()
-
-    # Step 3: Check ampy and successful MicroPython install
-    if platform != 'esp8266':
-        print('Checking...')
-        if not os_shell('{} deps/ampy.py -p {} ls'.format(PYTHON, serial_port), interactive=INTERACTIVE, silent=SILENT):
-            abort('Error, could not communicate with the board (see output above)')
-        time.sleep(2)
-        print('Done.')
-        print('')
-
-if not OPERATION:
-    print('')
-    print('Please put the board back in normal operation mode. If you')
-    print('are switching manually, detach and re-attach the board.')
-    print('')
-    print('Press any key to continue')
-    try:
-        raw_input()
-    except:
-        input()
-
-if (copy and platform!='esp8266') or operation == 2:
-    
-    # Step 3: (Download) and extract PythingsOS
-    if os.path.isfile('{}/zips/PythingsOS_{}_{}.zip'.format(ARTIFACTS_PATH, VERSION, platform)):
-        if ARTIFACTS_PATH != DEFAULT_ARTIFACTS_PATH:
-            print('WARNING: found and using local zip file in "{}/zips/PythingsOS_{}_{}.zip"'.format(ARTIFACTS_PATH, VERSION, platform))
-        use_local_zip=True
-    else:
-        print('Downloading PythingsOS...')
-        url = '{}/static/PythingsOS/zips/PythingsOS_{}_{}.zip'.format(HOST, VERSION, platform)
-        #print ('Downloading {}'.format(url))
-        download(url, 'tmp/')
-        print('Done.')
-        use_local_zip=False
-    print('')
-
-    # (now extract)
-    if not use_local_zip:
-        zip_ref = zipfile.ZipFile('tmp/PythingsOS_{}_{}.zip'.format(VERSION, platform), 'r')
-    else:
-        zip_ref = zipfile.ZipFile('{}/zips/PythingsOS_{}_{}.zip'.format(ARTIFACTS_PATH, VERSION, platform), 'r')
-    zip_ref.extractall('tmp/extracted')
-    zip_ref.close()
-
-    # Step 4: Copy over all files
-    files_path = 'tmp/extracted/{}'.format(platform)
-    files = [f for f in listdir(files_path) if isfile(join(files_path, f))]
-
-    print('Installing PythingsOS... (about two minutes)')
-    for file in files:
-        if file.endswith('.py'):
-            while True:
-                if DEBUG:
-                    print('Now copying {}/{} ...'.format(files_path,file))
-                if not os_shell('{} deps/ampy.py -p {} put {}/{}'.format(PYTHON, serial_port,files_path,file), interactive=INTERACTIVE, silent=SILENT):
-                    print('Failed, retrying...')
-                    time.sleep(2)
-                else:
-                    time.sleep(2)
-                    break
-
-    print('Done.')
-    print('')
-    
-    if INTERACTIVE:
-        print('')
-        print('Press any key to continue')
-        try:
-            raw_input()
-        except:
-            input()
-    
-    # Step 5: Reset
-    if not OPERATION:
-        print('Now resetting the board...')
-        # TODO: Change this since in the esp32 executing a reset will not "return", cusing a neverending loop
-        time.sleep(2)
-        output = os_shell('{} deps/ampy.py -p {} run deps/reset.py'.format(PYTHON, serial_port), interactive=INTERACTIVE, silent=SILENT, capture=True)
-        if output.exit_code != 0:
-            print('Automatic reset seems to have failed, you might need a manual reset.')
+        # Step 3: (Download) and extract PythingsOS
+        if os.path.isfile('{}/zips/PythingsOS_{}_{}.zip'.format(ARTIFACTS_PATH, VERSION, platform)):
+            if ARTIFACTS_PATH != DEFAULT_ARTIFACTS_PATH:
+                print('WARNING: found and using local zip file in "{}/zips/PythingsOS_{}_{}.zip"'.format(ARTIFACTS_PATH, VERSION, platform))
+            use_local_zip=True
         else:
+            print('Downloading PythingsOS...')
+            url = '{}/static/PythingsOS/zips/PythingsOS_{}_{}.zip'.format(HOST, VERSION, platform)
+            #print ('Downloading {}'.format(url))
+            download(url, 'tmp/')
             print('Done.')
+            use_local_zip=False
         print('')
-
-    if INTERACTIVE:
+    
+        # (now extract)
+        if not use_local_zip:
+            zip_ref = zipfile.ZipFile('tmp/PythingsOS_{}_{}.zip'.format(VERSION, platform), 'r')
+        else:
+            zip_ref = zipfile.ZipFile('{}/zips/PythingsOS_{}_{}.zip'.format(ARTIFACTS_PATH, VERSION, platform), 'r')
+        zip_ref.extractall('tmp/extracted')
+        zip_ref.close()
+    
+        # Step 4: Copy over all files
+        files_path = 'tmp/extracted/{}'.format(platform)
+        files = [f for f in listdir(files_path) if isfile(join(files_path, f))]
+    
+        print('Installing PythingsOS... (about two minutes)')
+        for file in files:
+            if file.endswith('.py'):
+                while True:
+                    if DEBUG:
+                        print('Now copying {}/{} ...'.format(files_path,file))
+                    if not os_shell('{} deps/ampy.py -p {} put {}/{}'.format(PYTHON, serial_port,files_path,file), interactive=INTERACTIVE, silent=SILENT):
+                        print('Failed, retrying...')
+                        time.sleep(2)
+                    else:
+                        time.sleep(2)
+                        break
+    
+        print('Done.')
         print('')
-        print('Press any key to continue')
+        
+        if INTERACTIVE:
+            print('')
+            print('Press any key to continue')
+            try:
+                raw_input()
+            except:
+                input()
+        
+        # Step 5: Reset
+        if not OPERATION:
+            print('Now resetting the board...')
+            # TODO: Change this since in the esp32 executing a reset will not "return", cusing a neverending loop
+            time.sleep(2)
+            output = os_shell('{} deps/ampy.py -p {} run deps/reset.py'.format(PYTHON, serial_port), interactive=INTERACTIVE, silent=SILENT, capture=True)
+            if output.exit_code != 0:
+                print('Automatic reset seems to have failed, you might need a manual reset.')
+            else:
+                print('Done.')
+            print('')
+    
+        if INTERACTIVE:
+            print('')
+            print('Press any key to continue')
+            try:
+                raw_input()
+            except:
+                input()
+    
+    if console:
+    
+        print('Now opening a serial connection...')
+        print('The output below is coming from PythingsOS running on your board!')
+        print('  - Hit ctrl-C to exit.')
+        print('  - Try pressing the reset button on your board if you don\'t see anything.')
+        print('')
+        # Step 6: Open serial console
+        try:
+            with serial.Serial(serial_port_raw, 115200, timeout=1) as ser:
+                while True:
+                    # Read a '\n' terminated line
+                    line_raw = ser.readline()
+                    if isinstance(line_raw, bytes):
+                        try:
+                            line = line_raw.decode('ascii')
+                        except:
+                            line=''
+                    else:
+                        line = line_raw
+                    # Clean line
+                    line_clean = line.rstrip()
+    
+                    # Print line if not empty
+                    if line_clean:
+                        print(line_clean)
+    
+        except serial.serialutil.SerialException:
+            raise
+            # print('Cannot open serial port')
+    
+    if not OPERATION:
+        print('')
+        print('Press any key to exit2')
         try:
             raw_input()
         except:
             input()
 
-if console:
-
-    print('Now opening a serial connection...')
-    print('The output below is coming from PythingsOS running on your board!')
-    print('  - Hit ctrl-C to exit.')
-    print('  - Try pressing the reset button on your board if you don\'t see anything.')
-    print('')
-    # Step 6: Open serial console
-    try:
-        with serial.Serial(serial_port_raw, 115200, timeout=1) as ser:
-            while True:
-                # Read a '\n' terminated line
-                line_raw = ser.readline()
-                if isinstance(line_raw, bytes):
-                    try:
-                        line = line_raw.decode('ascii')
-                    except:
-                        line=''
-                else:
-                    line = line_raw
-                # Clean line
-                line_clean = line.rstrip()
-
-                # Print line if not empty
-                if line_clean:
-                    print(line_clean)
-
-    except serial.serialutil.SerialException:
-        raise
-        # print('Cannot open serial port')
-
-if not OPERATION:
-    print('')
-    print('Press any key to exit')
-    try:
-        raw_input()
-    except:
-        input()
+except Exception as e:
+    abort(e)
+    

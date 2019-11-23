@@ -10,7 +10,3 @@ if [ -z "$PYTHON" ]; then
 fi
 
 $PYTHON installer.py
-
-echo ""
-read -n 1 -s -r -p "Press any key to exit"
-
