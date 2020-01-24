@@ -4,9 +4,9 @@ file:0:env.py
 file:423:files.txt
 file:724:handle_main_error.py
 file:3816:http.py
-file:6504:init.py
+file:6522:init.py
 file:642:logger.py
-file:4020:management.py
+file:3999:management.py
 file:2825:pal.py
 file:28:platform.py
 file:1030:preregister.py
@@ -16,5 +16,5 @@ file:747:updates_pythings.py
 file:325:updates_settings.py
 file:1793:utils.py
 file:6948:websetup.py
-file:864:worker.py
-file:21:version.py
+file:855:worker.py
+file:17:version.py
