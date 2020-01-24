@@ -8,11 +8,11 @@ from common import run_controlled
 def system_worker_task(chronos):
     
     # Call App's worker    
-    if env.app_worker_task:
+    if env.app_workerTask:
         worker_msg = None
         try:
             logger.debug('Mem free:', pal.get_mem_free())
-            worker_msg = env.app_worker_task.call(chronos)
+            worker_msg = env.app_workerTask.call()
             if worker_msg:
                 run_controlled(2,apost,api='/apps/worker/', data={'msg': worker_msg })
             report('worker','OK')

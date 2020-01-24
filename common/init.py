@@ -86,8 +86,8 @@ def start():
     env.frozen = hal.is_frozen()
 
     # Tasks placeholders
-    env.app_worker_task = None
-    env.app_management_task = None
+    env.app_workerTask = None
+    env.app_managementTask = None
       
     # Report
     logger.info('Running with backend="{}" and aid="{}"'.format(env.backend, env.aid))
@@ -121,8 +121,9 @@ def start():
     del register
     gc.collect()
     
-    # Sync time.
+    # Sync time and add to env
     chronos = hal.Chronos(epoch)
+    env.chronos = chronos
 
     # Call system management (will update App/Pythings versions  and settings if required)
     logger.info('Calling system management (preloop)')
@@ -139,8 +140,8 @@ def start():
 
     # Init app
     try:
-        from worker_task import worker_task
-        env.app_worker_task = worker_task(chronos)
+        from worker_task import WorkerTask
+        env.app_workerTask = WorkerTask()
     except Exception as e:
         logger.error('Error in importing/loading app\'s worker tasks: {} {}'.format(e.__class__.__name__, e))
         logger.debug(pal.get_traceback(e))
@@ -148,8 +149,8 @@ def start():
         common.run_controlled(2,report,what='worker', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, pal.get_traceback(e)))
 
     try:
-        from management_task import management_task
-        env.app_management_task = management_task(chronos)
+        from management_task import ManagementTask
+        env.app_managementTask = ManagementTask()
     except Exception as e:
         logger.error('Error in importing/loading  app\'s management tasks: {} {}'.format(e.__class__.__name__, e))
         logger.debug(pal.get_traceback(e))

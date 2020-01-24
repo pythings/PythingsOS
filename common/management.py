@@ -76,13 +76,13 @@ def system_management_task(chronos):
             run_controlled(2,report,what='management', status='KO', message='{} {} ({})'.format(e.__class__.__name__, e, pal.get_traceback(e)))
 
     # Call App's management
-    if env.app_management_task:
+    if env.app_managementTask:
         try:
             logger.debug('Mem free:', pal.get_mem_free())
             if mid and mty == 'APP':
-                rep=env.app_management_task.call(chronos, msg)
+                rep=env.app_managementTask.call(msg)
             else:
-                env.app_management_task.call(chronos, None)
+                env.app_managementTask.call(None)
                 
         except Exception as e:
             logger.error('Error in executing app\'s management task: {} {}'.format(e.__class__.__name__, e))
