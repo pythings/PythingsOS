@@ -80,9 +80,7 @@ def start():
     if not env.pool:
         if 'pool' in env.settings and env.settings['pool']:
             env.pool = env.settings['pool']
-        else:
-            env.pool = 'production'
-            
+      
     env.frozen = hal.is_frozen()
 
     # Tasks placeholders
