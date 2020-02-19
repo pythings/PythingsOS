@@ -2,14 +2,17 @@
 import env
 import logger
 import json
-from http import post
+try:
+    from http_extended import post
+except ImportError:
+    from http import post
 import gc
 
 apiver='v1'
 
 # Utility
 def check_response(response):
-    if response['status'] != b'200':
+    if response['status'] not in [b'200', 200]:
         try:
             msg=response['content']
             if not msg: msg=response 
