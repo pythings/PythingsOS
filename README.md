@@ -1,5 +1,10 @@
 # PythingsOS
 
+
+Clone with:
+
+    git clone --recurse-submodules https://github.com/pythings/PythingsOS
+
 ### Requirements
 
 MicroPython version: v1.9.4
