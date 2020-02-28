@@ -7,6 +7,8 @@ import json
 import ure
 from utils import *
 import hal
+from platform import platform
+from version import version
 import gc
 
 def websetup(timeout_s=60, lock_session=False):
@@ -24,15 +26,16 @@ def websetup(timeout_s=60, lock_session=False):
     ap = network.WLAN(network.AP_IF)
     ap.active(True)
     ap.config(essid="Thing_{}".format(hal.get_tid()), authmode=network.AUTH_WPA_WPA2_PSK, password="NewThing")
-    
+
+    logger.info('Done, waiting for a connection... ({}s)'.format(timeout_s))
+
     while True:
         try:
-            logger.info('Done, waiting for a connection... ({}s)'.format(timeout_s))
-            gc.collect
+            gc.collect()
             
             # Handle client connection
             cl, addr = s.accept()
-            logger.info('Client connected from', addr[0])
+            logger.info('Incoming client connection from', addr[0])
             s.settimeout(None)
 
             # Read request
@@ -81,13 +84,6 @@ def websetup(timeout_s=60, lock_session=False):
                 password = None
                 if 'password' in parameters: password = parameters['password']                    
 
-                if hal.HW_SUPPORTS_LED:
-                    hal.LED.off()
-                    time.sleep(0.3)
-                    hal.LED.on()
-
-                gc.collect()
-
                 # Set app command
                 if cmd=='set_app':
                     #logger.debug('Called set app API')
@@ -100,11 +96,23 @@ def websetup(timeout_s=60, lock_session=False):
                             f.write(aid)
                     cl.write(json.dumps({'status':'OK', 'aid': load_param('aid',None)}))
 
+                # Set apn command
+                if cmd=='set_apn':
+                    #logger.debug('Called set app API')
+                    apn = None
+                    apn = parameters['apn']
+                    if apn is None:
+                        cl.write(json.dumps({'status':'ERROR'}))
+                    else:
+                        with open('/apn','w') as f:
+                            f.write(apn)
+                    cl.write(json.dumps({'status':'OK', 'apn': load_param('apn',None)}))
+
                 # Check command
                 if cmd=='check':
                     import os
                     #logger.debug('Called check API')
-                    cl.write(json.dumps({'status':'OK', 'info': str(os.uname().version),'aid':load_param('aid',None)}))
+                    cl.write(json.dumps({'status':'OK', 'platform': platform, 'version': version, 'aid':load_param('aid',None)}))
                 
                 # Check_wifi command
                 if cmd=='check_wifi':
