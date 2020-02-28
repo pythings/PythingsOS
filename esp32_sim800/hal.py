@@ -14,13 +14,16 @@ from pal import reboot
 # Hardware settings
 HW_SUPPORTS_DEEPSLEEP  = False
 HW_SUPPORTS_RESETCAUSE = True
-HW_SUPPORTS_LED        = True
+HW_SUPPORTS_LED        = False
 HW_SUPPORTS_WLAN       = True
-HW_SUPPORTS_SSL        = True if is_frozen() else False
-HW_SUPPORTS_ENCRYPTION = True if is_frozen() else False
+HW_SUPPORTS_SSL        = True
+HW_SUPPORTS_ENCRYPTION = True
 USE_ENCRYPTION_DEFAULT = False
 WEBSETUP_RESETCAUSES   = [machine.PWRON_RESET, machine.HARD_RESET, machine.WDT_RESET]
 
 # Hardware initialization (i.e. put PWMs to zero)
 def init():
     pass
+
+# Modem settings
+from pal import MODEM_PWKEY_PIN, MODEM_RST_PIN, MODEM_POWER_ON_PIN, MODEM_TX_PIN, MODEM_RX_PIN

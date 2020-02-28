@@ -45,7 +45,7 @@ echo ""
 
 # 2) Create file lists
 echo "Creating file lists..."
-platforms=( 'MicroPython' 'esp8266' 'esp8266_esp-12' 'Python' 'esp32' 'RaspberryPi')
+platforms=( 'MicroPython' 'esp8266' 'esp8266_sim800' 'Python' 'esp32' 'RaspberryPi' 'esp32_sim800')
 for dir in "${platforms[@]}"
 do
     echo " $dir"

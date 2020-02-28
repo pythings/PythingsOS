@@ -28,7 +28,7 @@ git tag -l | while read TAG ; do
     ORIGIN=$(pwd)
 
     # For every platform, consolidate versions and make zips
-    for PLATFORM in Python MicroPython RaspberryPi esp8266 esp32 esp8266_esp-12; do
+    for PLATFORM in Python MicroPython RaspberryPi esp8266 esp32 esp8266_sim800; do
         echo "Checking if consolidate/zip $PLATFORM"
         if [ -d "$DEST/PythingsOS/$TAG/$PLATFORM" ]; then
             echo "Consolidating and making zip archive for \"$PLATFORM\"."

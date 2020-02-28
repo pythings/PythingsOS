@@ -1,0 +1,1 @@
+../esp32/updates_settings.py

@@ -328,7 +328,7 @@ try:
             print('')
             print(' 1) Esp8266')
             print(' 2) Esp32')
-            #print(' 3) Raspberry PI')
+            print(' 3) Esp32 SIM800L')
             print('')
             
             sys.stdout.write('Your choice (number): ')
@@ -341,7 +341,7 @@ try:
             platforms={}
             platforms[1] = 'esp8266'
             platforms[2] = 'esp32'
-            #platforms[3] = 'raspberrypi'
+            platforms[3] = 'esp32_sim800'
             
             try:
                 platform_id = int(platform_id)
@@ -349,7 +349,7 @@ try:
             except:
                 abort('Error, please type a valid numerical choice')
         else:
-            if not PLATFORM in ['esp8266', 'esp32']:
+            if not PLATFORM in ['esp8266', 'esp32', 'esp32_sim800']:
                 abort('Error, got unsupported platform "{}"'.format(PLATFORM))            
             platform = PLATFORM
     else:
@@ -516,7 +516,7 @@ try:
                     print('Done.')
                     print('')
                 
-        elif platform == 'esp32':
+        elif platform in ['esp32', 'esp32_sim800']:
             if os.path.isfile('{}/firmware/esp32-20190529-v1.11.bin'.format(ARTIFACTS_PATH)):
                 if ARTIFACTS_PATH != DEFAULT_ARTIFACTS_PATH:
                     print('WARNING: found and using local firmware file  in "{}/firmware/esp32-20190529-v1.11.bin"'.format(ARTIFACTS_PATH))
@@ -527,7 +527,7 @@ try:
                 print('Done.')
                 print('')
         else:
-            abort('Consistency Exception')
+            abort('Consistency Exception (Unknown platform "{}")'.format(platform))
     
     
         if not OPERATION:
@@ -545,10 +545,10 @@ try:
         # Step 1: Erease flash
         if platform== 'esp8266':
             command = '{} deps/esptool.py --port {} erase_flash'.format(PYTHON, serial_port)
-        elif platform == 'esp32':
+        elif platform in ['esp32', 'esp32_sim800']:
             command =  '{} deps/esptool.py --port {} erase_flash'.format(PYTHON, serial_port)  
         else:
-            abort('Consistency Exception')
+            abort('Consistency Exception (Unknown platform "{}")'.format(platform))
     
         print('Erasing flash... (about 10 secs)')
         if not(os_shell(command, interactive=INTERACTIVE, silent=SILENT)):
@@ -581,13 +581,13 @@ try:
                 else:
                     command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.bin'.format(PYTHON, serial_port, VERSION)
     
-        elif platform == 'esp32':
+        elif platform in ['esp32', 'esp32_sim800']:
                 if use_local:
                     command = '{} deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 {}/firmware/esp32-20190529-v1.11.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH)
                 else:
                     command = '{} deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 tmp/esp32-20190529-v1.11.bin'.format(PYTHON, serial_port)
         else:
-            abort('Consistency Exception')
+            abort('Consistency Exception (Unknown platform "{}")'.format(platform))
             
         print('Flashing firmware... (about a minute)')
         if not(os_shell(command, interactive=INTERACTIVE, silent=SILENT)):
