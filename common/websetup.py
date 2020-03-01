@@ -18,7 +18,7 @@ def websetup(timeout_s=60, lock_session=False):
     s.bind(addr)
     s.listen(0)
     s.settimeout(timeout_s)
-    #logger.info('Listening on ', addr)
+    logger.debug('Listening on ', addr)
     
     # Start AP mode and disable client mode
     sta = network.WLAN(network.STA_IF)
@@ -57,7 +57,6 @@ def websetup(timeout_s=60, lock_session=False):
             cl.write("Access-Control-Allow-Headers: X-CSRFToken, ACCEPT, CONTENT-TYPE, X-CSRF-TOKEN, Content-Type, Authorization, X-Requested-With\r\n");
 
             if not get_request_data: # an OPTIONS, basically
-                #logger.debug('no GET data in request')
                 cl.write('Content-Length: 0\r\n\r\n')
                 cl.close()
                 continue
@@ -70,7 +69,6 @@ def websetup(timeout_s=60, lock_session=False):
 
             # Close connection if requesting favicon
             if 'favicon' in path:
-                #logger.debug('Requested favicon, closing connection')
                 set_api()
                 cl.close()
             
@@ -86,7 +84,6 @@ def websetup(timeout_s=60, lock_session=False):
 
                 # Set app command
                 if cmd=='set_app':
-                    #logger.debug('Called set app API')
                     aid = None
                     aid = parameters['aid']
                     if aid is None:
@@ -98,7 +95,6 @@ def websetup(timeout_s=60, lock_session=False):
 
                 # Set apn command
                 if cmd=='set_apn':
-                    #logger.debug('Called set app API')
                     apn = None
                     apn = parameters['apn']
                     if apn is None:
@@ -111,12 +107,11 @@ def websetup(timeout_s=60, lock_session=False):
                 # Check command
                 if cmd=='check':
                     import os
-                    #logger.debug('Called check API')
-                    cl.write(json.dumps({'status':'OK', 'platform': platform, 'version': version, 'aid':load_param('aid',None)}))
+                    essid = get_wifi_data()[0]
+                    cl.write(json.dumps({'status':'OK', 'tid': hal.get_tid(), 'platform': platform, 'version': version, 'aid':load_param('aid',None), 'apn': load_param('apn',None), 'essid': essid}))
                 
                 # Check_wifi command
                 if cmd=='check_wifi':
-                    #logger.debug('Called check_wifi API')
                     sta.active(True)
                     essid='Unknown'
                     isconnected=False
@@ -130,7 +125,6 @@ def websetup(timeout_s=60, lock_session=False):
                 
                 # Scan command
                 elif cmd == 'scan':
-                    #logger.debug('Called scan API')
                     sta.active(True)
                     nets = sta.scan() 
                     sta.active(False)
@@ -138,7 +132,6 @@ def websetup(timeout_s=60, lock_session=False):
                           
                 # Join command                  
                 elif cmd == 'join':
-                    #logger.debug('Called join API')
                     if password is None or essid is None:
                         cl.write(json.dumps({'status': 'ERROR'}))
                     else:
@@ -159,7 +152,6 @@ def websetup(timeout_s=60, lock_session=False):
                 
                 # Close command
                 elif cmd == 'close':
-                    #logger.debug('Called close API')
                     cl.write(json.dumps({'status': 'OK'}))
                     cl.close()
                     s.close()
@@ -171,17 +163,15 @@ def websetup(timeout_s=60, lock_session=False):
                 cl.write('Please go to your vendor\'s Website to configure this device.\r\n')
 
             # Close client connection at the end
-            #logger.info('Closing client connection')
             cl.close()
         
         except OSError as e:
             if str(e) == "[Errno 110] ETIMEDOUT":
-                #logger.info('Exiting due to no incoming connections')
+                logger.info('Exiting due to no incoming connections')
                 s.close()
                 break
             import sys
             sys.print_exception(e)
-            #logger.error(str(e))
             try: cl.close()
             except: pass
             try: s.close()
