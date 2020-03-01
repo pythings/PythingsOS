@@ -122,6 +122,6 @@ def execute(cmd):
 
 MODEM_PWKEY_PIN    = 4
 MODEM_RST_PIN      = 5
-MODEM_POWER_ON_PIN = 23
-MODEM_TX_PIN       = 26
-MODEM_RX_PIN       = 27
+MODEM_POWER_ON_PIN = None
+MODEM_TX_PIN       = 14
+MODEM_RX_PIN       = 16
