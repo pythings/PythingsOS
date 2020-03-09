@@ -54,12 +54,12 @@ RUN cd /home/xtensa/micropython/$PORTS_DIR/esp8266 && make clean
 RUN cd /home/xtensa/micropython/$PORTS_DIR/esp8266 && make all
 RUN mv /home/xtensa/micropython/$PORTS_DIR/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${VER}_esp8266.bin
 
-# Build for esp8266_esp-12 (normal)
-RUN cp -L /home/xtensa/PythingsOS/artifacts/selfarchives/esp8266_esp-12/selfarchive.py /home/xtensa/micropython/$PORTS_DIR/esp8266/modules/
-RUN cd /home/xtensa/micropython/$PORTS_DIR/esp8266 && make clean
+# Build for esp8266_sim800 (normal) # No, not enough space for the selfarchives. Maybe use pyminifier? 
+#RUN cp -L /home/xtensa/PythingsOS/artifacts/selfarchives/esp8266_sim800/selfarchive.py /home/xtensa/micropython/$PORTS_DIR/esp8266/modules/
+#RUN cd /home/xtensa/micropython/$PORTS_DIR/esp8266 && make clean
 #RUN cd /home/xtensa/micropython/$PORTS_DIR/esp8266 && make axtls # Comment this line for > v1.9.4
-RUN cd /home/xtensa/micropython/$PORTS_DIR/esp8266 && make all
-RUN mv /home/xtensa/micropython/$PORTS_DIR/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${VER}_esp8266_esp-12.bin
+#RUN cd /home/xtensa/micropython/$PORTS_DIR/esp8266 && make all
+#RUN mv /home/xtensa/micropython/$PORTS_DIR/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${VER}_esp8266_sim800.bin
 
 
 
@@ -81,17 +81,25 @@ RUN cd /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266 && make clean
 RUN cd /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266 && make all
 RUN mv /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${VER}_esp8266.frozen.bin
 
-# Build for esp8266-esp-12 (fozen)
-RUN cp -L /home/xtensa/PythingsOS/esp8266_esp-12/* /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266/modules/
+# Add softuart 
+COPY Makefile-1.11-softuart /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266/Makefile
+COPY modmachine.c /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266/
+COPY modmachine.h /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266/
+COPY esp8266_common.ld /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266/
+COPY softuart.c /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266/
+COPY softuart.h /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266/
+
+# Build for esp8266_sim800 (fozen)
+RUN cp -L /home/xtensa/PythingsOS/esp8266_sim800/* /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266/modules/
 RUN cp -a /home/xtensa/PythingsOS/common/crypto* /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266/modules/
 RUN cd /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266 && make clean
 #RUN cd /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266 && make axtls # Comment this line for > v1.9.4
 RUN cd /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266 && make all
-RUN mv /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${VER}_esp8266_esp-12.frozen.bin
+RUN mv /home/xtensa/micropython-frozen/$PORTS_DIR/esp8266/build/firmware-combined.bin /home/xtensa/builds/PythingsOS_${VER}_esp8266_sim800.frozen.bin
 
 #COPY build_bytecode.sh /home/xtensa/build_bytecode.sh
-#RUN cd /home/xtensa/PythingsOS/esp8266_esp-12 && bash /home/xtensa/build_bytecode.sh
-#RUN mkdir /home/xtensa/builds/bytecode && cp -a /home/xtensa/PythingsOS/esp8266_esp-12/*.mpy /home/xtensa/builds/bytecode/
+#RUN cd /home/xtensa/PythingsOS/esp8266_sim800 && bash /home/xtensa/build_bytecode.sh
+#RUN mkdir /home/xtensa/builds/bytecode && cp -a /home/xtensa/PythingsOS/esp8266_sim800/*.mpy /home/xtensa/builds/bytecode/
 
 #-------------------
 #   Entrypoint,

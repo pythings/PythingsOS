@@ -26,21 +26,26 @@ def post(url, data, dest=None):
         port=int(host.split(':')[1])
         host=host.split(':')[0]
     logger.debug('Calling POST "{}:{}/{}" with data'.format(host,port,path),data)
-    addr = socket.getaddrinfo(host, port)[0][-1]
+    try:
+        addr = socket.getaddrinfo(host, port)[0][-1]
+    except IndexError:
+        raise Exception('Cannot resolve host "{}"'.format(host))
     s = socket.socket()
     try: s.settimeout(60)
     except: pass
 
-    # If socket connect fails do not have an exception when closing file
+    # If socket connect fails do not have an exception when closing file in the finally
     if dest: f = None
 
     # Connect and handle SSL
     s.connect(addr)
     if hal.HW_SUPPORTS_SSL and use_ssl:
         s = pal.socket_ssl(s)
-
-    if dest: f = open(dest, 'w')
+   
     try:
+        
+        if dest: f = open(dest, 'w')
+        
         pal.socket_write(s, bytes('%s /%s HTTP/1.0\r\nHost: %s\r\n' % ('POST', path, host), 'utf8'))
 
         content = json.dumps(data)

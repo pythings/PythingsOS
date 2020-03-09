@@ -30,7 +30,7 @@ if [ "$FOR_EACH_TAG" = true ]; then
         ORIGIN=$(pwd)
     
         # For every platform, consolidate versions and make zips
-        for PLATFORM in Python MicroPython RaspberryPi esp8266 esp32 esp8266_esp-12; do
+        for PLATFORM in Python MicroPython RaspberryPi esp8266 esp32 esp8266_sim800 esp32_sim800; do
             # TODO: include the logic below
             :
         done
@@ -45,7 +45,7 @@ else
     ORIGIN=$(pwd)
 
     # For every platform, consolidate versions and make zips
-    for PLATFORM in Python MicroPython RaspberryPi esp8266 esp32 esp8266_esp-12; do
+    for PLATFORM in Python MicroPython RaspberryPi esp8266 esp32 esp8266_sim800 esp32_sim800; do
         echo "Consolidating and making zip archive for \"$PLATFORM\"."
         ZIP_LOCATION=$TMP_DIR/$VERSION/zips/$PLATFORM
         mkdir -p $ZIP_LOCATION

@@ -21,15 +21,18 @@ DEFAULT_SILENT           = True
 DEFAULT_HOST             = 'https://pythings.io'
 DEFAULT_ARTIFACTS_PATH   = 'artifacts'
 DEFAULT_ALLOW_DOWNLOAD   = False
+DEFAULT_EXPERIMENTAL     = False
 
 # Default Python
 try:
     # Can we use "python3"?
-    subprocess.call(['python3', '--version'], stdout=open(os.devnull, 'w'), stderr=subprocess.STDOUT)
+    if subprocess.call(['python3', '--version'], stdout=open(os.devnull, 'w'), stderr=subprocess.STDOUT):
+        raise OSError
 except OSError:
     try:
         # Can we use "py"?
-        subprocess.call(['py', '--version'], stdout=open(os.devnull, 'w'), stderr=subprocess.STDOUT)
+        if subprocess.call(['py', '--version'], stdout=open(os.devnull, 'w'), stderr=subprocess.STDOUT):
+            raise OSError
     except OSError as e:
         # Fallback on a generic Python
         DEFAULT_PYTHON='python'
@@ -77,7 +80,8 @@ PYTHON           = os.environ.get('PYTHON', DEFAULT_PYTHON)
 HOST             = os.environ.get('HOST', DEFAULT_HOST)
 ARTIFACTS_PATH   = os.environ.get('ARTIFACTS_PATH', DEFAULT_ARTIFACTS_PATH)
 ALLOW_DOWNLOAD   = booleanize(os.environ.get('ALLOW_DOWNLOAD', DEFAULT_ALLOW_DOWNLOAD))
-
+EXPERIMENTAL     = booleanize(os.environ.get('EXPERIMENTAL', DEFAULT_EXPERIMENTAL))
+ 
 # Extra external settings
 PORT      = os.environ.get('PORT', None)
 PLATFORM  = os.environ.get('PLATFORM', None)
@@ -324,11 +328,14 @@ try:
         
         if not PLATFORM:
         
-            print('On what platform do you want to install?')
+            print('On which platform do you want to install?')
             print('')
             print(' 1) Esp8266')
             print(' 2) Esp32')
-            #print(' 3) Raspberry PI')
+            print(' 3) Esp32 + SIM800')
+            if EXPERIMENTAL:
+                print(' 4) Esp8266 + SIM800 (experimental)')
+
             print('')
             
             sys.stdout.write('Your choice (number): ')
@@ -341,15 +348,17 @@ try:
             platforms={}
             platforms[1] = 'esp8266'
             platforms[2] = 'esp32'
-            #platforms[3] = 'raspberrypi'
-            
+            platforms[3] = 'esp32_sim800'
+            if EXPERIMENTAL:
+                platforms[4] = 'esp8266_sim800'
+           
             try:
                 platform_id = int(platform_id)
                 platform    = platforms[platform_id]
             except:
                 abort('Error, please type a valid numerical choice')
         else:
-            if not PLATFORM in ['esp8266', 'esp32']:
+            if not PLATFORM in ['esp8266', 'esp8266_sim800', 'esp32', 'esp32_sim800']:
                 abort('Error, got unsupported platform "{}"'.format(PLATFORM))            
             platform = PLATFORM
     else:
@@ -378,7 +387,8 @@ try:
             operation=3
         else:
             operation=1
-    
+    print('----------')
+    print(platform)
     
     #==========================
     #  Set operations
@@ -420,7 +430,24 @@ try:
     
     
     # Ask also if frozen or non frozen for esp8266
-    forzen = False
+    frozen = False
+    
+    if flash and platform=='esp8266_sim800':
+            print('')
+            print('')
+            print('PythingsOS for the Esp8266 + SIM800 platform only comes in frozen version.')
+            print('')
+            print('With a frozen version you will not be able to update PythingsOS')
+            print('remotely as it will be frozen into the firmware, but you will')
+            print('have more memory for your Apps and SSL plus SIM800 support.')
+            print('')    
+            print('Press any key to continue')
+            frozen = True
+            try:
+                raw_input()
+            except:
+                input()
+
     if flash and platform=='esp8266':
         if FROZEN is None:
             print('')
@@ -439,13 +466,13 @@ try:
             sys.stdout.write('Your choice (number): ')
             
             try:
-                forzen_choice  = int(input())
+                frozen_choice  = int(input())
             except:
                 abort('Error, please type a valid numerical choice')
         
-            if forzen_choice == 1:
+            if frozen_choice == 1:
                 frozen = False
-            elif forzen_choice == 2:
+            elif frozen_choice == 2:
                 frozen = True
             else:
                 abort('Error, please type a valid choice')
@@ -492,31 +519,31 @@ try:
         use_local = False
     
         
-        if platform== 'esp8266':
+        if platform in ['esp8266', 'esp8266_sim800']:
             if frozen:
-                if os.path.isfile('{}/firmware/PythingsOS_{}_esp8266.frozen.bin'.format(ARTIFACTS_PATH, VERSION)):
+                if os.path.isfile('{}/firmware/PythingsOS_{}_{}.frozen.bin'.format(ARTIFACTS_PATH, VERSION, platform)):
                     if ARTIFACTS_PATH != DEFAULT_ARTIFACTS_PATH:
                         print('WARNING: found and using local firmware file  in "artifacts/firmware/PythingsOS_{}_esp8266.frozen.bin"'.format(ARTIFACTS_PATH, VERSION))
                     use_local=True
                 else:
                     print('')
                     print('Downloading firmware...')
-                    download('{}/static/PythingsOS/firmware/PythingsOS_{}_esp8266.frozen.bin'.format(HOST,VERSION), 'tmp/')
+                    download('{}/static/PythingsOS/firmware/PythingsOS_{}_{}.frozen.bin'.format(HOST,VERSION, platform), 'tmp/')
                     print('Done.')
                     print('')
             else:
-                if os.path.isfile('{}/firmware/PythingsOS_{}_esp8266.bin'.format(ARTIFACTS_PATH, VERSION)):
+                if os.path.isfile('{}/firmware/PythingsOS_{}_{}.bin'.format(ARTIFACTS_PATH, VERSION, platform)):
                     if ARTIFACTS_PATH != DEFAULT_ARTIFACTS_PATH:
                         print('WARNING: found and using local firmware file  in "artifacts/firmware/PythingsOS_{}_esp8266.bin"'.format(ARTIFACTS_PATH, VERSION))
                     use_local=True
                 else:
                     print('')
                     print('Downloading firmware...')
-                    download('{}/static/PythingsOS/firmware/PythingsOS_{}_esp8266.bin'.format(HOST,VERSION), 'tmp/')
+                    download('{}/static/PythingsOS/firmware/PythingsOS_{}_{}.bin'.format(HOST,VERSION, platform), 'tmp/')
                     print('Done.')
                     print('')
                 
-        elif platform == 'esp32':
+        elif platform in ['esp32', 'esp32_sim800']:
             if os.path.isfile('{}/firmware/esp32-20190529-v1.11.bin'.format(ARTIFACTS_PATH)):
                 if ARTIFACTS_PATH != DEFAULT_ARTIFACTS_PATH:
                     print('WARNING: found and using local firmware file  in "{}/firmware/esp32-20190529-v1.11.bin"'.format(ARTIFACTS_PATH))
@@ -527,7 +554,7 @@ try:
                 print('Done.')
                 print('')
         else:
-            abort('Consistency Exception')
+            abort('Consistency Exception (Unknown platform "{}")'.format(platform))
     
     
         if not OPERATION:
@@ -543,12 +570,12 @@ try:
                 input()
         
         # Step 1: Erease flash
-        if platform== 'esp8266':
+        if platform in ['esp8266', 'esp8266_sim800']:
             command = '{} deps/esptool.py --port {} erase_flash'.format(PYTHON, serial_port)
-        elif platform == 'esp32':
+        elif platform in ['esp32', 'esp32_sim800']:
             command =  '{} deps/esptool.py --port {} erase_flash'.format(PYTHON, serial_port)  
         else:
-            abort('Consistency Exception')
+            abort('Consistency Exception (Unknown platform "{}")'.format(platform))
     
         print('Erasing flash... (about 10 secs)')
         if not(os_shell(command, interactive=INTERACTIVE, silent=SILENT)):
@@ -569,25 +596,25 @@ try:
                 input()
     
         # Step 2: Flash MicroPython firmware
-        if platform== 'esp8266':
+        if platform in ['esp8266', 'esp8266_sim800']:
             if frozen:
                 if use_local:
-                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 {}/firmware/PythingsOS_{}_esp8266.frozen.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH, VERSION)
+                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 {}/firmware/PythingsOS_{}_{}.frozen.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH, VERSION, platform)
                 else:
-                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.frozen.bin'.format(PYTHON, serial_port, VERSION)
+                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_{}.frozen.bin'.format(PYTHON, serial_port, VERSION, platform)
             else:
                 if use_local:
-                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 {}/firmware/PythingsOS_{}_esp8266.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH, VERSION)
+                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 {}/firmware/PythingsOS_{}_{}.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH, VERSION, platform)
                 else:
-                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_esp8266.bin'.format(PYTHON, serial_port, VERSION)
+                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_{}.bin'.format(PYTHON, serial_port, VERSION, platform)
     
-        elif platform == 'esp32':
+        elif platform in ['esp32', 'esp32_sim800']:
                 if use_local:
                     command = '{} deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 {}/firmware/esp32-20190529-v1.11.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH)
                 else:
                     command = '{} deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 tmp/esp32-20190529-v1.11.bin'.format(PYTHON, serial_port)
         else:
-            abort('Consistency Exception')
+            abort('Consistency Exception (Unknown platform "{}")'.format(platform))
             
         print('Flashing firmware... (about a minute)')
         if not(os_shell(command, interactive=INTERACTIVE, silent=SILENT)):
@@ -605,7 +632,7 @@ try:
                 input()
     
         # Step 3: Check ampy and successful MicroPython install
-        if platform != 'esp8266':
+        if platform in ['esp32', 'esp32_sim800']:
             print('Checking...')
             attempt_count=0
             while True:
@@ -635,7 +662,7 @@ try:
         except:
             input()
     
-    if (copy and platform!='esp8266') or operation == 2:
+    if (copy and platform in ['esp32', 'esp32_sim800']) or operation == 2:
         
         # Step 3: (Download) and extract PythingsOS
         if os.path.isfile('{}/zips/PythingsOS_{}_{}.zip'.format(ARTIFACTS_PATH, VERSION, platform)):

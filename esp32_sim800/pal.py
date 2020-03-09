@@ -11,10 +11,10 @@ import socket
 class LED(object):
     @staticmethod
     def on():
-        machine.Pin(2, machine.Pin.OUT).low()     
+        raise NotImplementedError()     
     @staticmethod
     def off():
-        machine.Pin(2, machine.Pin.OUT).high()  
+        raise NotImplementedError() 
 
 class WLAN(object):  
     @staticmethod
@@ -95,7 +95,7 @@ def get_re():
     return ure
 
 def socket_read(s, n):
-    return s.recv(n)
+    return s.read(n)
 
 def socket_readline(s):
     return s.readline()
@@ -104,8 +104,8 @@ def socket_write(s,data):
     s.write(data)
 
 def socket_ssl(s):
-    import ussl
-    return ussl.wrap_socket(s)
+    import ssl
+    return ssl.wrap_socket(s)
 
 def execute(cmd):
     import uos
@@ -119,3 +119,8 @@ def execute(cmd):
     uos.dupterm(None)
     return (mystdout.getvalue() + err)
 
+MODEM_PWKEY_PIN    = 4
+MODEM_RST_PIN      = 5
+MODEM_POWER_ON_PIN = 23
+MODEM_TX_PIN       = 26
+MODEM_RX_PIN       = 27

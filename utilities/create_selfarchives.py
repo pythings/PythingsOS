@@ -7,7 +7,7 @@ from os import makedirs
 def sanitize(text):
     return text.replace('\\','\\\\')
             
-platforms = ['esp8266', 'esp8266_esp-12']
+platforms = ['esp8266', 'esp8266_sim800']
 
 for platform in platforms:
     print(' Generating self extracting archive for platform "{}"...'.format(platform))
