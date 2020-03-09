@@ -13,7 +13,7 @@ from os.path import isfile, join
 import platform
 
 # Defaults
-DEFAULT_VERSION          = 'v1.0.0'
+DEFAULT_VERSION          = 'v1.1.0'
 DEFAULT_CHOOSE_OPERATION = False
 DEFAULT_INTERACTIVE      = False
 DEFAULT_DEBUG            = False

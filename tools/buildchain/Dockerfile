@@ -21,7 +21,7 @@ USER xtensa
 #-------------------
 
 # Set version
-ENV VER="v1.0.0"
+ENV VER="v1.1.0"
 
 # Use the following for MicroPython <= v1.8.6
 #ENV PORTS_DIR="" 
