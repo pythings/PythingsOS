@@ -72,3 +72,4 @@ tools/installer/tmp/
 
 #Misc
 utilities/finalize_release.sh
+tmp
