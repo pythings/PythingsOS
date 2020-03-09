@@ -1,13 +1,8 @@
 # PythingsOS
 
-
-Clone with:
-
-    git clone --recurse-submodules https://github.com/pythings/PythingsOS
-
 ### Requirements
 
-MicroPython version: v1.9.4
+MicroPython version: v1.11
 
 Python versions: 3.4-3.6
 
@@ -25,9 +20,13 @@ Run the utilities/draft_release.sh script, that will:
   - the firmwares, frozen and not;
   - the installer.
 
+ After the build, you can either use the artifacts in the "artifacts" folder, or use the installer:
+
+     cd tools/installer && python3 installer.py
+
 ### Updateability
 
-The hal.py is not updatable (it is supposed to be very "intimate" with the hardware), while pal.py it is. 
+Every file can be remotely updated except the hal.py, which it is supposed to be hardware-specific (i.e. Pins, leds, etc.)
 
 ### Development
 
