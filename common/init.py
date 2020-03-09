@@ -11,7 +11,7 @@ from platform import platform
 
 # Logger
 import logger
-logger.level = int(load_param('loglevel', logger.INFO ))
+logger.level = int(load_param('loglevel', logger.INFO))
 
 # Start
 def start():
@@ -33,7 +33,7 @@ def start():
     
     # Start setup  mode if required
     if hal.HW_SUPPORTS_RESETCAUSE and hal.HW_SUPPORTS_WLAN and hal.get_reset_cause() in hal.WEBSETUP_RESETCAUSES:
-        setup_timeout = load_param('setup_timeout', 60)
+        setup_timeout = int(load_param('setup_timeout', 60))
         if setup_timeout:
             if hal.HW_SUPPORTS_LED: hal.LED.on()
             from websetup import websetup
