@@ -120,8 +120,8 @@ def execute(cmd):
     uos.dupterm(None)
     return (mystdout.getvalue() + err)
 
-MODEM_PWKEY_PIN    = 4
-MODEM_RST_PIN      = 5
+MODEM_PWKEY_PIN    = None
+MODEM_RST_PIN      = None
 MODEM_POWER_ON_PIN = None
-MODEM_TX_PIN       = 14
-MODEM_RX_PIN       = 16
+MODEM_TX_PIN       = 5
+MODEM_RX_PIN       = 4
