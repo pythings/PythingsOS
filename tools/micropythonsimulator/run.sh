@@ -5,13 +5,13 @@ tid="$2"
 be="$3"
 
 if [ -z "$1" ]; then
-    echo "Usage: ./run.sh AID TID BE"
+    echo "Usage: ./run.sh AID TID (BACKEND)"
     echo "       ./run.sh bash"
     exit 1
 fi
 
 if [ -z "$2}" ]; then
-    echo "Usage: ./run.sh AID TID BE"
+    echo "Usage: ./run.sh AID TID (BACKEND)"
     echo "       ./run.sh bash"
     exit 1
 fi
@@ -31,9 +31,4 @@ if [[ "x$3" == "xlocal" ]] ; then
     fi
 fi
 
-
-
 docker run -v $PWD/../../:/opt/PythingsOS -eINTERACTIVE=True -it pythingsos/micropythonsimulator $1 $tid $be
-
-
-

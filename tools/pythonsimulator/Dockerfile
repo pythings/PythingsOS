@@ -3,6 +3,7 @@ MAINTAINER Stefano Alberto Russo <stefano.russo@gmail.com>
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+
 #----------------------------------
 # Dependencies
 #----------------------------------
@@ -19,6 +20,12 @@ RUN curl -O https://bootstrap.pypa.io/get-pip.py
 # Install Python3 and Pip3 (python3-distutils required for pip3)
 RUN apt-get install python3 python3-distutils -y 
 RUN python3 get-pip.py 'pip==10.0.1'
+
+
+#----------------------------------
+# PythingsOS code
+#----------------------------------
+COPY PythingsOS /opt/PythingsOS
 
 
 #----------------------------------
@@ -39,9 +46,6 @@ USER pythings
 # Create conf dir
 RUN mkdir /home/pythings/.pythings
 
-# Set default pool
-RUN echo "development" >  /home/pythings/.pythings/pool
-
 # Create log files dir
 RUN mkdir /tmp/logs
 
@@ -61,13 +65,4 @@ ENTRYPOINT ["/entrypoint.sh"]
 # Default user once the container starts
 USER pythings
 WORKDIR /opt/PythingsOS/Python
-
-
-
-
-
-
-
-
-
 

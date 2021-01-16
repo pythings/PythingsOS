@@ -5,13 +5,13 @@ tid="$2"
 be="$3"
 
 if [ -z "$1" ]; then
-    echo "Usage: ./run.sh AID TID BE"
+    echo "Usage: ./run.sh AID TID (BACKEND)"
     echo "       ./run.sh bash"
     exit 1
 fi
 
 if [ -z "$2}" ]; then
-    echo "Usage: ./run.sh AID TID BE"
+    echo "Usage: ./run.sh AID TID (BACKEND)"
     echo "       ./run.sh bash"
     exit 1
 fi
@@ -25,14 +25,10 @@ if [[ "x$3" == "xlocal" ]] ; then
         echo "Detected local PythingsCloud running, using its proxy IP: $PYTHIGSCLOUD_PROXY_IP"
         be=$PYTHIGSCLOUD_PROXY_IP
     else
-        echo "Error: you ser \"local\" as backend but I cannot find any local Pythings Cloud instance running."
+        echo "Error: you set \"local\" as backend but I cannot find any local Pythings Cloud instance running."
         echo ""
         exit
     fi
 fi
 
-
 docker run -v $PWD/../../:/opt/PythingsOS -eINTERACTIVE=True -it pythingsos/pythonsimulator $1 $tid $be
-
-
-

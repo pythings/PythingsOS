@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 if [ ! -f "Dockerfile" ]; then
     # TODO: This check is WEAK: improve me!
@@ -6,13 +7,11 @@ if [ ! -f "Dockerfile" ]; then
     exit 1
 fi
 
-#echo "Copying code ..."
-#rsync -avz --exclude 'tools' --exclude 'utilities' --exclude '.git' --exclude 'artifacts' --exclude 'extras' ../../ PythingsOS
+# Consolidate code to be copied inside the container
+rsync -avzL --exclude 'tools' --exclude 'utilities' --exclude '.git' --exclude 'artifacts' --exclude 'extras' ../../ PythingsOS
 
-echo "Building the Dokerfile and the firmware..."
+# Build the Dockerfile (and the firmware)
 docker build . -t pythingsos/micropythonsimulator
 
-
-
-
-
+# Remove the consolidated code
+rm -rf PythingsOS

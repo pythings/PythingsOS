@@ -3,6 +3,7 @@ MAINTAINER Stefano Alberto Russo <stefano.russo@gmail.com>
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+
 #----------------------------------
 # Dependencies
 #----------------------------------
@@ -54,6 +55,11 @@ RUN ln -s /micropython/$PORTS_DIR/unix/micropython /usr/bin/micropython
 
 # Add pythings user
 RUN useradd pythings -m -s /bin/bash
+
+#----------------------------------
+# PythingsOS code
+#----------------------------------
+COPY PythingsOS /opt/PythingsOS
 
 
 #----------------------------------
