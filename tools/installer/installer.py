@@ -559,9 +559,8 @@ try:
     
         if not OPERATION:
             print('')
-            print('Please put your board in programming mode. Most of the boards')
-            print('switch automatically, but some don\'t and you will have to do it')        
-            print('manually. After switching manually, detach and re-attach the board.')
+            print('If your board needs to be switched manually to be put in')
+            print('programming mode, do it now. Otherwise, just carry on.')
             print('')
             print('Press any key to continue')
             try:
@@ -586,8 +585,8 @@ try:
     
         if not OPERATION:
             print('')
-            print('Please put again your board in programming mode. If you')
-            print('are switching manually, detach and re-attach the board.')
+            print('If your board needed to be switched manually to be put in')
+            print('programming mode, please do it again.')
             print('')
             print('Press any key to continue')
             try:
@@ -653,8 +652,8 @@ try:
     
     if not OPERATION:
         print('')
-        print('Please put the board back in normal operation mode. If you')
-        print('are switching manually, detach and re-attach the board.')
+        print('If your board needed to be switched manually to be put in')
+        print('programming mode, now please put it normal operation mode.')
         print('')
         print('Press any key to continue')
         try:
