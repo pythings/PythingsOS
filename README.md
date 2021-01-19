@@ -1,8 +1,8 @@
-# The PythingsOS
+# PythingsOS
 
 Pythings is a quick and easy way of programming IoT devices, directly from a web browser, in Python. It shines on microcontrollers like the ESP8266 and the ESP32, but it works nicely also on small Linux boards.
 
-The PythingsOS is a minimal Operating System based on Python and MicroPython. It implements all the base functionalities required by an IoT device like network management, remote updates and security, so you don’t have to. Devices (Things) running PythingsOS are orchestrated by the [Pythings Cloud](https://github.com/pythings/PythingsCloud).
+The Pythings OS is a minimal Operating System based on Python and MicroPython. It implements all the base functionalities required by an IoT device like network management, remote updates and security, so you don’t have to. Devices (Things) running PythingsOS are orchestrated by the [Pythings Cloud](https://github.com/pythings/PythingsCloud).
 
 ![Image of the PythingsOS](https://pythings.io/static/img/custom/PythingsOS.png)
 
