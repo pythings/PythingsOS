@@ -3,7 +3,7 @@ appdirs==1.4.2
 bdist-mpkg==0.5.0
 bonjour-py==0.3
 cffi==1.9.1
-cryptography==1.7.2
+cryptography==3.2
 ecdsa==0.13
 enum34==1.1.6
 esptool==1.2.1
