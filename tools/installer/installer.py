@@ -17,11 +17,11 @@ DEFAULT_VERSION          = 'v1.1.0'
 DEFAULT_CHOOSE_OPERATION = False
 DEFAULT_INTERACTIVE      = False
 DEFAULT_DEBUG            = False
-DEFAULT_SILENT           = True
 DEFAULT_HOST             = 'https://pythings.io'
 DEFAULT_ARTIFACTS_PATH   = 'artifacts'
 DEFAULT_ALLOW_DOWNLOAD   = False
 DEFAULT_EXPERIMENTAL     = False
+DEFAULT_BAUD_RATE        = '115200'
 
 # Default Python
 try:
@@ -75,13 +75,14 @@ VERSION          = os.environ.get('VERSION', DEFAULT_VERSION)
 CHOOSE_OPERATION = booleanize(os.environ.get('CHOOSE_OPERATION', DEFAULT_CHOOSE_OPERATION))
 INTERACTIVE      = booleanize(os.environ.get('INTERACTIVE', DEFAULT_INTERACTIVE))
 DEBUG            = booleanize(os.environ.get('DEBUG', DEFAULT_DEBUG))
-SILENT           = booleanize(os.environ.get('SILENT', DEFAULT_SILENT))
+SILENT           = booleanize(os.environ.get('SILENT', False if DEBUG else True))
 PYTHON           = os.environ.get('PYTHON', DEFAULT_PYTHON)
 HOST             = os.environ.get('HOST', DEFAULT_HOST)
 ARTIFACTS_PATH   = os.environ.get('ARTIFACTS_PATH', DEFAULT_ARTIFACTS_PATH)
 ALLOW_DOWNLOAD   = booleanize(os.environ.get('ALLOW_DOWNLOAD', DEFAULT_ALLOW_DOWNLOAD))
 EXPERIMENTAL     = booleanize(os.environ.get('EXPERIMENTAL', DEFAULT_EXPERIMENTAL))
- 
+BAUD_RATE        = int(os.environ.get('BAUD_RATE', DEFAULT_BAUD_RATE))
+
 # Extra external settings
 PORT      = os.environ.get('PORT', None)
 PLATFORM  = os.environ.get('PLATFORM', None)
@@ -559,9 +560,8 @@ try:
     
         if not OPERATION:
             print('')
-            print('Please put your board in programming mode. Most of the boards')
-            print('switch automatically, but some don\'t and you will have to do it')        
-            print('manually. After switching manually, detach and re-attach the board.')
+            print('If your board needs to be switched manually to be put in')
+            print('programming mode, do it now. Otherwise, just carry on.')
             print('')
             print('Press any key to continue')
             try:
@@ -571,9 +571,9 @@ try:
         
         # Step 1: Erease flash
         if platform in ['esp8266', 'esp8266_sim800']:
-            command = '{} deps/esptool.py --port {} erase_flash'.format(PYTHON, serial_port)
+            command = '{} deps/esptool.py --port {} --baud {} erase_flash'.format(PYTHON, serial_port, BAUD_RATE)
         elif platform in ['esp32', 'esp32_sim800']:
-            command =  '{} deps/esptool.py --port {} erase_flash'.format(PYTHON, serial_port)  
+            command =  '{} deps/esptool.py --port {} --baud {} erase_flash'.format(PYTHON, serial_port, BAUD_RATE)  
         else:
             abort('Consistency Exception (Unknown platform "{}")'.format(platform))
     
@@ -586,8 +586,8 @@ try:
     
         if not OPERATION:
             print('')
-            print('Please put again your board in programming mode. If you')
-            print('are switching manually, detach and re-attach the board.')
+            print('If your board needed to be switched manually to be put in')
+            print('programming mode, please do it again.')
             print('')
             print('Press any key to continue')
             try:
@@ -599,20 +599,20 @@ try:
         if platform in ['esp8266', 'esp8266_sim800']:
             if frozen:
                 if use_local:
-                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 {}/firmware/PythingsOS_{}_{}.frozen.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH, VERSION, platform)
+                    command = '{} deps/esptool.py --port {} --baud {} write_flash --flash_size=detect -fm dio 0 {}/firmware/PythingsOS_{}_{}.frozen.bin'.format(PYTHON, serial_port, BAUD_RATE, ARTIFACTS_PATH, VERSION, platform)
                 else:
-                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_{}.frozen.bin'.format(PYTHON, serial_port, VERSION, platform)
+                    command = '{} deps/esptool.py --port {} --baud {} write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_{}.frozen.bin'.format(PYTHON, serial_port,  BAUD_RATE, VERSION, platform)
             else:
                 if use_local:
-                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 {}/firmware/PythingsOS_{}_{}.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH, VERSION, platform)
+                    command = '{} deps/esptool.py --port {} --baud {} write_flash --flash_size=detect -fm dio 0 {}/firmware/PythingsOS_{}_{}.bin'.format(PYTHON, serial_port, BAUD_RATE, ARTIFACTS_PATH, VERSION, platform)
                 else:
-                    command = '{} deps/esptool.py --port {} --baud 115200 write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_{}.bin'.format(PYTHON, serial_port, VERSION, platform)
+                    command = '{} deps/esptool.py --port {} --baud {} write_flash --flash_size=detect -fm dio 0 tmp/PythingsOS_{}_{}.bin'.format(PYTHON, serial_port, BAUD_RATE, VERSION, platform)
     
         elif platform in ['esp32', 'esp32_sim800']:
                 if use_local:
-                    command = '{} deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 {}/firmware/esp32-20190529-v1.11.bin'.format(PYTHON, serial_port, ARTIFACTS_PATH)
+                    command = '{} deps/esptool.py --chip esp32 --port {} --baud {} write_flash -z 0x1000 {}/firmware/esp32-20190529-v1.11.bin'.format(PYTHON, serial_port, BAUD_RATE, ARTIFACTS_PATH)
                 else:
-                    command = '{} deps/esptool.py --chip esp32 --port {} write_flash -z 0x1000 tmp/esp32-20190529-v1.11.bin'.format(PYTHON, serial_port)
+                    command = '{} deps/esptool.py --chip esp32 --port {} --baud {} write_flash -z 0x1000 tmp/esp32-20190529-v1.11.bin'.format(PYTHON, serial_port, BAUD_RATE)
         else:
             abort('Consistency Exception (Unknown platform "{}")'.format(platform))
             
@@ -637,10 +637,23 @@ try:
             attempt_count=0
             while True:
                 attempt_count+=1
-                output = os_shell('{} deps/ampy.py -p {} ls'.format(PYTHON, serial_port), interactive=INTERACTIVE, silent=SILENT, capture=True)
-                if output.exit_code != 0:
+                output = os_shell('{} deps/ampy.py -p {} -b {} ls'.format(PYTHON, serial_port, BAUD_RATE), interactive=INTERACTIVE, silent=SILENT, capture=True)
+                
+                # If we use the silent mode, the output is just a boolean
+                if isinstance(output, bool):
+                    success = output
+                else:
+                    if output.exit_code != 0:
+                        success = False
+                    else:
+                        success = True
+                
+                if not success:
                     if attempt_count > 3:
-                        print(format_shell_error(output.stdout, output.stderr, output.exit_code))
+                        try:
+                            print(format_shell_error(output.stdout, output.stderr, output.exit_code))
+                        except:
+                            pass
                         abort('Error, could not communicate with the board (see output above)')
                     else:
                         time.sleep(2)
@@ -653,8 +666,8 @@ try:
     
     if not OPERATION:
         print('')
-        print('Please put the board back in normal operation mode. If you')
-        print('are switching manually, detach and re-attach the board.')
+        print('If your board needed to be switched manually to be put in')
+        print('programming mode, now please put it normal operation mode.')
         print('')
         print('Press any key to continue')
         try:
@@ -696,7 +709,7 @@ try:
                 while True:
                     if DEBUG:
                         print('Now copying {}/{} ...'.format(files_path,file))
-                    if not os_shell('{} deps/ampy.py -p {} put {}/{}'.format(PYTHON, serial_port,files_path,file), interactive=INTERACTIVE, silent=SILENT):
+                    if not os_shell('{} deps/ampy.py -p {} -b {} put {}/{}'.format(PYTHON, serial_port, BAUD_RATE, files_path, file), interactive=INTERACTIVE, silent=SILENT):
                         print('Failed, retrying...')
                         time.sleep(2)
                     else:
@@ -719,8 +732,17 @@ try:
             print('Now resetting the board...')
             # TODO: Change this since in the esp32 executing a reset will not "return", cusing a neverending loop
             time.sleep(2)
-            output = os_shell('{} deps/ampy.py -p {} run deps/reset.py'.format(PYTHON, serial_port), interactive=INTERACTIVE, silent=SILENT, capture=True)
-            if output.exit_code != 0:
+            output = os_shell('{} deps/ampy.py -p {} -b {} run deps/reset.py'.format(PYTHON, serial_port, BAUD_RATE), interactive=INTERACTIVE, silent=SILENT, capture=True)
+                     
+            # If we use the silent mode, the output is just a boolean
+            if isinstance(output, bool):
+                success = output
+            else:
+                if output.exit_code != 0:
+                    success = False
+                else:
+                    success = True
+            if not success:            
                 print('Automatic reset seems to have failed, you might need a manual reset.')
             else:
                 print('Done.')
