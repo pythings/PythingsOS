@@ -64,6 +64,6 @@ scipy==0.13.0b1
 six==1.10.0
 terminaltables==2.1.0
 vboxapi==1.0
-virtualenv==13.1.2
+virtualenv==20.36.1
 xattr==0.6.4
 zope.interface==4.1.1
